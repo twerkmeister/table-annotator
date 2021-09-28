@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "table-annotator-api"
+version = "0.1.0"
+description = ""
+authors = ["Thomas Werkmeister <thomas@werkmeister.me>"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+Flask = "^2.0.1"
+python-dotenv = "^0.19.0"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
