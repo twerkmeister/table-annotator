@@ -72,7 +72,7 @@ function Canvas() {
         if (canvas && typeof(image_idx) != "undefined" && typeof(images) != "undefined") {
             const context = canvas.getContext('2d')
             if (context) {
-                const image = new Image(300, 200)
+                const image = new Image(2000, 3000)
                 image.src = "image/" + images[image_idx]
                 image.onload = function () {
                     context.clearRect(0, 0, canvas.width, canvas.height)
@@ -84,7 +84,7 @@ function Canvas() {
 
     if(images && typeof(image_idx) != "undefined") {
         return (
-            <canvas ref={canvasRef} width="800" height="600">
+            <canvas ref={canvasRef} width="2000" height="3000">
                 Your browser does not support the canvas element.
             </canvas>
         )
