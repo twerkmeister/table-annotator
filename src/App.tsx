@@ -8,6 +8,12 @@ const keyMap = {
     NEXT_IMAGE: "right",
 };
 
+type Image = {
+    src: string,
+    width: number,
+    height: number
+}
+
 type UnfinishedTable = {
     x: number,
     y: number
@@ -30,7 +36,7 @@ type Table = {
 
 
 type AnnotatorState = {
-    images?: string[],
+    images?: Image[],
     current_image_index?: number,
     unfinishedTable?: UnfinishedTable,
     tables: Table[],
@@ -110,7 +116,7 @@ function Canvas() {
             const ctx = canvas.getContext('2d')
             if (ctx) {
                 const image = new Image(2000, 3000)
-                image.src = "image/" + images[image_idx]
+                image.src = images[image_idx].src
                 image.onload = function () {
                     ctx.clearRect(0, 0, canvas.width, canvas.height)
                     ctx.drawImage(image, 0, 0)
