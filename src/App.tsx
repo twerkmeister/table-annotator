@@ -1,4 +1,4 @@
-import React, {useEffect, useRef} from 'react';
+import React, {useEffect} from 'react';
 import create from 'zustand'
 import { HotKeys } from "react-hotkeys";
 import './App.css';
@@ -44,20 +44,19 @@ type Table = {
 
 type AnnotatorState = {
     images?: Image[],
-    currentImageIndex?: number,
+    currentImageIndex: number,
     unfinishedTable?: UnfinishedTable,
     rotationDegrees: number,
     tables: Table[],
     fetchImages: () => void
-    nextImage: () => void
-    previousImage: () => void
+    setImageIndex: (idx: number) => void
     outlineTable: (p: Point, rotationDegrees: number) => void,
     rotate: (degrees: number) => void,
 }
 
 const useStore = create<AnnotatorState>((set, get) => ({
     images: undefined,
-    currentImageIndex: undefined,
+    currentImageIndex: 0,
     unfinishedTable: undefined,
     rotationDegrees: 0,
     tables: [],
@@ -69,19 +68,10 @@ const useStore = create<AnnotatorState>((set, get) => ({
             set({images, currentImageIndex: 0})
         }
     },
-    nextImage: () => {
+    setImageIndex: (idx: number) => {
         const images = get().images
-        const currentImageIndex = get().currentImageIndex
-        if (typeof(currentImageIndex) != "undefined" &&
-            typeof(images) != "undefined" &&
-            (currentImageIndex < images.length - 1)) {
-            set({ currentImageIndex: currentImageIndex + 1 })
-        }
-    },
-    previousImage: () => {
-        const currentImageIndex = get().currentImageIndex
-        if (typeof(currentImageIndex) != "undefined" && (currentImageIndex > 0)) {
-            set({ currentImageIndex: currentImageIndex - 1 })
+        if(images && idx >= 0 && idx < images.length){
+            set({ currentImageIndex: idx })
         }
     },
     outlineTable: (p: Point, rotationDegrees: number) => {
@@ -96,44 +86,46 @@ const useStore = create<AnnotatorState>((set, get) => ({
     },
     rotate: (degrees: number) => {
         const rotationDegrees = get().rotationDegrees + degrees
-        console.log(rotationDegrees)
         set({rotationDegrees})
     }
 }))
 
 function App() {
     const fetchImages = useStore(state => state.fetchImages)
-    const nextImage = useStore(state => state.nextImage)
-    const previousImage = useStore(state => state.previousImage)
+    const setImageIndex = useStore(state => state.setImageIndex)
     const rotate = useStore(state => state.rotate)
     const tables = useStore(state => state.tables)
     const imageIdx = useStore(state => state.currentImageIndex)
     const images = useStore(state => state.images)
-    console.log("App")
     useEffect(() => fetchImages())
 
     const hotkeyHandlers = {
-        PREVIOUS_IMAGE: previousImage,
-        NEXT_IMAGE: nextImage,
+        PREVIOUS_IMAGE:  () => setImageIndex(imageIdx - 1),
+        NEXT_IMAGE:  () => setImageIndex(imageIdx + 1),
         INCREASE_ROTATION: () => rotate(0.5),
         DECREASE_ROTATION: () => rotate(-0.5)
     };
-    if(images && typeof(imageIdx) != "undefined") {
+
+    if(typeof(images) != "undefined" && images.length > 0) {
         const image = images[imageIdx]
-        const imageCenter: Point = {x: image.width/2, y: image.height/2}
+        const imageCenter: Point = {x: image.width / 2, y: image.height / 2}
         return (
             <div className="App">
-                <HotKeys keyMap={keyMap} handlers={hotkeyHandlers}>
+                <HotKeys keyMap={keyMap} handlers={hotkeyHandlers} allowChanges={true}>
                     <DocumentImage {...image}/>
                     {tables.map((t, i) => {
                         return (
                             <TableElement key={i} tableTopLeft={t.topLeft} tableBottomRight={t.bottomRight}
-                            imageCenter={imageCenter} tableRotation={t.rotationDegrees}/>
+                                          imageCenter={imageCenter} tableRotation={t.rotationDegrees}/>
                         )
                     })}
                 </HotKeys>
             </div>
         );
+    } else if(typeof(images) != "undefined" && images.length === 0) {
+        return (
+            <div>There are no images to annotate...</div>
+        )
     } else {
         return (
             <div>Still loading...</div>
@@ -142,7 +134,6 @@ function App() {
 }
 
 function TableElement(props: {tableTopLeft: Point, tableBottomRight: Point, tableRotation: number, imageCenter: Point}) {
-    console.log(props)
     const rotationDegrees = useStore(state => state.rotationDegrees)
     return (
         <div className="table" style={{transform: `rotate(${rotationDegrees - props.tableRotation}deg) translate(${props.tableTopLeft.x}px, ${props.tableTopLeft.y}px)`,
@@ -157,13 +148,13 @@ function DocumentImage(image: Image) {
 
     const handleCanvasClick = (e: React.MouseEvent<HTMLImageElement, MouseEvent>) => {
         e.preventDefault()
-        console.log("ding")
         outlineTable({x: e.pageX, y: e.pageY}, rotationDegrees)
     }
 
     return (
         <img className="documentImage" src={image.src} width={image.width} height={image.height}
-        style={{transform: `rotate(${rotationDegrees}deg)`}} onClick={e => handleCanvasClick(e)}/>
+        style={{transform: `rotate(${rotationDegrees}deg)`}} alt="The document"
+             onClick={e => handleCanvasClick(e)}/>
     )
 
 }
