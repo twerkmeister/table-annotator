@@ -40,41 +40,41 @@ type Table = {
 
 type AnnotatorState = {
     images?: Image[],
-    current_image_index?: number,
+    currentImageIndex?: number,
     unfinishedTable?: UnfinishedTable,
     rotationDegrees: number,
     tables: Table[],
-    fetch_images: () => void
-    next_image: () => void
-    previous_image: () => void
+    fetchImages: () => void
+    nextImage: () => void
+    previousImage: () => void
     outlineTable: (x: number, y: number, rotationDegrees: number) => void,
     rotate: (degrees: number) => void,
 }
 
 const useStore = create<AnnotatorState>((set, get) => ({
     images: undefined,
-    current_image_index: undefined,
+    currentImageIndex: undefined,
     unfinishedTable: undefined,
     rotationDegrees: 0,
     tables: [],
-    fetch_images: async() => {
+    fetchImages: async() => {
         const response = await fetch("/images")
         const images = (await response.json())["images"]
-        set({ images, current_image_index: 0 })
+        set({ images, currentImageIndex: 0 })
     },
-    next_image: () => {
+    nextImage: () => {
         const images = get().images
-        const current_image_index = get().current_image_index
-        if (typeof(current_image_index) != "undefined" &&
+        const currentImageIndex = get().currentImageIndex
+        if (typeof(currentImageIndex) != "undefined" &&
             typeof(images) != "undefined" &&
-            (current_image_index < images.length - 1)) {
-            set({ current_image_index: current_image_index + 1 })
+            (currentImageIndex < images.length - 1)) {
+            set({ currentImageIndex: currentImageIndex + 1 })
         }
     },
-    previous_image: () => {
-        const current_image_index = get().current_image_index
-        if (typeof(current_image_index) != "undefined" && (current_image_index > 0)) {
-            set({ current_image_index: current_image_index - 1 })
+    previousImage: () => {
+        const currentImageIndex = get().currentImageIndex
+        if (typeof(currentImageIndex) != "undefined" && (currentImageIndex > 0)) {
+            set({ currentImageIndex: currentImageIndex - 1 })
         }
     },
     outlineTable: (x: number, y: number, rotationDegrees: number) => {
@@ -95,15 +95,15 @@ const useStore = create<AnnotatorState>((set, get) => ({
 }))
 
 function App() {
-    const fetch_images = useStore(state => state.fetch_images)
-    const next_image = useStore(state => state.next_image)
-    const previous_image = useStore(state => state.previous_image)
+    const fetchImages = useStore(state => state.fetchImages)
+    const nextImage = useStore(state => state.nextImage)
+    const previousImage = useStore(state => state.previousImage)
     const rotate = useStore(state => state.rotate)
-    useEffect(() => fetch_images())
+    useEffect(() => fetchImages())
 
     const hotkeyHandlers = {
-        PREVIOUS_IMAGE: previous_image,
-        NEXT_IMAGE: next_image,
+        PREVIOUS_IMAGE: previousImage,
+        NEXT_IMAGE: nextImage,
         INCREASE_ROTATION: () => rotate(0.5),
         DECREASE_ROTATION: () => rotate(-0.5)
     };
@@ -118,7 +118,7 @@ function App() {
 }
 
 function Canvas() {
-    const image_idx = useStore(state => state.current_image_index)
+    const imageIdx = useStore(state => state.currentImageIndex)
     const images = useStore(state => state.images)
     const outlineTable = useStore(state => state.outlineTable)
     const tables = useStore(state => state.tables)
@@ -127,12 +127,12 @@ function Canvas() {
 
     useEffect(() => {
         const canvas = canvasRef.current
-        if (canvas && typeof(image_idx) != "undefined" && typeof(images) != "undefined") {
+        if (canvas && typeof(imageIdx) != "undefined" && typeof(images) != "undefined") {
             const ctx = canvas.getContext('2d')
             if (ctx) {
-                const image = images[image_idx]
+                const image = images[imageIdx]
                 const documentImage = new Image(image.width, image.height)
-                documentImage.src = images[image_idx].src
+                documentImage.src = images[imageIdx].src
                 documentImage.onload = function () {
                     ctx.clearRect(0, 0, canvas.width, canvas.height)
                     ctx.save()
@@ -169,7 +169,7 @@ function Canvas() {
     }
 
 
-    if(images && typeof(image_idx) != "undefined") {
+    if(images && typeof(imageIdx) != "undefined") {
         return (
             <canvas ref={canvasRef} onClick={e => handleCanvasClick(e)} width="2000" height="3000">
                 Your browser does not support the canvas element.
