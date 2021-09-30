@@ -1,5 +1,6 @@
 .App {
-  /*text-align: center;*/
+    margin: 100px auto 100px auto;
+    width: 75%;
 }
 
 .documentImage{
@@ -10,4 +11,11 @@
     position: absolute;
     border-style: solid;
     border-width: 5px;
+}
+
+.startedTableDot {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    background: black;
 }
