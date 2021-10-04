@@ -84,6 +84,7 @@ type Table = {
 type AnnotatorState = {
     images?: Image[],
     currentImageIndex: number,
+    selectedTable?: number,
     unfinishedTable?: UnfinishedTable,
     mousePosition: Point,
     documentPosition?: Point,
@@ -96,12 +97,15 @@ type AnnotatorState = {
     setMousePosition: (mousePosition: Point) => void,
     setDocumentPosition: (documentPosition: Point) => void,
     removeUnfinishedTable: () => void,
+    selectTable: (idx?: number) => void
+
 }
 
 const useStore = create<AnnotatorState>((set, get) => ({
     images: undefined,
     currentImageIndex: 0,
     unfinishedTable: undefined,
+    selectedTable: undefined,
     mousePosition: {x: 0, y: 0},
     documentPosition: undefined,
     rotationDegrees: 0,
@@ -125,7 +129,7 @@ const useStore = create<AnnotatorState>((set, get) => ({
         const unfinishedTable = get().unfinishedTable
         if (typeof(unfinishedTable) != "undefined") {
             const newTable = makeTable(unfinishedTable.firstPoint, p, rotationDegrees)
-            set({unfinishedTable: undefined, tables: [...currentTables, newTable]})
+            set({unfinishedTable: undefined, tables: [...currentTables, newTable], selectedTable: currentTables.length})
         } else {
             set({unfinishedTable: {firstPoint: p, rotationDegrees}})
         }
@@ -141,7 +145,10 @@ const useStore = create<AnnotatorState>((set, get) => ({
         set({documentPosition})
     },
     removeUnfinishedTable: () => {
-        set ({unfinishedTable: undefined})
+        set({unfinishedTable: undefined})
+    },
+    selectTable: (idx?: number) => {
+        set({selectedTable: idx})
     }
 }))
 
@@ -184,7 +191,9 @@ function App() {
                         return (
                             <TableElement key={i} tableTopLeft={t.outline.topLeft}
                                           tableBottomRight={t.outline.bottomRight}
-                                          imageCenter={imageCenter} tableRotation={t.rotationDegrees}/>
+                                          imageCenter={imageCenter}
+                                          tableIdx={i}
+                                          tableRotation={t.rotationDegrees}/>
                         )
                     })}
                     {typeof(unfinishedTable) != "undefined" ? <StartedTable {...unfinishedTable}
@@ -233,14 +242,26 @@ function StartedTable(props: { firstPoint: Point, rotationDegrees: number, image
     }
 }
 
-function TableElement(props: {tableTopLeft: Point, tableBottomRight: Point, tableRotation: number, imageCenter: Point}) {
+function TableElement(props: {tableTopLeft: Point, tableBottomRight: Point, tableRotation: number,
+                              tableIdx: number, imageCenter: Point}) {
     const rotationDegrees = useStore(state => state.rotationDegrees)
+    const selectTable = useStore(state => state.selectTable)
+    const selectedTable = useStore(state => state.selectedTable)
+    const isSelected = typeof(selectedTable) !== "undefined" && selectedTable === props.tableIdx
+
+    const handleClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+        e.preventDefault()
+        selectTable(props.tableIdx)
+    }
+
     return (
         <div className="table"
              style={{transform: `rotate(${rotationDegrees - props.tableRotation}deg) translate(${props.tableTopLeft.x}px, ${props.tableTopLeft.y}px)`,
                      width: `${props.tableBottomRight.x - props.tableTopLeft.x}px`,
                      height: `${props.tableBottomRight.y - props.tableTopLeft.y}px`,
-                     transformOrigin: `${props.imageCenter.x}px ${props.imageCenter.y}px`}}/>
+                     transformOrigin: `${props.imageCenter.x}px ${props.imageCenter.y}px`,
+                     borderColor: isSelected ? "green" : "black"}}
+             onClick={e => handleClick(e)}/>
     )
 }
 
@@ -250,6 +271,8 @@ function DocumentImage(image: Image) {
     const rotationDegrees = useStore(state => state.rotationDegrees)
     const setDocumentPosition = useStore(state => state.setDocumentPosition)
     const documentPosition = useStore(state => state.documentPosition)
+    const selectedTable = useStore(state => state.selectedTable)
+    const selectTable = useStore(state => state.selectTable)
 
     useEffect(() => {
         const imageRef = ref.current
@@ -258,17 +281,21 @@ function DocumentImage(image: Image) {
             setDocumentPosition(newDocumentPosition)
         }
     })
-    const handleCanvasClick = (e: React.MouseEvent<HTMLImageElement, MouseEvent>) => {
+    const handleClick = (e: React.MouseEvent<HTMLImageElement, MouseEvent>) => {
         e.preventDefault()
-        if (documentPosition) {
-            outlineTable({x: e.pageX - documentPosition.x, y: e.pageY - documentPosition.y}, rotationDegrees)
+        if (typeof(selectedTable) === "undefined") {
+            if (documentPosition) {
+                outlineTable({x: e.pageX - documentPosition.x, y: e.pageY - documentPosition.y}, rotationDegrees)
+            }
+        } else {
+            selectTable(undefined)
         }
     }
 
     return (
         <img ref={ref} className="documentImage" src={image.src} width={image.width} height={image.height}
         style={{transform: `rotate(${rotationDegrees}deg)`}} alt="The document"
-             onClick={e => handleCanvasClick(e)}/>
+             onClick={e => handleClick(e)}/>
     )
 
 }
