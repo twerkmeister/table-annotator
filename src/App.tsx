@@ -73,7 +73,7 @@ function calcRectangle(p1: Point, p2: Point): Rectangle {
 function makeTable(p1: Point, p2: Point, rotationDegrees: number): Table {
     const outline = calcRectangle(p1, p2)
     return {
-        outline, rotationDegrees, columns: []
+        outline, rotationDegrees, columns: [], rows: []
     }
 }
 
@@ -81,6 +81,7 @@ type Table = {
     outline: Rectangle,
     rotationDegrees: number,
     columns: number[],
+    rows: number[],
 }
 
 
@@ -90,6 +91,7 @@ type AnnotatorState = {
     selectedTable?: number,
     unfinishedTable?: UnfinishedTable,
     newColumnPosition?: number,
+    newRowPosition?: number,
     mousePosition: Point,
     documentPosition?: Point,
     rotationDegrees: number,
@@ -104,7 +106,9 @@ type AnnotatorState = {
     removeUnfinishedTable: () => void,
     selectTable: (idx?: number) => void,
     setNewColumnPosition: (pagePoint?: Point) => void,
+    setNewRowPosition: (pagePoint?: Point) => void,
     addColumn: () => void
+    addRow: () => void
 }
 
 const useStore = create<AnnotatorState>((set, get) => ({
@@ -113,6 +117,7 @@ const useStore = create<AnnotatorState>((set, get) => ({
     unfinishedTable: undefined,
     selectedTable: undefined,
     newColumnPosition: undefined,
+    newRowPosition: undefined,
     mousePosition: {x: 0, y: 0},
     documentPosition: undefined,
     rotationDegrees: 0,
@@ -155,7 +160,7 @@ const useStore = create<AnnotatorState>((set, get) => ({
         set({unfinishedTable: undefined})
     },
     selectTable: (idx?: number) => {
-        set({selectedTable: idx, newColumnPosition: undefined})
+        set({selectedTable: idx, newColumnPosition: undefined, newRowPosition: undefined})
     },
     setNewColumnPosition: (pagePoint?: Point) => {
         if(typeof(pagePoint) === "undefined"){
@@ -179,6 +184,28 @@ const useStore = create<AnnotatorState>((set, get) => ({
             }
         }
     },
+    setNewRowPosition: (pagePoint?: Point) => {
+        if(typeof(pagePoint) === "undefined"){
+            set({newRowPosition: undefined})
+            return
+        }
+
+        const tables = get().tables
+        const selectedTableIdx = get().selectedTable
+        const documentPosition = get().documentPosition
+        const images = get().images
+        const currentImageIndex = get().currentImageIndex
+        const rotationDegrees = get().rotationDegrees
+        if (typeof (selectedTableIdx) !== "undefined" &&
+            typeof (documentPosition) !== "undefined" && typeof(images) !== "undefined") {
+            const table = tables[selectedTableIdx]
+            if (typeof (table) !== "undefined") {
+                const rotatedPagePoint = rotatePoint(pagePoint, table.rotationDegrees - rotationDegrees, addPoints(images[currentImageIndex].center, documentPosition))
+                const rowPositionInsideTable = rotatedPagePoint.y - documentPosition.y - table.outline.topLeft.y
+                set({newRowPosition: Math.round(rowPositionInsideTable - 7)})
+            }
+        }
+    },
     addColumn: () => {
         const tables = get().tables
         const selectedTableIdx = get().selectedTable
@@ -192,6 +219,21 @@ const useStore = create<AnnotatorState>((set, get) => ({
                 set({tables: newTables})
             }
         }
+    },
+    addRow: () => {
+        const tables = get().tables
+        const selectedTableIdx = get().selectedTable
+        const newRowPosition = get().newRowPosition
+        if (typeof (selectedTableIdx) !== "undefined" && typeof(newRowPosition) !== "undefined") {
+            const table = tables[selectedTableIdx]
+            if (typeof (table) !== "undefined") {
+                const newRows = [...table.rows, newRowPosition].sort()
+                const newTable = {...table, rows: newRows}
+                const newTables = [...tables.slice(0, selectedTableIdx), newTable, ...tables.slice(selectedTableIdx+1)]
+                set({tables: newTables})
+            }
+        }
+
     }
 
 }))
@@ -244,7 +286,8 @@ function App() {
                                           imageCenter={image.center}
                                           tableIdx={i}
                                           tableRotation={t.rotationDegrees}
-                                          columns={t.columns}/>
+                                          columns={t.columns}
+                                          rows={t.rows}/>
                         )
                     })}
                     {typeof(unfinishedTable) != "undefined" ? <StartedTable {...unfinishedTable}
@@ -294,7 +337,7 @@ function StartedTable(props: { firstPoint: Point, imageCenter: Point } ) {
 }
 
 function TableElement(props: {tableTopLeft: Point, tableBottomRight: Point, tableRotation: number,
-                              tableIdx: number, imageCenter: Point, columns: number[]}) {
+                              tableIdx: number, imageCenter: Point, columns: number[], rows: number[]}) {
     const rotationDegrees = useStore(state => state.rotationDegrees)
     const selectTable = useStore(state => state.selectTable)
     const selectedTable = useStore(state => state.selectedTable)
@@ -318,8 +361,15 @@ function TableElement(props: {tableTopLeft: Point, tableBottomRight: Point, tabl
                     <ColumnLine key={i} position={c}/>
                 )
             })}
+            {props.rows.map((r, i) => {
+                return (
+                    <RowLine key={i} position={r}/>
+                )
+            })}
             {isSelected ? <ColumnSetterSpace/> : null}
+            {isSelected ? <RowSetterSpace/> : null}
             {isSelected ? <NewColumnLine/> : null}
+            {isSelected ? <NewRowLine/> : null}
         </div>
     )
 }
@@ -328,10 +378,23 @@ function ColumnLine(props: {position: number}) {
     return (<div className="columnLine" style={{left: `${props.position}px`}}/>)
 }
 
+function RowLine(props: {position: number}) {
+    return (<div className="rowLine" style={{top: `${props.position}px`}}/>)
+}
+
 function NewColumnLine() {
     const newColumnPosition = useStore(state => state.newColumnPosition)
     if (typeof(newColumnPosition) !== "undefined") {
         return (<div className="columnLine" style={{left: `${newColumnPosition}px`}}/>)
+    } else {
+        return null
+    }
+}
+
+function NewRowLine() {
+    const newRowPosition = useStore(state => state.newRowPosition)
+    if (typeof(newRowPosition) !== "undefined") {
+        return (<div className="rowLine" style={{top: `${newRowPosition}px`}}/>)
     } else {
         return null
     }
@@ -355,6 +418,28 @@ function ColumnSetterSpace(){
 
     return (
         <div className="columnSetterSpace" onMouseMove={handleMouseMove} onClick={handleMouseClick}
+             onMouseLeave={handleMouseLeave}/>
+    )
+}
+
+function RowSetterSpace(){
+    const setNewRowPosition = useStore(state => state.setNewRowPosition)
+    const addRow = useStore(state => state.addRow)
+
+    const handleMouseLeave = (e: React.MouseEvent<Element, MouseEvent>) => {
+        setNewRowPosition(undefined)
+    }
+
+    const handleMouseClick = (e: React.MouseEvent<Element, MouseEvent>) => {
+        addRow()
+    }
+
+    const handleMouseMove = (e: React.MouseEvent<Element, MouseEvent>) => {
+        setNewRowPosition({x: e.pageX, y: e.pageY})
+    }
+
+    return (
+        <div className="rowSetterSpace" onMouseMove={handleMouseMove} onClick={handleMouseClick}
              onMouseLeave={handleMouseLeave}/>
     )
 }

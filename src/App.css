@@ -37,3 +37,21 @@
     top: -30px;
     left: 0px;
 }
+
+.rowLine {
+    height: 5px;
+    background: orangered;
+    opacity: 0.3;
+    width: 100%;
+    position: absolute;
+}
+
+.rowSetterSpace {
+    position: absolute;
+    height: 100%;
+    width: 30px;
+    background: orangered;
+    opacity: 0.3;
+    top: 0px;
+    left: -30px;
+}
