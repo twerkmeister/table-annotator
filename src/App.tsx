@@ -8,7 +8,8 @@ const keyMap = {
     NEXT_IMAGE: "d",
     INCREASE_ROTATION: "w",
     DECREASE_ROTATION: "s",
-    ESC: "esc"
+    ESC: "esc",
+    ZERO: "0"
 };
 
 type Point = {
@@ -24,9 +25,10 @@ function addPoints(p: Point, p2: Point): Point {
     return {x: p.x + p2.x, y: p.y + p2.y}
 }
 
-function rotatePoint(p: Point, angle: number, rotationCenter: Point = {x: 0, y: 0}): Point {
-    const sinAngle = Math.sin(angle);
-    const cosAngle = Math.cos(angle);
+function rotatePoint(p: Point, degrees: number, rotationCenter: Point = {x: 0, y: 0}): Point {
+    const radians = degrees * Math.PI / 180
+    const sinAngle = Math.sin(radians);
+    const cosAngle = Math.cos(radians);
 
     const translated = subtractPoints(p, rotationCenter)
     const rotated = {
@@ -44,12 +46,12 @@ type Rectangle = {
 type Image = {
     src: string,
     width: number,
-    height: number
+    height: number,
+    center: Point
 }
 
 type UnfinishedTable = {
     firstPoint: Point
-    rotationDegrees: number,
 }
 
 function getPageOffset(el: Element): Point {
@@ -86,6 +88,7 @@ type AnnotatorState = {
     currentImageIndex: number,
     selectedTable?: number,
     unfinishedTable?: UnfinishedTable,
+    newColumnPosition?: number,
     mousePosition: Point,
     documentPosition?: Point,
     rotationDegrees: number,
@@ -93,12 +96,13 @@ type AnnotatorState = {
     fetchImages: () => void
     setImageIndex: (idx: number) => void
     outlineTable: (p: Point, rotationDegrees: number) => void,
-    rotate: (degrees: number) => void,
+    increaseRotationDegrees: (degrees: number) => void,
+    setRotationDegrees: (rotationDegrees: number) => void,
     setMousePosition: (mousePosition: Point) => void,
     setDocumentPosition: (documentPosition: Point) => void,
     removeUnfinishedTable: () => void,
-    selectTable: (idx?: number) => void
-
+    selectTable: (idx?: number) => void,
+    setNewColumnPosition: (pagePoint: Point) => void
 }
 
 const useStore = create<AnnotatorState>((set, get) => ({
@@ -106,36 +110,37 @@ const useStore = create<AnnotatorState>((set, get) => ({
     currentImageIndex: 0,
     unfinishedTable: undefined,
     selectedTable: undefined,
+    newColumnPosition: undefined,
     mousePosition: {x: 0, y: 0},
     documentPosition: undefined,
     rotationDegrees: 0,
     tables: [],
     fetchImages: async() => {
-        const images = get().images
-        if(typeof(images) == "undefined") {
-            const response = await fetch("/images")
-            const images = (await response.json())["images"]
-            set({images, currentImageIndex: 0})
-        }
+        const response = await fetch("/images")
+        const images = (await response.json())["images"]
+        set({images, currentImageIndex: 0})
     },
     setImageIndex: (idx: number) => {
         const images = get().images
-        if(images && idx >= 0 && idx < images.length){
+        if(typeof(images) !== "undefined" && idx >= 0 && idx < images.length){
             set({ currentImageIndex: idx, rotationDegrees: 0, documentPosition: undefined})
         }
     },
     outlineTable: (p: Point, rotationDegrees: number) => {
         const currentTables = get().tables
         const unfinishedTable = get().unfinishedTable
-        if (typeof(unfinishedTable) != "undefined") {
+        if (typeof(unfinishedTable) !== "undefined") {
             const newTable = makeTable(unfinishedTable.firstPoint, p, rotationDegrees)
             set({unfinishedTable: undefined, tables: [...currentTables, newTable], selectedTable: currentTables.length})
         } else {
-            set({unfinishedTable: {firstPoint: p, rotationDegrees}})
+            set({unfinishedTable: {firstPoint: p}})
         }
     },
-    rotate: (degrees: number) => {
+    increaseRotationDegrees: (degrees: number) => {
         const rotationDegrees = get().rotationDegrees + degrees
+        set({rotationDegrees})
+    },
+    setRotationDegrees: (rotationDegrees: number) => {
         set({rotationDegrees})
     },
     setMousePosition: (mousePosition: Point) => {
@@ -148,21 +153,45 @@ const useStore = create<AnnotatorState>((set, get) => ({
         set({unfinishedTable: undefined})
     },
     selectTable: (idx?: number) => {
-        set({selectedTable: idx})
+        set({selectedTable: idx, newColumnPosition: undefined})
+    },
+    setNewColumnPosition: (pagePoint: Point) => {
+        const tables = get().tables
+        const selectedTableIdx = get().selectedTable
+        const documentPosition = get().documentPosition
+        const images = get().images
+        const currentImageIndex = get().currentImageIndex
+        const rotationDegrees = get().rotationDegrees
+        if (typeof (tables) !== "undefined" && typeof (selectedTableIdx) !== "undefined" &&
+            typeof (documentPosition) !== "undefined" && typeof(images) !== "undefined") {
+            const table = tables[selectedTableIdx]
+            if (typeof (table) !== "undefined") {
+                const rotatedPagePoint = rotatePoint(pagePoint, table.rotationDegrees - rotationDegrees, addPoints(images[currentImageIndex].center, documentPosition))
+                const columnPositionInsideTable = rotatedPagePoint.x - documentPosition.x - table.outline.topLeft.x
+                set({newColumnPosition: columnPositionInsideTable})
+            }
+        }
     }
+
 }))
 
 function App() {
     const fetchImages = useStore(state => state.fetchImages)
     const setImageIndex = useStore(state => state.setImageIndex)
-    const rotate = useStore(state => state.rotate)
+    const increaseRotationDegrees = useStore(state => state.increaseRotationDegrees)
+    const setRotationDegrees = useStore(state => state.setRotationDegrees)
     const tables = useStore(state => state.tables)
     const unfinishedTable = useStore(state => state.unfinishedTable)
     const imageIdx = useStore(state => state.currentImageIndex)
     const images = useStore(state => state.images)
     const setMousePosition = useStore(state => state.setMousePosition)
     const removeUnfinishedTable = useStore(state => state.removeUnfinishedTable)
-    useEffect(() => fetchImages())
+
+    useEffect(() => {
+        if(typeof(images) === "undefined") {
+            fetchImages()
+        }
+    })
 
     const handleMouseMove = (e: React.MouseEvent<Element, MouseEvent>) => {
         setMousePosition({x: e.pageX, y: e.pageY})
@@ -171,8 +200,9 @@ function App() {
     const hotkeyHandlers = {
         PREVIOUS_IMAGE:  () => setImageIndex(imageIdx - 1),
         NEXT_IMAGE:  () => setImageIndex(imageIdx + 1),
-        INCREASE_ROTATION: () => rotate(0.5),
-        DECREASE_ROTATION: () => rotate(-0.5),
+        INCREASE_ROTATION: () => increaseRotationDegrees(0.5),
+        DECREASE_ROTATION: () => increaseRotationDegrees(-0.5),
+        ZERO: () => setRotationDegrees(0),
         ESC: () => {}
     }
 
@@ -182,7 +212,6 @@ function App() {
 
     if(typeof(images) != "undefined" && images.length > 0) {
         const image = images[imageIdx]
-        const imageCenter: Point = {x: image.width / 2, y: image.height / 2}
         return (
             <div className="App" onMouseMove={e => handleMouseMove(e)}>
                 <HotKeys keyMap={keyMap} handlers={hotkeyHandlers} allowChanges={true}>
@@ -191,13 +220,13 @@ function App() {
                         return (
                             <TableElement key={i} tableTopLeft={t.outline.topLeft}
                                           tableBottomRight={t.outline.bottomRight}
-                                          imageCenter={imageCenter}
+                                          imageCenter={image.center}
                                           tableIdx={i}
                                           tableRotation={t.rotationDegrees}/>
                         )
                     })}
                     {typeof(unfinishedTable) != "undefined" ? <StartedTable {...unfinishedTable}
-                                                                            imageCenter={imageCenter} /> : null}
+                                                                            imageCenter={image.center} /> : null}
                 </HotKeys>
             </div>
         );
@@ -212,7 +241,7 @@ function App() {
     }
 }
 
-function StartedTable(props: { firstPoint: Point, rotationDegrees: number, imageCenter: Point } ) {
+function StartedTable(props: { firstPoint: Point, imageCenter: Point } ) {
     const rotationDegrees = useStore(state => state.rotationDegrees)
     const mousePosition = useStore(state => state.mousePosition)
     const documentPosition = useStore(state => state.documentPosition)
@@ -230,7 +259,7 @@ function StartedTable(props: { firstPoint: Point, rotationDegrees: number, image
         return (
             <div className="table"
                  style={{
-                     transform: `rotate(${rotationDegrees - props.rotationDegrees}deg) translate(${rectangle.topLeft.x}px, ${rectangle.topLeft.y}px)`,
+                     transform: `translate(${rectangle.topLeft.x}px, ${rectangle.topLeft.y}px)`,
                      width: `${rectangle.bottomRight.x - rectangle.topLeft.x}px`,
                      height: `${rectangle.bottomRight.y - rectangle.topLeft.y}px`,
                      transformOrigin: `${props.imageCenter.x}px ${props.imageCenter.y}px`
@@ -261,7 +290,30 @@ function TableElement(props: {tableTopLeft: Point, tableBottomRight: Point, tabl
                      height: `${props.tableBottomRight.y - props.tableTopLeft.y}px`,
                      transformOrigin: `${props.imageCenter.x}px ${props.imageCenter.y}px`,
                      borderColor: isSelected ? "green" : "black"}}
-             onClick={e => handleClick(e)}/>
+             onClick={e => handleClick(e)}>
+            {isSelected ? <ColumnSetterSpace/> : null}
+            {isSelected ? <NewColumnLine/> : null}
+        </div>
+    )
+}
+
+function NewColumnLine() {
+    const newColumnPosition = useStore(state => state.newColumnPosition)
+    if (typeof(newColumnPosition) !== "undefined") {
+        return (<div className="columnLine" style={{left: `${newColumnPosition}px`}}/>)
+    } else {
+        return null
+    }
+}
+
+function ColumnSetterSpace(){
+    const setNewColumnPosition = useStore(state => state.setNewColumnPosition)
+
+    const handleMouseMove = (e: React.MouseEvent<Element, MouseEvent>) => {
+        setNewColumnPosition({x: e.pageX, y: e.pageY})
+    }
+    return (
+        <div className="columnSetterSpace" onMouseMove={handleMouseMove}/>
     )
 }
 

@@ -24,8 +24,9 @@ def create_app(script_info: Optional[ScriptInfo] = None, image_path: Text = "ima
         for f in relevant_files:
             width, height = img.get_image_dimensions(
                 os.path.join(app.config[IMAGE_PATH], f))
+            center = {"x": width//2, "y": height // 2}
             images_with_metadata.append({"src": f"image/{f}", "width": width,
-                                         "height": height})
+                                         "height": height, "center": center})
         return {"images": images_with_metadata}
 
     @app.route('/image/<file_name>')
