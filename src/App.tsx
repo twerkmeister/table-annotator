@@ -130,7 +130,7 @@ const useStore = create<AnnotatorState>((set, get) => ({
     setImageIndex: (idx: number) => {
         const images = get().images
         if(typeof(images) !== "undefined" && idx >= 0 && idx < images.length){
-            set({ currentImageIndex: idx, rotationDegrees: 0, documentPosition: undefined})
+            set({ currentImageIndex: idx, rotationDegrees: 0, documentPosition: undefined, tables: []})
         }
     },
     outlineTable: (p: Point, rotationDegrees: number) => {
