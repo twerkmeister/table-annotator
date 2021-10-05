@@ -103,7 +103,7 @@ type AnnotatorState = {
     setDocumentPosition: (documentPosition: Point) => void,
     removeUnfinishedTable: () => void,
     selectTable: (idx?: number) => void,
-    setNewColumnPosition: (pagePoint: Point) => void,
+    setNewColumnPosition: (pagePoint?: Point) => void,
     addColumn: () => void
 }
 
@@ -157,7 +157,12 @@ const useStore = create<AnnotatorState>((set, get) => ({
     selectTable: (idx?: number) => {
         set({selectedTable: idx, newColumnPosition: undefined})
     },
-    setNewColumnPosition: (pagePoint: Point) => {
+    setNewColumnPosition: (pagePoint?: Point) => {
+        if(typeof(pagePoint) === "undefined"){
+            set({newColumnPosition: undefined})
+            return
+        }
+
         const tables = get().tables
         const selectedTableIdx = get().selectedTable
         const documentPosition = get().documentPosition
@@ -336,6 +341,10 @@ function ColumnSetterSpace(){
     const setNewColumnPosition = useStore(state => state.setNewColumnPosition)
     const addColumn = useStore(state => state.addColumn)
 
+    const handleMouseLeave = (e: React.MouseEvent<Element, MouseEvent>) => {
+        setNewColumnPosition(undefined)
+    }
+
     const handleMouseClick = (e: React.MouseEvent<Element, MouseEvent>) => {
         addColumn()
     }
@@ -345,7 +354,8 @@ function ColumnSetterSpace(){
     }
 
     return (
-        <div className="columnSetterSpace" onMouseMove={handleMouseMove} onClick={handleMouseClick}/>
+        <div className="columnSetterSpace" onMouseMove={handleMouseMove} onClick={handleMouseClick}
+             onMouseLeave={handleMouseLeave}/>
     )
 }
 
