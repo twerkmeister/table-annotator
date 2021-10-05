@@ -73,13 +73,14 @@ function calcRectangle(p1: Point, p2: Point): Rectangle {
 function makeTable(p1: Point, p2: Point, rotationDegrees: number): Table {
     const outline = calcRectangle(p1, p2)
     return {
-        outline, rotationDegrees
+        outline, rotationDegrees, columns: []
     }
 }
 
 type Table = {
     outline: Rectangle,
     rotationDegrees: number,
+    columns: number[],
 }
 
 
@@ -102,7 +103,8 @@ type AnnotatorState = {
     setDocumentPosition: (documentPosition: Point) => void,
     removeUnfinishedTable: () => void,
     selectTable: (idx?: number) => void,
-    setNewColumnPosition: (pagePoint: Point) => void
+    setNewColumnPosition: (pagePoint: Point) => void,
+    addColumn: () => void
 }
 
 const useStore = create<AnnotatorState>((set, get) => ({
@@ -162,13 +164,27 @@ const useStore = create<AnnotatorState>((set, get) => ({
         const images = get().images
         const currentImageIndex = get().currentImageIndex
         const rotationDegrees = get().rotationDegrees
-        if (typeof (tables) !== "undefined" && typeof (selectedTableIdx) !== "undefined" &&
+        if (typeof (selectedTableIdx) !== "undefined" &&
             typeof (documentPosition) !== "undefined" && typeof(images) !== "undefined") {
             const table = tables[selectedTableIdx]
             if (typeof (table) !== "undefined") {
                 const rotatedPagePoint = rotatePoint(pagePoint, table.rotationDegrees - rotationDegrees, addPoints(images[currentImageIndex].center, documentPosition))
                 const columnPositionInsideTable = rotatedPagePoint.x - documentPosition.x - table.outline.topLeft.x
-                set({newColumnPosition: columnPositionInsideTable})
+                set({newColumnPosition: Math.round(columnPositionInsideTable - 7)})
+            }
+        }
+    },
+    addColumn: () => {
+        const tables = get().tables
+        const selectedTableIdx = get().selectedTable
+        const newColumnPosition = get().newColumnPosition
+        if (typeof (selectedTableIdx) !== "undefined" && typeof(newColumnPosition) !== "undefined") {
+            const table = tables[selectedTableIdx]
+            if (typeof (table) !== "undefined") {
+                const newColumns = [...table.columns, newColumnPosition].sort()
+                const newTable = {...table, columns: newColumns}
+                const newTables = [...tables.slice(0, selectedTableIdx), newTable, ...tables.slice(selectedTableIdx+1)]
+                set({tables: newTables})
             }
         }
     }
@@ -222,7 +238,8 @@ function App() {
                                           tableBottomRight={t.outline.bottomRight}
                                           imageCenter={image.center}
                                           tableIdx={i}
-                                          tableRotation={t.rotationDegrees}/>
+                                          tableRotation={t.rotationDegrees}
+                                          columns={t.columns}/>
                         )
                     })}
                     {typeof(unfinishedTable) != "undefined" ? <StartedTable {...unfinishedTable}
@@ -272,12 +289,12 @@ function StartedTable(props: { firstPoint: Point, imageCenter: Point } ) {
 }
 
 function TableElement(props: {tableTopLeft: Point, tableBottomRight: Point, tableRotation: number,
-                              tableIdx: number, imageCenter: Point}) {
+                              tableIdx: number, imageCenter: Point, columns: number[]}) {
     const rotationDegrees = useStore(state => state.rotationDegrees)
     const selectTable = useStore(state => state.selectTable)
     const selectedTable = useStore(state => state.selectedTable)
     const isSelected = typeof(selectedTable) !== "undefined" && selectedTable === props.tableIdx
-
+    console.log(props.columns)
     const handleClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
         e.preventDefault()
         selectTable(props.tableIdx)
@@ -291,10 +308,19 @@ function TableElement(props: {tableTopLeft: Point, tableBottomRight: Point, tabl
                      transformOrigin: `${props.imageCenter.x}px ${props.imageCenter.y}px`,
                      borderColor: isSelected ? "green" : "black"}}
              onClick={e => handleClick(e)}>
+            {props.columns.map((c, i) => {
+                return (
+                    <ColumnLine key={i} position={c}/>
+                )
+            })}
             {isSelected ? <ColumnSetterSpace/> : null}
             {isSelected ? <NewColumnLine/> : null}
         </div>
     )
+}
+
+function ColumnLine(props: {position: number}) {
+    return (<div className="columnLine" style={{left: `${props.position}px`}}/>)
 }
 
 function NewColumnLine() {
@@ -308,12 +334,18 @@ function NewColumnLine() {
 
 function ColumnSetterSpace(){
     const setNewColumnPosition = useStore(state => state.setNewColumnPosition)
+    const addColumn = useStore(state => state.addColumn)
+
+    const handleMouseClick = (e: React.MouseEvent<Element, MouseEvent>) => {
+        addColumn()
+    }
 
     const handleMouseMove = (e: React.MouseEvent<Element, MouseEvent>) => {
         setNewColumnPosition({x: e.pageX, y: e.pageY})
     }
+
     return (
-        <div className="columnSetterSpace" onMouseMove={handleMouseMove}/>
+        <div className="columnSetterSpace" onMouseMove={handleMouseMove} onClick={handleMouseClick}/>
     )
 }
 
