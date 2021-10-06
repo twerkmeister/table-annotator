@@ -9,7 +9,8 @@ const keyMap = {
     INCREASE_ROTATION: "w",
     DECREASE_ROTATION: "s",
     ESC: "esc",
-    ZERO: "0"
+    ZERO: "0",
+    BACKSPACE_OR_DELETE: ["Backspace", "Delete"]
 };
 
 type Point = {
@@ -95,6 +96,7 @@ type AnnotatorState = {
     mousePosition: Point,
     documentPosition?: Point,
     rotationDegrees: number,
+    tableMarkedForDeletion: boolean,
     tables: Table[],
     fetchImages: () => void
     setImageIndex: (idx: number) => void
@@ -107,8 +109,9 @@ type AnnotatorState = {
     selectTable: (idx?: number) => void,
     setNewColumnPosition: (pagePoint?: Point) => void,
     setNewRowPosition: (pagePoint?: Point) => void,
-    addColumn: () => void
-    addRow: () => void
+    addColumn: () => void,
+    addRow: () => void,
+    deleteTable: () => void
 }
 
 const useStore = create<AnnotatorState>((set, get) => ({
@@ -121,6 +124,7 @@ const useStore = create<AnnotatorState>((set, get) => ({
     mousePosition: {x: 0, y: 0},
     documentPosition: undefined,
     rotationDegrees: 0,
+    tableMarkedForDeletion: false,
     tables: [],
     fetchImages: async() => {
         const response = await fetch("/images")
@@ -161,7 +165,8 @@ const useStore = create<AnnotatorState>((set, get) => ({
         set({unfinishedTable: undefined})
     },
     selectTable: (idx?: number) => {
-        set({selectedTable: idx, newColumnPosition: undefined, newRowPosition: undefined})
+        set({selectedTable: idx, newColumnPosition: undefined,
+            newRowPosition: undefined, tableMarkedForDeletion: false})
     },
     setNewColumnPosition: (pagePoint?: Point) => {
         if(typeof(pagePoint) === "undefined"){
@@ -223,18 +228,30 @@ const useStore = create<AnnotatorState>((set, get) => ({
     },
     addRow: () => {
         const tables = get().tables
-        const selectedTableIdx = get().selectedTable
+        const selectedTable = get().selectedTable
         const newRowPosition = get().newRowPosition
-        if (typeof (selectedTableIdx) !== "undefined" && typeof(newRowPosition) !== "undefined") {
-            const table = tables[selectedTableIdx]
+        if (typeof (selectedTable) !== "undefined" && typeof(newRowPosition) !== "undefined") {
+            const table = tables[selectedTable]
             if (typeof (table) !== "undefined") {
                 const newRows = [...table.rows, newRowPosition].sort()
                 const newTable = {...table, rows: newRows}
-                const newTables = [...tables.slice(0, selectedTableIdx), newTable, ...tables.slice(selectedTableIdx+1)]
+                const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable+1)]
                 set({tables: newTables})
             }
         }
-
+    },
+    deleteTable: () => {
+        const tables = get().tables
+        const selectedTable = get().selectedTable
+        const tableMarkedForDeletion = get().tableMarkedForDeletion
+        if (typeof (selectedTable) !== "undefined") {
+            if (tableMarkedForDeletion) {
+                const newTables = [...tables.slice(0, selectedTable), ...tables.slice(selectedTable + 1)]
+                set({selectedTable: undefined, tableMarkedForDeletion: false, tables: newTables})
+            } else {
+                set({tableMarkedForDeletion: true})
+            }
+        }
     }
 
 }))
@@ -250,6 +267,8 @@ function App() {
     const images = useStore(state => state.images)
     const setMousePosition = useStore(state => state.setMousePosition)
     const removeUnfinishedTable = useStore(state => state.removeUnfinishedTable)
+    const deleteTable = useStore(state => state.deleteTable)
+    const selectedTable = useStore(state => state.selectedTable)
 
     useEffect(() => {
         if(typeof(images) === "undefined") {
@@ -261,13 +280,20 @@ function App() {
         setMousePosition({x: e.pageX, y: e.pageY})
     }
 
+    const deleteFunc = () => {
+        if(typeof(selectedTable) !== "undefined") {
+            deleteTable()
+        }
+    }
+
     const hotkeyHandlers = {
         PREVIOUS_IMAGE:  () => setImageIndex(imageIdx - 1),
         NEXT_IMAGE:  () => setImageIndex(imageIdx + 1),
         INCREASE_ROTATION: () => increaseRotationDegrees(0.5),
         DECREASE_ROTATION: () => increaseRotationDegrees(-0.5),
         ZERO: () => setRotationDegrees(0),
-        ESC: () => {}
+        ESC: () => {},
+        BACKSPACE_OR_DELETE: deleteFunc
     }
 
     if (unfinishedTable) {
@@ -342,8 +368,9 @@ function TableElement(props: {tableTopLeft: Point, tableBottomRight: Point, tabl
     const rotationDegrees = useStore(state => state.rotationDegrees)
     const selectTable = useStore(state => state.selectTable)
     const selectedTable = useStore(state => state.selectedTable)
+    const tableMarkedForDeletion = useStore(state => state.tableMarkedForDeletion)
     const isSelected = typeof(selectedTable) !== "undefined" && selectedTable === props.tableIdx
-    console.log(props.columns)
+    const borderColor = !isSelected ? "black" : !tableMarkedForDeletion ? "green" : "red"
     const handleClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
         e.preventDefault()
         selectTable(props.tableIdx)
@@ -355,7 +382,7 @@ function TableElement(props: {tableTopLeft: Point, tableBottomRight: Point, tabl
                      width: `${props.tableBottomRight.x - props.tableTopLeft.x}px`,
                      height: `${props.tableBottomRight.y - props.tableTopLeft.y}px`,
                      transformOrigin: `${props.imageCenter.x}px ${props.imageCenter.y}px`,
-                     borderColor: isSelected ? "green" : "black"}}
+                     borderColor: borderColor}}
              onClick={e => handleClick(e)}>
             {props.columns.map((c, i) => {
                 return (
