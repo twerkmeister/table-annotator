@@ -1,6 +1,7 @@
+import json
 from typing import Text, Optional
 import os
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, make_response, request
 from flask.cli import ScriptInfo
 
 import img
@@ -26,12 +27,27 @@ def create_app(script_info: Optional[ScriptInfo] = None, image_path: Text = "ima
                 os.path.join(app.config[IMAGE_PATH], f))
             center = {"x": width//2, "y": height // 2}
             images_with_metadata.append({"src": f"image/{f}", "width": width,
-                                         "height": height, "center": center})
+                                         "height": height, "center": center,
+                                         "name": f})
         return {"images": images_with_metadata}
 
-    @app.route('/image/<file_name>')
-    def get_image(file_name):
-        return send_from_directory(app.config[IMAGE_PATH], file_name)
+    @app.route('/image/<name>')
+    def get_image(name):
+        return send_from_directory(app.config[IMAGE_PATH], name)
+
+    @app.route('/tables/<image_name>', methods=["POST"])
+    def store_tables(image_name):
+        image_basename = os.path.basename(image_name)
+        if not os.path.isfile(os.path.join(app.config[IMAGE_PATH], image_basename)):
+            return make_response({"msg": "The image for which you tried to save "
+                                         "table data does not exist."}, 404)
+
+        json_file_name = os.path.splitext(image_basename)[0] + ".json"
+        json_file_path = os.path.join(app.config[IMAGE_PATH], json_file_name)
+        with open(json_file_path, "w", encoding="utf-8") as out:
+            json.dump(request.json, out, ensure_ascii=False, indent=4)
+
+        return {"msg": "okay!"}
 
     return app
 

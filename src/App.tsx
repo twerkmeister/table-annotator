@@ -1,6 +1,7 @@
 import React, {useEffect} from 'react';
 import create from 'zustand'
 import { HotKeys } from "react-hotkeys";
+import axios from 'axios';
 import './App.css';
 
 const keyMap = {
@@ -48,7 +49,8 @@ type Image = {
     src: string,
     width: number,
     height: number,
-    center: Point
+    center: Point,
+    name: string
 }
 
 type UnfinishedTable = {
@@ -85,7 +87,6 @@ type Table = {
     rows: number[],
 }
 
-
 type AnnotatorState = {
     images?: Image[],
     currentImageIndex: number,
@@ -119,6 +120,7 @@ type AnnotatorState = {
     deleteColumn: () => void
     deleteRow: () => void
 }
+
 
 const useStore = create<AnnotatorState>((set, get) => ({
     images: undefined,
@@ -299,13 +301,23 @@ const useStore = create<AnnotatorState>((set, get) => ({
     }
 }))
 
+const pushTablesToApi = async(state: AnnotatorState, previousState: AnnotatorState) => {
+    if(state.tables === previousState.tables) return
+    const {currentImageIndex, images, tables} = state
+    if(typeof(currentImageIndex) === "undefined" || typeof(images) === "undefined") return
+    const image = images[currentImageIndex]
+    if(typeof(image) === "undefined") return
+    axios.post(`/tables/${image.name}`, tables)
+}
+
+const unsubTables = useStore.subscribe(pushTablesToApi)
+
 function App() {
     const fetchImages = useStore(state => state.fetchImages)
     const setImageIndex = useStore(state => state.setImageIndex)
     const increaseRotationDegrees = useStore(state => state.increaseRotationDegrees)
     const setRotationDegrees = useStore(state => state.setRotationDegrees)
     const tables = useStore(state => state.tables)
-    const tableMarkedForDeletion = useStore(state => state.tableMarkedForDeletion)
     const unfinishedTable = useStore(state => state.unfinishedTable)
     const imageIdx = useStore(state => state.currentImageIndex)
     const images = useStore(state => state.images)
