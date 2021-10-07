@@ -485,11 +485,10 @@ function ColumnLine(props: {position: number, idx: number, parentTableSelected: 
     }
 
     const isSelected = props.parentTableSelected && props.idx === selectedColumn
-    const canBeSelected = props.parentTableSelected && ! isSelected
 
     return (<div className="columnLine" onClick={handleMouseClick}
                  style={{left: `${props.position}px`,
-                     cursor: canBeSelected ? "pointer" : "default",
+                     cursor: !isSelected ? "default" : "pointer",
                      background: isSelected ? "blue" : ""}}/>)
 }
 
@@ -505,11 +504,10 @@ function RowLine(props: {position: number, idx: number, parentTableSelected: boo
     }
 
     const isSelected = props.parentTableSelected && props.idx === selectedRow
-    const canBeSelected = props.parentTableSelected && ! isSelected
 
     return (<div className="rowLine"  onClick={handleMouseClick}
                  style={{top: `${props.position}px`,
-                     cursor: canBeSelected ? "pointer" : "default",
+                     cursor: isSelected ? "default": "pointer",
                      background: isSelected ? "brown" : ""}}/>)
 }
 
