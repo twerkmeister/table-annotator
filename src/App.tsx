@@ -515,7 +515,7 @@ function ColumnLine(props: {position: number, idx: number, parentTableSelected: 
 
     return (<div className="columnLine" onClick={handleMouseClick}
                  style={{left: `${props.position}px`,
-                     cursor: !isSelected ? "default" : "pointer",
+                     cursor: isSelected ? "default" : "pointer",
                      background: isSelected ? "blue" : ""}}/>)
 }
 
