@@ -11,7 +11,8 @@ const keyMap = {
     DECREASE_ROTATION: "s",
     ESC: "esc",
     ZERO: "0",
-    BACKSPACE_OR_DELETE: ["Backspace", "Delete"]
+    BACKSPACE_OR_DELETE: ["Backspace", "Delete"],
+    R: "r"
 };
 
 type Point = {
@@ -114,6 +115,7 @@ type AnnotatorState = {
     setNewRowPosition: (pagePoint?: Point) => void,
     addColumn: () => void,
     addRow: () => void,
+    smartAddRow: () => void,
     selectColumn: (idx?: number) => void,
     selectRow: (idx?: number) => void,
     deleteTable: () => void
@@ -242,7 +244,7 @@ const useStore = create<AnnotatorState>((set, get) => ({
         if (typeof (selectedTableIdx) !== "undefined" && typeof(newColumnPosition) !== "undefined") {
             const table = tables[selectedTableIdx]
             if (typeof (table) !== "undefined") {
-                const newColumns = [...table.columns, newColumnPosition].sort()
+                const newColumns = [...table.columns, newColumnPosition].sort((a, b) => a - b)
                 const newTable = {...table, columns: newColumns}
                 const newTables = [...tables.slice(0, selectedTableIdx), newTable, ...tables.slice(selectedTableIdx+1)]
                 set({tables: newTables, tableDeletionMarkCount: 0})
@@ -256,12 +258,35 @@ const useStore = create<AnnotatorState>((set, get) => ({
         if (typeof (selectedTable) !== "undefined" && typeof(newRowPosition) !== "undefined") {
             const table = tables[selectedTable]
             if (typeof (table) !== "undefined") {
-                const newRows = [...table.rows, newRowPosition].sort()
+                const newRows = [...table.rows, newRowPosition].sort((a, b) => a - b)
                 const newTable = {...table, rows: newRows}
                 const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable+1)]
                 set({tables: newTables, tableDeletionMarkCount: 0})
             }
         }
+    },
+    smartAddRow: () => {
+        const tables = get().tables
+        const selectedTable = get().selectedTable
+        if (typeof(selectedTable) === "undefined")
+            return
+
+        const table = tables[selectedTable]
+        if (typeof(table) === "undefined")
+            return
+
+        const lastTwoRows = table.rows.slice(table.rows.length-2)
+        if (lastTwoRows.length === 0)
+            return
+
+        const smartNextRow = lastTwoRows.length === 2 ? 2 * lastTwoRows[1] - lastTwoRows[0] : 2 * lastTwoRows[0]
+        if(smartNextRow > subtractPoints(table.outline.bottomRight, table.outline.topLeft).y)
+            return
+
+        const newRows = [...table.rows, smartNextRow].sort((a, b) => a - b)
+        const newTable = {...table, rows: newRows}
+        const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable+1)]
+        set({tables: newTables, tableDeletionMarkCount: 0})
     },
     deleteTable: () => {
         const tables = get().tables
@@ -328,6 +353,7 @@ function App() {
     const images = useStore(state => state.images)
     const setMousePosition = useStore(state => state.setMousePosition)
     const deleteTable = useStore(state => state.deleteTable)
+    const smartAddRow = useStore(state => state.smartAddRow)
     const deleteRow = useStore(state => state.deleteRow)
     const deleteColumn = useStore(state => state.deleteColumn)
     const selectedTable = useStore(state => state.selectedTable)
@@ -360,11 +386,12 @@ function App() {
     const hotkeyHandlers = {
         PREVIOUS_IMAGE:  () => setImageIndex(imageIdx - 1),
         NEXT_IMAGE:  () => setImageIndex(imageIdx + 1),
-        INCREASE_ROTATION: () => increaseRotationDegrees(0.5),
-        DECREASE_ROTATION: () => increaseRotationDegrees(-0.5),
+        INCREASE_ROTATION: () => increaseRotationDegrees(0.3),
+        DECREASE_ROTATION: () => increaseRotationDegrees(-0.3),
         ZERO: () => setRotationDegrees(0),
         ESC: cancelActions,
-        BACKSPACE_OR_DELETE: deleteFunc
+        BACKSPACE_OR_DELETE: deleteFunc,
+        R: smartAddRow
     }
 
 
