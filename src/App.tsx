@@ -141,13 +141,18 @@ const useStore = create<AnnotatorState>((set, get) => ({
         const images = (await response.json())["images"]
         set({images, currentImageIndex: 0})
     },
-    setImageIndex: (idx: number) => {
+    setImageIndex: async(idx: number) => {
         const images = get().images
-        if(typeof(images) !== "undefined" && idx >= 0 && idx < images.length){
-            set({ currentImageIndex: idx, rotationDegrees: 0, documentPosition: undefined,
-                tables: [], unfinishedTable: undefined, selectedTable: undefined, selectedRow: undefined,
-                selectedColumn: undefined})
-        }
+        if(typeof(images) === "undefined") return
+        const image = images[idx]
+        if(typeof(image) === "undefined") return
+
+        const response = await fetch(`/tables/${image.name}`)
+        const tables = (await response.json())["tables"]
+        set({ currentImageIndex: idx, rotationDegrees: 0, documentPosition: undefined,
+            tables, unfinishedTable: undefined, selectedTable: undefined, selectedRow: undefined,
+            selectedColumn: undefined})
+
     },
     outlineTable: (p: Point, rotationDegrees: number) => {
         const currentTables = get().tables

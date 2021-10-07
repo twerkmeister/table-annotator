@@ -49,5 +49,23 @@ def create_app(script_info: Optional[ScriptInfo] = None, image_path: Text = "ima
 
         return {"msg": "okay!"}
 
+    @app.route('/tables/<image_name>', methods=["GET"])
+    def get_tables(image_name):
+        image_basename = os.path.basename(image_name)
+        if not os.path.isfile(os.path.join(app.config[IMAGE_PATH], image_basename)):
+            return make_response({"msg": "The image for which you tried to retrieve "
+                                         "table data does not exist."}, 404)
+
+        json_file_name = os.path.splitext(image_basename)[0] + ".json"
+        json_file_path = os.path.join(app.config[IMAGE_PATH], json_file_name)
+
+        if not os.path.isfile(json_file_path):
+            return {"tables": []}
+
+        with open(json_file_path, "r", encoding="utf-8") as f:
+            tables = json.load(f)
+
+        return {"tables": tables}
+
     return app
 
