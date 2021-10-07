@@ -99,7 +99,7 @@ type AnnotatorState = {
     mousePosition: Point,
     documentPosition?: Point,
     rotationDegrees: number,
-    tableMarkedForDeletion: boolean,
+    tableDeletionMarkCount: number,
     tables: Table[],
     fetchImages: () => void
     setImageIndex: (idx: number) => void
@@ -134,7 +134,7 @@ const useStore = create<AnnotatorState>((set, get) => ({
     mousePosition: {x: 0, y: 0},
     documentPosition: undefined,
     rotationDegrees: 0,
-    tableMarkedForDeletion: false,
+    tableDeletionMarkCount: 0,
     tables: [],
     fetchImages: async() => {
         const response = await fetch("/images")
@@ -178,18 +178,18 @@ const useStore = create<AnnotatorState>((set, get) => ({
         set({documentPosition})
     },
     cancelActions: () => {
-        set({unfinishedTable: undefined, tableMarkedForDeletion: false})
+        set({unfinishedTable: undefined, tableDeletionMarkCount: 0})
     },
     selectTable: (idx?: number) => {
         set({selectedTable: idx, newColumnPosition: undefined,
-            newRowPosition: undefined, tableMarkedForDeletion: false,
+            newRowPosition: undefined, tableDeletionMarkCount: 0,
             selectedColumn: undefined, selectedRow: undefined})
     },
     selectColumn: (idx?: number) => {
-        set({selectedColumn: idx, selectedRow: undefined, tableMarkedForDeletion: false})
+        set({selectedColumn: idx, selectedRow: undefined, tableDeletionMarkCount: 0})
     },
     selectRow: (idx?: number) => {
-      set({selectedRow: idx, selectedColumn: undefined, tableMarkedForDeletion: false})
+      set({selectedRow: idx, selectedColumn: undefined, tableDeletionMarkCount: 0})
     },
     setNewColumnPosition: (pagePoint?: Point) => {
         if(typeof(pagePoint) === "undefined"){
@@ -245,7 +245,7 @@ const useStore = create<AnnotatorState>((set, get) => ({
                 const newColumns = [...table.columns, newColumnPosition].sort()
                 const newTable = {...table, columns: newColumns}
                 const newTables = [...tables.slice(0, selectedTableIdx), newTable, ...tables.slice(selectedTableIdx+1)]
-                set({tables: newTables, tableMarkedForDeletion: false})
+                set({tables: newTables, tableDeletionMarkCount: 0})
             }
         }
     },
@@ -259,20 +259,20 @@ const useStore = create<AnnotatorState>((set, get) => ({
                 const newRows = [...table.rows, newRowPosition].sort()
                 const newTable = {...table, rows: newRows}
                 const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable+1)]
-                set({tables: newTables, tableMarkedForDeletion: false})
+                set({tables: newTables, tableDeletionMarkCount: 0})
             }
         }
     },
     deleteTable: () => {
         const tables = get().tables
         const selectedTable = get().selectedTable
-        const tableMarkedForDeletion = get().tableMarkedForDeletion
+        const tableDeletionMarkCount = get().tableDeletionMarkCount
         if (typeof (selectedTable) !== "undefined") {
-            if (tableMarkedForDeletion) {
+            if (tableDeletionMarkCount >= 2) {
                 const newTables = [...tables.slice(0, selectedTable), ...tables.slice(selectedTable + 1)]
-                set({selectedTable: undefined, tableMarkedForDeletion: false, tables: newTables})
+                set({selectedTable: undefined, tableDeletionMarkCount: 0, tables: newTables})
             } else {
-                set({tableMarkedForDeletion: true})
+                set({tableDeletionMarkCount: tableDeletionMarkCount + 1})
             }
         }
     },
@@ -286,7 +286,7 @@ const useStore = create<AnnotatorState>((set, get) => ({
                 const newColumns = [...table.columns.slice(0, selectedColumn), ...table.columns.slice(selectedColumn+1)]
                 const newTable = {...table, columns: newColumns}
                 const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable+1)]
-                set({tables: newTables, tableMarkedForDeletion: false, selectedColumn: undefined})
+                set({tables: newTables, tableDeletionMarkCount: 0, selectedColumn: undefined})
             }
         }
     },
@@ -300,7 +300,7 @@ const useStore = create<AnnotatorState>((set, get) => ({
                 const newRows = [...table.rows.slice(0, selectedRow), ...table.rows.slice(selectedRow+1)]
                 const newTable = {...table, rows: newRows}
                 const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable+1)]
-                set({tables: newTables, tableMarkedForDeletion: false, selectedRow: undefined})
+                set({tables: newTables, tableDeletionMarkCount: 0, selectedRow: undefined})
             }
         }
     }
@@ -437,9 +437,10 @@ function TableElement(props: {tableTopLeft: Point, tableBottomRight: Point, tabl
     const rotationDegrees = useStore(state => state.rotationDegrees)
     const selectTable = useStore(state => state.selectTable)
     const selectedTable = useStore(state => state.selectedTable)
-    const tableMarkedForDeletion = useStore(state => state.tableMarkedForDeletion)
+    const tableDeletionMarkCount = useStore(state => state.tableDeletionMarkCount)
     const isSelected = typeof(selectedTable) !== "undefined" && selectedTable === props.tableIdx
-    const borderColor = !isSelected ? "black" : !tableMarkedForDeletion ? "green" : "red"
+    const deletionMarkColors = ["green", "yellow", "red"]
+    const borderColor = !isSelected ? "black" : deletionMarkColors[tableDeletionMarkCount] || "red"
     const handleClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
         e.preventDefault()
         selectTable(props.tableIdx)
