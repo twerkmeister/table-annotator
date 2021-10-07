@@ -1,6 +1,6 @@
 import React, {useEffect} from 'react';
 import create from 'zustand'
-import { HotKeys } from "react-hotkeys";
+import { GlobalHotKeys } from "react-hotkeys";
 import axios from 'axios';
 import './App.css';
 
@@ -373,7 +373,7 @@ function App() {
         const image = images[imageIdx]
         return (
             <div className="App" onMouseMove={e => handleMouseMove(e)}>
-                <HotKeys keyMap={keyMap} handlers={hotkeyHandlers} allowChanges={true}>
+                <GlobalHotKeys keyMap={keyMap} handlers={hotkeyHandlers} allowChanges={true}>
                     <DocumentImage {...image} />
                     {tables.map((t, i) => {
                         return (
@@ -388,7 +388,7 @@ function App() {
                     })}
                     {typeof(unfinishedTable) != "undefined" ? <StartedTable {...unfinishedTable}
                                                                             imageCenter={image.center} /> : null}
-                </HotKeys>
+                </GlobalHotKeys>
             </div>
         );
     } else if(typeof(images) != "undefined" && images.length === 0) {
