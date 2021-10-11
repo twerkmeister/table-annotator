@@ -25,7 +25,7 @@ def create_app(script_info: Optional[ScriptInfo] = None, image_path: Text = "ima
         for f in relevant_files:
             image = table_annotator.io.read_image(
                 os.path.join(app.config[IMAGE_PATH], f))
-            width, height = table_annotator.img.get_image_dimensions(image)
+            width, height = table_annotator.img.get_dimensions(image)
             center = {"x": width//2, "y": height // 2}
             images_with_metadata.append({"src": f"image/{f}", "width": width,
                                          "height": height, "center": center,
