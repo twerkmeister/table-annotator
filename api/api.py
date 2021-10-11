@@ -4,7 +4,7 @@ import os
 from flask import Flask, send_from_directory, make_response, request
 from flask.cli import ScriptInfo
 
-import img
+from table_annotator import img
 
 IMAGE_PATH = "image_path"
 
