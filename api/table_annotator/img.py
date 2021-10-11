@@ -1,20 +1,13 @@
-from typing import Text, Tuple
-import cv2
+from typing import Tuple
 import numpy as np
 from scipy import ndimage
 
-from table_annotator.types import Rectangle
+from table_annotator.types import Rectangle, Table
 
 
-def read(image_path: Text) -> np.ndarray:
-    """Reads an image from disc."""
-    return cv2.imread(image_path)
-
-
-def get_image_dimensions(image_path: Text) -> Tuple[int, int]:
+def get_image_dimensions(image: np.ndarray) -> Tuple[int, int]:
     """Returns the width and height of the given image on disc."""
-    img = read(image_path)
-    return img.shape[1], img.shape[0]
+    return image.shape[1], image.shape[0]
 
 
 def get_image_rectangle(image: np.ndarray, rect: Rectangle) -> np.ndarray:
@@ -26,3 +19,9 @@ def get_image_rectangle(image: np.ndarray, rect: Rectangle) -> np.ndarray:
 def rotate(image: np.ndarray, degrees: float) -> np.ndarray:
     """Rotates an image by given degrees."""
     return ndimage.rotate(image, degrees, reshape=False)
+
+
+def extract_table(image: np.ndarray, table: Table) -> np.ndarray:
+    """Extracts the image part relating to the given table."""
+    image_rotated_for_table = rotate(image, - table.rotationDegrees)
+    return get_image_rectangle(image_rotated_for_table, table.outline)

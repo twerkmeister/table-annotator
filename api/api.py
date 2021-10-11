@@ -1,10 +1,10 @@
-import json
 from typing import Text, Optional
 import os
 from flask import Flask, send_from_directory, make_response, request
 from flask.cli import ScriptInfo
 
-from table_annotator import img
+import table_annotator.img
+import table_annotator.io
 
 IMAGE_PATH = "image_path"
 
@@ -23,8 +23,9 @@ def create_app(script_info: Optional[ScriptInfo] = None, image_path: Text = "ima
                           if os.path.splitext(f)[1] in allowed_extensions]
         images_with_metadata = []
         for f in relevant_files:
-            width, height = img.get_image_dimensions(
+            image = table_annotator.io.read_image(
                 os.path.join(app.config[IMAGE_PATH], f))
+            width, height = table_annotator.img.get_image_dimensions(image)
             center = {"x": width//2, "y": height // 2}
             images_with_metadata.append({"src": f"image/{f}", "width": width,
                                          "height": height, "center": center,
@@ -44,8 +45,7 @@ def create_app(script_info: Optional[ScriptInfo] = None, image_path: Text = "ima
 
         json_file_name = os.path.splitext(image_basename)[0] + ".json"
         json_file_path = os.path.join(app.config[IMAGE_PATH], json_file_name)
-        with open(json_file_path, "w", encoding="utf-8") as out:
-            json.dump(request.json, out, ensure_ascii=False, indent=4)
+        table_annotator.io.write_json(json_file_path, request.json)
 
         return {"msg": "okay!"}
 
@@ -62,8 +62,7 @@ def create_app(script_info: Optional[ScriptInfo] = None, image_path: Text = "ima
         if not os.path.isfile(json_file_path):
             return {"tables": []}
 
-        with open(json_file_path, "r", encoding="utf-8") as f:
-            tables = json.load(f)
+        tables = table_annotator.io.read_json(json_file_path)
 
         return {"tables": tables}
 
