@@ -4,6 +4,9 @@ from scipy import ndimage
 
 from table_annotator.types import Rectangle, Point, Table
 
+BORDER_OFFSET = 5
+SEPARATOR_WIDTH = 3
+
 
 def get_dimensions(image: np.ndarray) -> Tuple[int, int]:
     """Returns the width and height of the given image on disc."""
@@ -24,7 +27,8 @@ def rotate(image: np.ndarray, degrees: float) -> np.ndarray:
 def extract_table(image: np.ndarray, table: Table) -> np.ndarray:
     """Extracts the image part relating to the given table."""
     image_rotated_for_table = rotate(image, - table.rotationDegrees)
-    return crop(image_rotated_for_table, table.outline)
+    offset = Point(x=BORDER_OFFSET, y=BORDER_OFFSET)
+    return crop(image_rotated_for_table, table.outline.translate(offset))
 
 
 def get_cell_grid(table: Table) -> List[List[Rectangle]]:
@@ -35,8 +39,10 @@ def get_cell_grid(table: Table) -> List[List[Rectangle]]:
     for r_i in range(len(rows)-1):
         cells.append([])
         for c_i in range(len(columns)-1):
-            top_left = Point(x=columns[c_i]+5, y=rows[r_i]+5)
-            bottom_right = Point(x=columns[c_i+1]+5, y=rows[r_i+1]+5)
+            top_left = Point(x=columns[c_i],
+                             y=rows[r_i])
+            bottom_right = Point(x=columns[c_i+1],
+                                 y=rows[r_i+1])
             cells[-1].append(Rectangle(topLeft=top_left, bottomRight=bottom_right))
     return cells
 
@@ -51,3 +57,4 @@ def get_cell_image_grid(image: np.ndarray, table: Table) -> List[List[np.ndarray
         for cell in row:
             cell_image_grid[-1].append(crop(table_image, cell))
     return cell_image_grid
+

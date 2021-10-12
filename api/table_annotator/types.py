@@ -17,6 +17,11 @@ class Rectangle(BaseModel):
     def height(self):
         return self.bottomRight.y - self.topLeft.y
 
+    def translate(self, p: Point):
+        new_top_left = Point(x=self.topLeft.x + p.x, y=self.topLeft.y + p.y)
+        new_bottom_right = Point(x=self.bottomRight.x + p.x, y=self.bottomRight.y + p.y)
+        return Rectangle(topLeft=new_top_left, bottomRight=new_bottom_right)
+
 
 class Table(BaseModel):
     outline: Rectangle

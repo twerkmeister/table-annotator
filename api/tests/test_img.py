@@ -63,8 +63,19 @@ def test_get_cell_grid() -> None:
     expected_columns = len(table.columns) + 1
     cell_grid = table_annotator.img.get_cell_grid(table)
     assert len(cell_grid) == expected_rows
+    # all cells in first row start at y = 0px
+    for cell in cell_grid[0]:
+        assert cell.topLeft.y == 0
+    # all cells in last row start at y = "height"px
+    for cell in cell_grid[-1]:
+        assert cell.bottomRight.y == table.outline.height()
+
     for row in cell_grid:
         assert len(row) == expected_columns
+        # first cell in row starts at x = 0px
+        assert row[0].topLeft.x == 0
+        # last cell row in row ends at x = "width"px
+        assert row[-1].bottomRight.x == table.outline.width()
 
 
 def test_get_cell_image_grid() -> None:
@@ -73,9 +84,15 @@ def test_get_cell_image_grid() -> None:
 
     image = table_annotator.io.read_image(img_path)
     table = table_annotator.io.read_tables(table_json_path)[0]
+    table_image = table_annotator.img.extract_table(image, table)
 
     cell_image_grid = table_annotator.img.get_cell_image_grid(image, table)
-    for i, row in enumerate(cell_image_grid):
-        for j, img in enumerate(row):
-            continue
-            # table_annotator.io.write_image(f"cell_test/{i}_{j}.jpg", img)
+
+    # concatenating the images should result in the original image
+    row_images = []
+    for row in cell_image_grid:
+        row_images.append(
+            np.concatenate(row, axis=1)
+        )
+    image_restored = np.concatenate(row_images, axis=0)
+    assert np.all(table_image == image_restored)
