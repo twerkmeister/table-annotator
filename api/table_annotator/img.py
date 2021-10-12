@@ -1,4 +1,4 @@
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 import numpy as np
 from scipy import ndimage
 
@@ -67,3 +67,22 @@ def get_row_line_image_parts(image: np.ndarray, table: Table) -> List[np.ndarray
     return [
         table_image[row_pos:row_pos + ROW_COLUMN_WIDTH] for row_pos in table.rows
     ]
+
+
+def predict_next_row_position(image: np.ndarray, table: Table) -> Optional[int]:
+    """Guesses the position of the next row."""
+    if len(table.rows) == 0:
+        return None
+    elif len(table.rows) == 1:
+        last_row_height = table.rows[0]
+    else:
+        last_row_height = table.rows[-1] - table.rows[-2]
+
+    existing_row_images = get_row_line_image_parts(image, table)
+    last_row_position = table.rows[-1]
+    search_area = 10  # px
+
+    return last_row_position + last_row_height
+
+
+

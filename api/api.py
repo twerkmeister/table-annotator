@@ -38,8 +38,10 @@ def create_app(script_info: Optional[ScriptInfo] = None, image_path: Text = "ima
 
     @app.route('/tables/<image_name>', methods=["POST"])
     def store_tables(image_name):
+        """Stores the tables and returns guesses for next rows."""
         image_basename = os.path.basename(image_name)
-        if not os.path.isfile(os.path.join(app.config[IMAGE_PATH], image_basename)):
+        image_file_path = os.path.join(app.config[IMAGE_PATH], image_basename)
+        if not os.path.isfile(image_file_path):
             return make_response({"msg": "The image for which you tried to save "
                                          "table data does not exist."}, 404)
 
@@ -65,6 +67,28 @@ def create_app(script_info: Optional[ScriptInfo] = None, image_path: Text = "ima
         tables = table_annotator.io.read_json(json_file_path)
 
         return {"tables": tables}
+
+    @app.route('/tables/<image_name>/next_rows', methods=["GET"])
+    def get_prediction_for_next_row(image_name):
+        image_basename = os.path.basename(image_name)
+        image_file_path = os.path.join(app.config[IMAGE_PATH], image_basename)
+        if not os.path.isfile(image_file_path):
+            return make_response({"msg": "The image for which you tried to retrieve "
+                                         "table data does not exist."}, 404)
+
+        tables_file_name = os.path.splitext(image_basename)[0] + ".json"
+        tables_file_path = os.path.join(app.config[IMAGE_PATH], tables_file_name)
+
+        if not os.path.isfile(tables_file_path):
+            return {"next_rows": None}
+
+        image = table_annotator.io.read_image(image_file_path)
+        tables = table_annotator.io.read_tables(tables_file_path)
+        guesses = []
+        for t in tables:
+            guesses.append(table_annotator.img.predict_next_row_position(image, t))
+
+        return {"next_rows": guesses}
 
     return app
 

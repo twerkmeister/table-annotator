@@ -97,6 +97,7 @@ type AnnotatorState = {
     unfinishedTable?: UnfinishedTable,
     newColumnPosition?: number,
     newRowPosition?: number,
+    newRowGuesses?: Array<number | undefined>,
     mousePosition: Point,
     documentPosition?: Point,
     rotationDegrees: number,
@@ -115,12 +116,12 @@ type AnnotatorState = {
     setNewRowPosition: (pagePoint?: Point) => void,
     addColumn: () => void,
     addRow: () => void,
-    smartAddRow: () => void,
     selectColumn: (idx?: number) => void,
     selectRow: (idx?: number) => void,
     deleteTable: () => void
     deleteColumn: () => void
     deleteRow: () => void
+    acceptRowGuess: () => void
 }
 
 
@@ -133,6 +134,7 @@ const useStore = create<AnnotatorState>((set, get) => ({
     selectedRow: undefined,
     newColumnPosition: undefined,
     newRowPosition: undefined,
+    newRowGuesses: undefined,
     mousePosition: {x: 0, y: 0},
     documentPosition: undefined,
     rotationDegrees: 0,
@@ -149,11 +151,13 @@ const useStore = create<AnnotatorState>((set, get) => ({
         const image = images[idx]
         if(typeof(image) === "undefined") return
 
-        const response = await fetch(`/tables/${image.name}`)
-        const tables = (await response.json())["tables"]
+        const table_response = await fetch(`/tables/${image.name}`)
+        const tables = (await table_response.json())["tables"]
+        const rows_response = await fetch(`/tables/${image.name}/next_rows`)
+        const newRowGuesses = (await rows_response.json())["next_rows"]
         set({ currentImageIndex: idx, rotationDegrees: 0, documentPosition: undefined,
             tables, unfinishedTable: undefined, selectedTable: undefined, selectedRow: undefined,
-            selectedColumn: undefined})
+            selectedColumn: undefined, newRowGuesses})
 
     },
     outlineTable: (p: Point, rotationDegrees: number) => {
@@ -265,29 +269,6 @@ const useStore = create<AnnotatorState>((set, get) => ({
             }
         }
     },
-    smartAddRow: () => {
-        const tables = get().tables
-        const selectedTable = get().selectedTable
-        if (typeof(selectedTable) === "undefined")
-            return
-
-        const table = tables[selectedTable]
-        if (typeof(table) === "undefined")
-            return
-
-        const lastTwoRows = table.rows.slice(table.rows.length-2)
-        if (lastTwoRows.length === 0)
-            return
-
-        const smartNextRow = lastTwoRows.length === 2 ? 2 * lastTwoRows[1] - lastTwoRows[0] : 2 * lastTwoRows[0]
-        if(smartNextRow > subtractPoints(table.outline.bottomRight, table.outline.topLeft).y)
-            return
-
-        const newRows = [...table.rows, smartNextRow].sort((a, b) => a - b)
-        const newTable = {...table, rows: newRows}
-        const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable+1)]
-        set({tables: newTables, tableDeletionMarkCount: 0})
-    },
     deleteTable: () => {
         const tables = get().tables
         const selectedTable = get().selectedTable
@@ -328,6 +309,24 @@ const useStore = create<AnnotatorState>((set, get) => ({
                 set({tables: newTables, tableDeletionMarkCount: 0, selectedRow: undefined})
             }
         }
+    },
+    acceptRowGuess: () => {
+        const newRowGuesses = get().newRowGuesses
+        const selectedTable = get().selectedTable
+        if(typeof(newRowGuesses) === "undefined" ||
+            typeof(selectedTable) === "undefined" ||
+            typeof(newRowGuesses[selectedTable]) === "undefined") return
+
+        const tables = get().tables
+        const newRowPosition = newRowGuesses[selectedTable]
+        const table = tables[selectedTable]
+        if (typeof(table) === "undefined" ||
+            typeof(newRowPosition) === "undefined") return
+
+        const newRows = [...table.rows, newRowPosition].sort((a, b) => a - b)
+        const newTable = {...table, rows: newRows}
+        const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable+1)]
+        set({tables: newTables, tableDeletionMarkCount: 0})
     }
 }))
 
@@ -337,7 +336,12 @@ const pushTablesToApi = async(state: AnnotatorState, previousState: AnnotatorSta
     if(typeof(currentImageIndex) === "undefined" || typeof(images) === "undefined") return
     const image = images[currentImageIndex]
     if(typeof(image) === "undefined") return
-    axios.post(`/tables/${image.name}`, tables)
+    await axios.post(`/tables/${image.name}`, tables)
+    const response = await fetch(`/tables/${image.name}/next_rows`)
+    const newRowGuesses = (await response.json())["next_rows"]
+    if(response.status === 200){
+        useStore.setState({newRowGuesses})
+    }
 }
 
 const unsubTables = useStore.subscribe(pushTablesToApi)
@@ -353,13 +357,13 @@ function App() {
     const images = useStore(state => state.images)
     const setMousePosition = useStore(state => state.setMousePosition)
     const deleteTable = useStore(state => state.deleteTable)
-    const smartAddRow = useStore(state => state.smartAddRow)
     const deleteRow = useStore(state => state.deleteRow)
     const deleteColumn = useStore(state => state.deleteColumn)
     const selectedTable = useStore(state => state.selectedTable)
     const selectedColumn = useStore(state => state.selectedColumn)
     const selectedRow = useStore(state => state.selectedRow)
     const cancelActions = useStore(state => state.cancelActions)
+    const acceptRowGuess = useStore(state => state.acceptRowGuess)
 
     useEffect(() => {
         if(typeof(images) === "undefined") {
@@ -391,10 +395,8 @@ function App() {
         ZERO: () => setRotationDegrees(0),
         ESC: cancelActions,
         BACKSPACE_OR_DELETE: deleteFunc,
-        R: smartAddRow
+        R: acceptRowGuess
     }
-
-
 
     if(typeof(images) != "undefined" && images.length > 0) {
         const image = images[imageIdx]
@@ -496,6 +498,7 @@ function TableElement(props: {tableTopLeft: Point, tableBottomRight: Point, tabl
             {isSelected ? <RowSetterSpace/> : null}
             {isSelected ? <NewColumnLine/> : null}
             {isSelected ? <NewRowLine/> : null}
+            {isSelected ? <GuessedRowLine tableIdx={props.tableIdx}/> : null}
         </div>
     )
 }
@@ -554,6 +557,16 @@ function NewRowLine() {
     } else {
         return null
     }
+}
+
+function GuessedRowLine(props: {tableIdx: number}) {
+    const newRowGuesses = useStore(state => state.newRowGuesses)
+    if(typeof(newRowGuesses) === "undefined" ||
+        typeof(newRowGuesses[props.tableIdx]) === "undefined") return null
+
+    return (<div className="rowLine"
+                 style={{top: `${newRowGuesses[props.tableIdx]}px`,
+                         background: "green"}}/>)
 }
 
 function ColumnSetterSpace(){
