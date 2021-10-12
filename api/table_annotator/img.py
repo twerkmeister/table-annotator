@@ -5,7 +5,7 @@ from scipy import ndimage
 from table_annotator.types import Rectangle, Point, Table
 
 BORDER_OFFSET = 5
-SEPARATOR_WIDTH = 3
+ROW_COLUMN_WIDTH = 3
 
 
 def get_dimensions(image: np.ndarray) -> Tuple[int, int]:
@@ -58,3 +58,12 @@ def get_cell_image_grid(image: np.ndarray, table: Table) -> List[List[np.ndarray
             cell_image_grid[-1].append(crop(table_image, cell))
     return cell_image_grid
 
+
+def get_row_line_image_parts(image: np.ndarray, table: Table) -> List[np.ndarray]:
+    """Extracts the image parts that correspond to the row lines.
+
+    This is useful for guessing the next row position."""
+    table_image = extract_table(image, table)
+    return [
+        table_image[row_pos:row_pos + ROW_COLUMN_WIDTH] for row_pos in table.rows
+    ]
