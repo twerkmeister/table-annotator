@@ -96,19 +96,3 @@ def test_get_cell_image_grid() -> None:
         )
     image_restored = np.concatenate(row_images, axis=0)
     assert np.all(table_image == image_restored)
-
-
-def test_get_row_line_image_parts() -> None:
-    img_path = "test_images/0100_5312606_1.jpg"
-    table_json_path = "test_images/0100_5312606_1.json"
-
-    image = table_annotator.io.read_image(img_path)
-    table = table_annotator.io.read_tables(table_json_path)[0]
-
-    row_line_images = table_annotator.img.get_row_line_image_parts(image, table)
-
-    # as many row line images as rows
-    assert len(row_line_images) == len(table.rows)
-
-    # all row line images have the same shape
-    assert len(set([rl.shape for rl in row_line_images])) == 1
