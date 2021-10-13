@@ -82,11 +82,11 @@ def create_app(script_info: Optional[ScriptInfo] = None, image_path: Text = "ima
         if not os.path.isfile(tables_file_path):
             return {"next_rows": None}
 
-        image = table_annotator.io.read_image(image_file_path)
         tables = table_annotator.io.read_tables(tables_file_path)
         guesses = []
         for t in tables:
-            guesses.append(table_annotator.img.predict_next_row_position(image, t))
+            guesses.append(
+                table_annotator.img.predict_next_row_position(image_file_path, t))
 
         return {"next_rows": guesses}
 

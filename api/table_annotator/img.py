@@ -1,8 +1,10 @@
-from typing import Tuple, List, Optional
+import functools
+from typing import Tuple, List, Optional, Text
 import numpy as np
 from scipy import ndimage
 import cv2
 
+import table_annotator.io
 from table_annotator.types import Rectangle, Point, Table
 
 BORDER_OFFSET = 5
@@ -60,7 +62,18 @@ def get_cell_image_grid(image: np.ndarray, table: Table) -> List[List[np.ndarray
     return cell_image_grid
 
 
-def predict_next_row_position(image: np.ndarray, table: Table) -> Optional[int]:
+@functools.lru_cache(maxsize=1000)
+def get_table_image_bw(image_path: Text,
+                    table_outline: Rectangle,
+                    rotation_degrees: float) -> np.ndarray:
+    image = table_annotator.io.read_image(image_path)
+    image_rotated_for_table = rotate(image, - rotation_degrees)
+    offset = Point(x=BORDER_OFFSET, y=BORDER_OFFSET)
+    table_image = crop(image_rotated_for_table, table_outline.translate(offset))
+    return cv2.cvtColor(table_image, cv2.COLOR_BGR2GRAY)
+
+
+def predict_next_row_position(image_path: Text, table: Table) -> Optional[int]:
     """Guesses the position of the next row."""
     if len(table.rows) == 0:
         return None
@@ -69,7 +82,7 @@ def predict_next_row_position(image: np.ndarray, table: Table) -> Optional[int]:
     else:
         last_row_height = table.rows[-1] - table.rows[-2]
 
-    table_image = extract_table(image, table)
+    table_image = get_table_image_bw(image_path, table.outline, table.rotationDegrees)
 
     last_row_position = table.rows[-1]
     search_area = 10  # px
@@ -87,11 +100,8 @@ def predict_next_row_position(image: np.ndarray, table: Table) -> Optional[int]:
     row_images = [table_image[row_pos:row_pos + ROW_COLUMN_WIDTH]
                   for row_pos in row_positions]
 
-    row_images_bw = [cv2.cvtColor(row_img, cv2.COLOR_BGR2GRAY)
-                     for row_img in row_images]
-
-    row_images_discretized_counts = [np.histogram(row_img, 10)[0]
-                                     for row_img in row_images_bw]
+    row_images_discretized_counts = [np.histogram(row_img, bins=range(0, 256, 51))[0]
+                                     for row_img in row_images]
 
     prev_row_discretized_counts = row_images_discretized_counts[0]
     candidate_rows_discretized_counts = row_images_discretized_counts[1:]

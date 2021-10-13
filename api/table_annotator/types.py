@@ -22,6 +22,10 @@ class Rectangle(BaseModel):
         new_bottom_right = Point(x=self.bottomRight.x + p.x, y=self.bottomRight.y + p.y)
         return Rectangle(topLeft=new_top_left, bottomRight=new_bottom_right)
 
+    def __hash__(self) -> int:
+        return hash((self.topLeft.x, self.topLeft.y,
+                     self.bottomRight.x, self.bottomRight.y))
+
 
 class Table(BaseModel):
     outline: Rectangle
