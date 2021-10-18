@@ -24,7 +24,7 @@ def crop(image: np.ndarray, rect: Rectangle) -> np.ndarray:
 
 def rotate(image: np.ndarray, degrees: float) -> np.ndarray:
     """Rotates an image by given degrees."""
-    return ndimage.rotate(image, degrees, reshape=False)
+    return ndimage.rotate(image, degrees, reshape=False, order=0)
 
 
 def extract_table(image: np.ndarray, table: Table) -> np.ndarray:
