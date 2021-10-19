@@ -4,7 +4,7 @@ from api import create_app
 
 @pytest.fixture(scope='module')
 def test_client():
-    flask_app = create_app(image_path='test_images')
+    flask_app = create_app(image_dir='test_images')
 
     # Create a test client using the Flask application configured for testing
     with flask_app.test_client() as testing_client:

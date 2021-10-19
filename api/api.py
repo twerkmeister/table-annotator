@@ -9,10 +9,10 @@ import table_annotator.io
 IMAGE_PATH = "image_path"
 
 
-def create_app(script_info: Optional[ScriptInfo] = None, image_path: Text = "images"):
+def create_app(script_info: Optional[ScriptInfo] = None, image_dir: Text = "images"):
     app = Flask(__name__)
-    app.config[IMAGE_PATH] = image_path
-    app.logger.info(f'Starting server serving images from {image_path}')
+    app.config[IMAGE_PATH] = image_dir
+    app.logger.info(f'Starting server serving images from directory {image_dir}')
 
     @app.route('/images')
     def list_images():
@@ -39,54 +39,43 @@ def create_app(script_info: Optional[ScriptInfo] = None, image_path: Text = "ima
     @app.route('/tables/<image_name>', methods=["POST"])
     def store_tables(image_name):
         """Stores the tables and returns guesses for next rows."""
-        image_basename = os.path.basename(image_name)
-        image_file_path = os.path.join(app.config[IMAGE_PATH], image_basename)
-        if not os.path.isfile(image_file_path):
+        image_path = os.path.join(app.config[IMAGE_PATH], image_name)
+        if not os.path.isfile(image_path):
             return make_response({"msg": "The image for which you tried to save "
                                          "table data does not exist."}, 404)
 
-        json_file_name = os.path.splitext(image_basename)[0] + ".json"
-        json_file_path = os.path.join(app.config[IMAGE_PATH], json_file_name)
-        table_annotator.io.write_json(json_file_path, request.json)
+        json_path = os.path.splitext(image_path)[0] + ".json"
+        table_annotator.io.write_json(json_path, request.json)
 
         return {"msg": "okay!"}
 
     @app.route('/tables/<image_name>', methods=["GET"])
     def get_tables(image_name):
-        image_basename = os.path.basename(image_name)
-        if not os.path.isfile(os.path.join(app.config[IMAGE_PATH], image_basename)):
+        image_path = os.path.join(app.config[IMAGE_PATH], image_name)
+        if not os.path.isfile(image_path):
             return make_response({"msg": "The image for which you tried to retrieve "
                                          "table data does not exist."}, 404)
 
-        json_file_name = os.path.splitext(image_basename)[0] + ".json"
-        json_file_path = os.path.join(app.config[IMAGE_PATH], json_file_name)
+        tables = table_annotator.io.read_tables_for_image(image_path)
 
-        if not os.path.isfile(json_file_path):
-            return {"tables": []}
-
-        tables = table_annotator.io.read_json(json_file_path)
-
-        return {"tables": tables}
+        return {"tables": [t.dict() for t in tables]}
 
     @app.route('/tables/<image_name>/next_rows', methods=["GET"])
     def get_prediction_for_next_row(image_name):
-        image_basename = os.path.basename(image_name)
-        image_file_path = os.path.join(app.config[IMAGE_PATH], image_basename)
-        if not os.path.isfile(image_file_path):
+        image_path = os.path.join(app.config[IMAGE_PATH], image_name)
+        if not os.path.isfile(image_path):
             return make_response({"msg": "The image for which you tried to retrieve "
                                          "table data does not exist."}, 404)
 
-        tables_file_name = os.path.splitext(image_basename)[0] + ".json"
-        tables_file_path = os.path.join(app.config[IMAGE_PATH], tables_file_name)
+        tables = table_annotator.io.read_tables_for_image(image_path)
 
-        if not os.path.isfile(tables_file_path):
+        if len(tables) == 0:
             return {"next_rows": None}
 
-        tables = table_annotator.io.read_tables(tables_file_path)
         guesses = []
         for t in tables:
             guesses.append(
-                table_annotator.img.predict_next_row_position(image_file_path, t))
+                table_annotator.img.predict_next_row_position(image_path, t))
 
         return {"next_rows": guesses}
 

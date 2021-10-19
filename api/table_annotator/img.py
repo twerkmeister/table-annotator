@@ -1,8 +1,9 @@
 import functools
-from typing import Tuple, List, Optional, Text
+from typing import Tuple, List, Optional, Text, Dict
 import numpy as np
 from scipy import ndimage
 import cv2
+import pytesseract
 
 import table_annotator.io
 from table_annotator.types import Rectangle, Point, Table
@@ -60,6 +61,28 @@ def get_cell_image_grid(image: np.ndarray, table: Table) -> List[List[np.ndarray
         for cell in row:
             cell_image_grid[-1].append(crop(table_image, cell))
     return cell_image_grid
+
+
+def cell_image_to_text(cell_image: np.ndarray) -> Text:
+    """Uses pytesseract to extract text from image."""
+    whitelist = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ./0123456789 "
+    config = f"--psm 11 -l deu -c tessedit_char_whitelist={whitelist}"
+    cell_image_rgb = cv2.cvtColor(cell_image, cv2.COLOR_BGR2RGB)
+    # cell_image_gray = cv2.cvtColor(cell_image, cv2.COLOR_BGR2GRAY)
+    # cell_image_thresh = cv2.threshold(cell_image_gray, 0, 255, cv2.THRESH_OTSU)[1]
+    return pytesseract.image_to_string(cell_image_rgb, config=config)
+
+
+def run_table_ocr(image: np.ndarray,
+                  table: Table) -> Tuple[List[List[np.ndarray]], Dict[Text, Text]]:
+    """Splits table into cell images and runs ocr on each."""
+    cell_images = get_cell_image_grid(image, table)
+    ocr_result = {}
+    for i in range(len(cell_images)):
+        for j in range(len(cell_images[i])):
+            ocr_result[str(i) + "_" + str(j)] = cell_image_to_text(cell_images[i][j])
+
+    return cell_images, ocr_result
 
 
 @functools.lru_cache(maxsize=1000)

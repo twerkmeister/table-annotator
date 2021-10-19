@@ -1,6 +1,7 @@
 from typing import Text, Any, List
 import json
 import functools
+import os
 
 import cv2
 import numpy as np
@@ -22,6 +23,14 @@ def read_tables(file_path: Text) -> List[Table]:
     """Reads tables from disc."""
     tables_serialized = read_json(file_path)
     return [Table(**t) for t in tables_serialized]
+
+
+def read_tables_for_image(image_path: Text) -> List[Table]:
+    json_file_path = os.path.splitext(image_path)[0] + ".json"
+    if not os.path.isfile(json_file_path):
+        return []
+    else:
+        return read_tables(json_file_path)
 
 
 @functools.lru_cache(1000)
