@@ -153,11 +153,9 @@ const useStore = create<AnnotatorState>((set, get) => ({
 
         const table_response = await fetch(`/tables/${image.name}`)
         const tables = (await table_response.json())["tables"]
-        const rows_response = await fetch(`/tables/${image.name}/next_rows`)
-        const newRowGuesses = (await rows_response.json())["next_rows"]
         set({ currentImageIndex: idx, rotationDegrees: 0, documentPosition: undefined,
             tables, unfinishedTable: undefined, selectedTable: undefined, selectedRow: undefined,
-            selectedColumn: undefined, newRowGuesses})
+            selectedColumn: undefined, newRowGuesses: undefined})
 
     },
     outlineTable: (p: Point, rotationDegrees: number) => {
@@ -332,11 +330,13 @@ const useStore = create<AnnotatorState>((set, get) => ({
 
 const pushTablesToApi = async(state: AnnotatorState, previousState: AnnotatorState) => {
     if(state.tables === previousState.tables) return
+
     const {currentImageIndex, images, tables} = state
     if(typeof(currentImageIndex) === "undefined" || typeof(images) === "undefined") return
     const image = images[currentImageIndex]
     if(typeof(image) === "undefined") return
     await axios.post(`/tables/${image.name}`, tables)
+
     const response = await fetch(`/tables/${image.name}/next_rows`)
     const newRowGuesses = (await response.json())["next_rows"]
     if(response.status === 200){
