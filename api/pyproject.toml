@@ -12,6 +12,7 @@ opencv-python = "^4.5.3"
 scipy = "^1.7.1"
 pydantic = "^1.8.2"
 pytesseract = "^0.3.8"
+Pillow = "^8.4.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"

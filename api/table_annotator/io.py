@@ -5,6 +5,7 @@ import os
 
 import cv2
 import numpy as np
+import PIL
 
 from table_annotator.types import Table
 
@@ -42,3 +43,11 @@ def read_image(image_path: Text) -> np.ndarray:
 def write_image(file_path: Text, image: np.ndarray) -> None:
     """Writes image to disc."""
     cv2.imwrite(file_path, image)
+
+
+def get_image_dpi(image_path: Text) -> int:
+    im = PIL.Image.open(image_path)
+    if "dpi" in im.info:
+        return im.info['dpi'][0]
+    else:
+        return 150
