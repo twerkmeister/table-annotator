@@ -1,5 +1,5 @@
 import functools
-from typing import Tuple, List, Optional, Text, Dict
+from typing import Tuple, List, Optional, Text, Dict, Callable, TypeVar
 import numpy as np
 from scipy import ndimage
 import cv2
@@ -40,13 +40,13 @@ def get_cell_grid(table: Table) -> List[List[Rectangle]]:
     cells = []
     rows = [0] + table.rows + [table.outline.height()]
     columns = [0] + table.columns + [table.outline.width()]
-    for r_i in range(len(rows)-1):
+    for r_i in range(len(rows) - 1):
         cells.append([])
-        for c_i in range(len(columns)-1):
+        for c_i in range(len(columns) - 1):
             top_left = Point(x=columns[c_i],
                              y=rows[r_i])
-            bottom_right = Point(x=columns[c_i+1],
-                                 y=rows[r_i+1])
+            bottom_right = Point(x=columns[c_i + 1],
+                                 y=rows[r_i + 1])
             cells[-1].append(Rectangle(topLeft=top_left, bottomRight=bottom_right))
     return cells
 
@@ -63,32 +63,46 @@ def get_cell_image_grid(image: np.ndarray, table: Table) -> List[List[np.ndarray
     return cell_image_grid
 
 
-def cell_image_to_text(cell_image: np.ndarray) -> Text:
-    """Uses pytesseract to extract text from image."""
+def cell_image_to_text(cell_image: np.ndarray, dpi: int) -> Text:
+    """Uses pytesseract to extract text from binarized image."""
     whitelist = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ./0123456789 "
-    config = f"--psm 11 -l deu -c tessedit_char_whitelist={whitelist}"
-    cell_image_rgb = cv2.cvtColor(cell_image, cv2.COLOR_BGR2RGB)
-    # cell_image_gray = cv2.cvtColor(cell_image, cv2.COLOR_BGR2GRAY)
-    # cell_image_thresh = cv2.threshold(cell_image_gray, 0, 255, cv2.THRESH_OTSU)[1]
-    return pytesseract.image_to_string(cell_image_rgb, config=config)
+    config = f"-l deu --dpi {dpi} -c tessedit_char_whitelist={whitelist}"
+    return pytesseract.image_to_string(cell_image, config=config)
 
 
-def run_table_ocr(image: np.ndarray,
-                  table: Table) -> Tuple[List[List[np.ndarray]], Dict[Text, Text]]:
-    """Splits table into cell images and runs ocr on each."""
-    cell_images = get_cell_image_grid(image, table)
-    ocr_result = {}
-    for i in range(len(cell_images)):
-        for j in range(len(cell_images[i])):
-            ocr_result[str(i) + "_" + str(j)] = cell_image_to_text(cell_images[i][j])
+def binarize(image: np.ndarray) -> np.ndarray:
+    """Binarize an image."""
+    image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    binarized = cv2.adaptiveThreshold(image_gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                      cv2.THRESH_BINARY, 31, 10)
+    return binarized
 
-    return cell_images, ocr_result
+
+def remove_small_contours(image: np.ndarray) -> np.ndarray:
+    """Removes contours that are smaller than the min area size."""
+    contours = cv2.findContours(image, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    too_small_contours = [c for c in contours[0]
+                          if cv2.contourArea(c) <= 20]
+    mask = np.zeros(image.shape, dtype="uint8")
+
+    cv2.drawContours(mask, too_small_contours, -1, 255, -1)
+    return image + mask
+
+
+T = TypeVar('T')
+C = TypeVar('C')
+
+
+def apply_to_cells(f: Callable[[C], T],
+                   cells:  List[List[C]]) -> List[List[T]]:
+    """Applies a function f to all cell images and returns the resulting cell images."""
+    return [[f(cell) for cell in row] for row in cells]
 
 
 @functools.lru_cache(maxsize=1000)
 def get_table_image_bw(image_path: Text,
-                    table_outline: Rectangle,
-                    rotation_degrees: float) -> np.ndarray:
+                       table_outline: Rectangle,
+                       rotation_degrees: float) -> np.ndarray:
     image = table_annotator.io.read_image(image_path)
     image_rotated_for_table = rotate(image, - rotation_degrees)
     offset = Point(x=BORDER_OFFSET, y=BORDER_OFFSET)

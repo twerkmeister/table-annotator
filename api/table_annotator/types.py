@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Text, Optional, Dict
 from pydantic import BaseModel
 
 
@@ -32,3 +32,24 @@ class Table(BaseModel):
     rotationDegrees: float
     columns: List[int]
     rows: List[int]
+
+
+class CellContent(BaseModel):
+    ocr_text: Text
+    human_text: Optional[Text]
+
+    @classmethod
+    def new_from_ocr_result(cls, ocr_result: Text):
+        return cls(ocr_text=ocr_result, human_text=None)
+
+
+class TableContent(BaseModel):
+    cells: Dict[Text, CellContent]
+
+    @classmethod
+    def from_cells(cls, cells: List[List[CellContent]]):
+        cells_dict = {}
+        for i in range(len(cells)):
+            for j in range(len(cells[i])):
+                cells_dict[f"{i:03d}_{j:03d}"] = cells[i][j]
+        return cls(cells=cells_dict)

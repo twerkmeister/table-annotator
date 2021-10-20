@@ -16,11 +16,7 @@ def create_app(script_info: Optional[ScriptInfo] = None, image_dir: Text = "imag
 
     @app.route('/images')
     def list_images():
-
-        files = os.listdir(app.config[IMAGE_PATH])
-        allowed_extensions = {".jpeg", ".jpg"}
-        relevant_files = [f for f in files
-                          if os.path.splitext(f)[1] in allowed_extensions]
+        relevant_files = table_annotator.io.list_images(app.config[IMAGE_PATH])
         images_with_metadata = []
         for f in relevant_files:
             image = table_annotator.io.read_image(
