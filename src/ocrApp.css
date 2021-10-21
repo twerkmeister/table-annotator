@@ -1,25 +1,59 @@
+::-webkit-scrollbar {
+    -webkit-appearance: none;
+    width: 7px;
+}
+::-webkit-scrollbar-thumb {
+    border-radius: 4px;
+    background-color: rgba(0,0,0,.5);
+    box-shadow: 0 0 1px rgba(255,255,255,.5);
+}
+
 .App {
     margin: 100px auto 100px auto;
-    width: 75%;
+    width: 85%;
 }
 
 .OCRFixItem{
     width: 100%;
     margin: 25px 0 25px 0;
-    height: 100px;
+    height: 150px;
+}
+
+.CellImageContainer{
+    float: left;
+    overflow: scroll;
+    height: 100%;
+    width: 600px;
+    text-align: right;
 }
 
 .CellImage{
+    margin: auto;
+}
+
+.OCRInputContainer{
+    margin-left: 30px;
     float: left;
+    overflow: scroll;
+    height: 100%;
+    width: 350px;
 }
 
 .OCRInput{
+    margin: auto;
+    width: 300px;
+}
+
+.OCRStatusIndicatorContainer{
+    margin-left: 30px;
     float: left;
-    height: 100px;
+    overflow: scroll;
+    height: 100%;
+    width: 100px;
 }
 
 .OCRStatusIndicator{
-    float: left;
+    margin: auto;
     width: 50px;
     height: 50px;
 }
