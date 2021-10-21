@@ -53,3 +53,14 @@ class TableContent(BaseModel):
             for j in range(len(cells[i])):
                 cells_dict[f"{i:03d}_{j:03d}"] = cells[i][j]
         return cls(cells=cells_dict)
+
+
+class OCRDataPoint(BaseModel):
+    image_name: Text
+    table_idx: Text
+    cell_id: Text
+    ocr_text: Text
+    human_text: Optional[Text]
+    image_path: Text
+    image_width: int
+    image_height: int

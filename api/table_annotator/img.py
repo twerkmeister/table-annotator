@@ -1,5 +1,5 @@
 import functools
-from typing import Tuple, List, Optional, Text, Dict, Callable, TypeVar
+from typing import Tuple, List, Optional, Text, Callable, TypeVar
 import numpy as np
 from scipy import ndimage
 import cv2
@@ -153,3 +153,5 @@ def predict_next_row_position(image_path: Text, table: Table) -> Optional[int]:
 
 def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
     return np.dot(a, b) / (np.sqrt(np.dot(a, a)) * np.sqrt(np.dot(b, b)))
+
+

@@ -2,12 +2,12 @@ from typing import Text, Any, List
 import json
 import functools
 import os
+import glob
 
 import cv2
 import numpy as np
 import PIL
-
-from table_annotator.types import Table, TableContent
+from table_annotator.types import Table, TableContent, OCRDataPoint
 
 
 def read_json(file_path: Text) -> Any:
@@ -54,6 +54,7 @@ def get_image_dpi(image_path: Text) -> int:
 
 
 def list_images(path: Text) -> List[Text]:
+    """Lists all jpg files in a folder."""
     files = os.listdir(path)
     allowed_extensions = {".jpeg", ".jpg"}
     return [f for f in files if os.path.splitext(f)[1] in allowed_extensions]
