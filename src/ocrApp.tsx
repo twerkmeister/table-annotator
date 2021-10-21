@@ -4,6 +4,9 @@ import { GlobalHotKeys } from "react-hotkeys";
 import axios from 'axios';
 import './ocrApp.css';
 
+const num_per_session = 100
+const only_new = true
+
 type OCRDataPoint = {
     image_name: string
     table_idx: string
@@ -24,8 +27,9 @@ const useStore = create<OCRFixerState>((set, get) => ({
     ocrDataPoints: undefined,
     fetchOCRDataPoints: async () => {
         const response = await fetch("/ocr/data_points")
-        const ocrDataPoints = (await response.json())["data_points"]
-        set({ocrDataPoints})
+        const ocrDataPoints: OCRDataPoint[] = (await response.json())["data_points"]
+        const relevantOCRDataPoints = only_new ? ocrDataPoints.filter(dp => dp.human_text === null) : ocrDataPoints
+        set({ocrDataPoints: relevantOCRDataPoints.slice(0, num_per_session)})
     }
 }))
 
@@ -64,7 +68,7 @@ function OCRFixItem(props: {dataPoint: OCRDataPoint}) {
     return (
         <div className="OCRFixItem">
             <img className="CellImage" src={props.dataPoint.image_path} width={props.dataPoint.image_width}
-                 height={props.dataPoint.image_height} alt={`cell image ${props.dataPoint.image_path}`}/>
+                 height={props.dataPoint.image_height} alt={`cell at ${props.dataPoint.image_path}`}/>
             <textarea className="OCRInput" rows={5} cols={50}>
                 {props.dataPoint.human_text === null ?
                     props.dataPoint.ocr_text : props.dataPoint.human_text}
