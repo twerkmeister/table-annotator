@@ -17,7 +17,7 @@ def collect_ocr_data_points(file_path: Text) -> List[OCRDataPoint]:
         for cell_id, cell in table_content.cells.items():
             cell_image_path = os.path.join(file_path, image_name,
                                            table_idx, f"{cell_id}.jpg")
-            external_image_path = os.path.join(image_name, table_idx, f"{cell_id}.jpg")
+            external_image_path = f"cell_image/{image_name}/{table_idx}/{cell_id}"
             cell_image = table_annotator.io.read_image(cell_image_path)
             image_width, image_height = table_annotator.img.get_dimensions(cell_image)
 

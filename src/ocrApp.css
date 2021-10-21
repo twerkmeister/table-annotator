@@ -1,0 +1,25 @@
+.App {
+    margin: 100px auto 100px auto;
+    width: 75%;
+}
+
+.OCRFixItem{
+    width: 100%;
+    margin: 25px 0 25px 0;
+    height: 100px;
+}
+
+.CellImage{
+    float: left;
+}
+
+.OCRInput{
+    float: left;
+    height: 100px;
+}
+
+.OCRStatusIndicator{
+    float: left;
+    width: 50px;
+    height: 50px;
+}

@@ -5,14 +5,19 @@ from flask.cli import ScriptInfo
 
 import table_annotator.img
 import table_annotator.io
+import table_annotator.ocr
 
 IMAGE_PATH = "image_path"
+OCR_PATH = "ocr_path"
 
 
-def create_app(script_info: Optional[ScriptInfo] = None, image_dir: Text = "images"):
+def create_app(script_info: Optional[ScriptInfo] = None, image_dir: Text = "images",
+               ocr_dir: Text = "ocr"):
     app = Flask(__name__)
     app.config[IMAGE_PATH] = image_dir
-    app.logger.info(f'Starting server serving images from directory {image_dir}')
+    app.config[OCR_PATH] = ocr_dir
+    app.logger.info(f'Starting server serving images from directory {image_dir}'
+                    f'and ocr data from {ocr_dir}')
 
     @app.route('/images')
     def list_images():
@@ -74,6 +79,16 @@ def create_app(script_info: Optional[ScriptInfo] = None, image_dir: Text = "imag
                 table_annotator.img.predict_next_row_position(image_path, t))
 
         return {"next_rows": guesses}
+
+    @app.route('/ocr/data_points', methods=["GET"])
+    def get_ocr_data_points():
+        data_points = table_annotator.ocr.collect_ocr_data_points(app.config[OCR_PATH])
+        return {"data_points": [dp.dict() for dp in data_points]}
+
+    @app.route('/cell_image/<document_name>/<table_idx>/<cell_id>', methods=["GET"])
+    def get_cell_image(document_name, table_idx, cell_id):
+        directory = os.path.join(app.config[OCR_PATH], document_name, table_idx)
+        return send_from_directory(directory, f"{cell_id}.jpg")
 
     return app
 

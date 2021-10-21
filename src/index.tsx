@@ -2,11 +2,15 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
+import OCRApp from './ocrApp';
 import reportWebVitals from './reportWebVitals';
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+  {
+      window.location.pathname === "/ocr" ?
+          <OCRApp /> : <App/>
+  }
   </React.StrictMode>,
   document.getElementById('root')
 );
