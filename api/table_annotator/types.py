@@ -43,6 +43,17 @@ class CellContent(BaseModel):
         return cls(ocr_text=ocr_result, human_text=None)
 
 
+class OCRDataPoint(BaseModel):
+    image_name: Text
+    table_idx: Text
+    cell_id: Text
+    ocr_text: Text
+    human_text: Optional[Text]
+    image_path: Text
+    image_width: int
+    image_height: int
+
+
 class TableContent(BaseModel):
     cells: Dict[Text, CellContent]
 
@@ -54,13 +65,13 @@ class TableContent(BaseModel):
                 cells_dict[f"{i:03d}_{j:03d}"] = cells[i][j]
         return cls(cells=cells_dict)
 
+    def update(self, data_point: OCRDataPoint) -> None:
+        if data_point.cell_id not in self.cells:
+            raise ValueError(f"Cannot insert a new data point with "
+                             f"cell id {data_point.cell_id} into ocr results of "
+                             f"{data_point.image_name}/{data_point.table_idx}")
 
-class OCRDataPoint(BaseModel):
-    image_name: Text
-    table_idx: Text
-    cell_id: Text
-    ocr_text: Text
-    human_text: Optional[Text]
-    image_path: Text
-    image_width: int
-    image_height: int
+        self.cells[data_point.cell_id].human_text = data_point.human_text
+
+
+

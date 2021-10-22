@@ -6,6 +6,7 @@ from flask.cli import ScriptInfo
 import table_annotator.img
 import table_annotator.io
 import table_annotator.ocr
+from table_annotator.types import OCRDataPoint
 
 IMAGE_PATH = "image_path"
 OCR_PATH = "ocr_path"
@@ -89,6 +90,24 @@ def create_app(script_info: Optional[ScriptInfo] = None, image_dir: Text = "imag
     def get_cell_image(document_name, table_idx, cell_id):
         directory = os.path.join(app.config[OCR_PATH], document_name, table_idx)
         return send_from_directory(directory, f"{cell_id}.jpg")
+
+    @app.route('/ocr/data_points', methods=["POST"])
+    def save_ocr_data_point():
+        ocr_data_point = OCRDataPoint(**request.json)
+        ocr_data_path = os.path.join(app.config[OCR_PATH],
+                                     ocr_data_point.image_name,
+                                     ocr_data_point.table_idx,
+                                     "ocr_result.json")
+
+        if not os.path.isfile(ocr_data_path):
+            return make_response({"msg": "Cannot find the ocr results "
+                                         "you tried to update"}, 404)
+
+        table_content = table_annotator.io.read_table_content(ocr_data_path)
+        table_content.update(ocr_data_point)
+        table_annotator.io.write_table_content(ocr_data_path, table_content)
+
+        return {"msg": "okay!"}
 
     return app
 

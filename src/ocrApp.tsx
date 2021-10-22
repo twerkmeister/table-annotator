@@ -12,7 +12,7 @@ type OCRDataPoint = {
     table_idx: string
     cell_id: string
     ocr_text: string
-    human_text?: string
+    human_text: string | null
     image_path: string
     image_width: number
     image_height: number
@@ -21,6 +21,7 @@ type OCRDataPoint = {
 type OCRFixerState = {
     ocrDataPoints?: OCRDataPoint[]
     fetchOCRDataPoints: () => void
+    updateOCRDataPoint: (idx: number, human_text: string) => void
 }
 
 const useStore = create<OCRFixerState>((set, get) => ({
@@ -30,9 +31,17 @@ const useStore = create<OCRFixerState>((set, get) => ({
         const ocrDataPoints: OCRDataPoint[] = (await response.json())["data_points"]
         const relevantOCRDataPoints = only_new ? ocrDataPoints.filter(dp => dp.human_text === null) : ocrDataPoints
         set({ocrDataPoints: relevantOCRDataPoints.slice(0, num_per_session)})
+    },
+    updateOCRDataPoint: async (idx: number, human_text: string) => {
+        const ocrDataPoints = get().ocrDataPoints
+        if(typeof(ocrDataPoints) === "undefined") return
+        const updatedOCRDataPoint = {...ocrDataPoints[idx], human_text}
+        const updatedOCRDataPoints = [...ocrDataPoints.slice(0, idx), updatedOCRDataPoint,
+                                      ...ocrDataPoints.slice(idx + 1)]
+        axios.post("/ocr/data_points", updatedOCRDataPoint)
+        set({ocrDataPoints: updatedOCRDataPoints})
     }
 }))
-
 
 function OCRApp() {
     const fetchOCRDataPoints = useStore(state => state.fetchOCRDataPoints)
@@ -48,7 +57,7 @@ function OCRApp() {
             <div className="App">
                 {
                     ocrDataPoints.map((dataPoint, i) => {
-                        return (<OCRFixItem key={i} dataPoint={dataPoint}/>)
+                        return (<OCRFixItem key={i} idx={i} dataPoint={dataPoint}/>)
                     })
                 }
             </div>
@@ -64,7 +73,13 @@ function OCRApp() {
     }
 }
 
-function OCRFixItem(props: {dataPoint: OCRDataPoint}) {
+function OCRFixItem(props: {idx: number, dataPoint: OCRDataPoint}) {
+    const updateOCRDataPoint = useStore(state => state.updateOCRDataPoint)
+
+    const handleInputOnBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+        updateOCRDataPoint(props.idx, e.target.value)
+    }
+
     return (
         <div className="OCRFixItem">
             <div className="CellImageContainer">
@@ -72,10 +87,10 @@ function OCRFixItem(props: {dataPoint: OCRDataPoint}) {
                      height={props.dataPoint.image_height} alt={`cell at ${props.dataPoint.image_path}`}/>
             </div>
             <div className="OCRInputContainer">
-                <textarea className="OCRInput" rows={5} cols={100}>
-                    {props.dataPoint.human_text === null ?
-                        props.dataPoint.ocr_text : props.dataPoint.human_text}
-                </textarea>
+                <textarea className="OCRInput" rows={5} cols={100}
+                 defaultValue={props.dataPoint.human_text === null ?
+                               props.dataPoint.ocr_text : props.dataPoint.human_text}
+                 onBlur={handleInputOnBlur}/>
             </div>
             <div className="OCRStatusIndicatorContainer">
                 <div className="OCRStatusIndicator"

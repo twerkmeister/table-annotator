@@ -2,7 +2,6 @@ from typing import Text, Any, List
 import json
 import functools
 import os
-import glob
 
 import cv2
 import numpy as np
@@ -68,3 +67,8 @@ def read_table_content(file_path: Text) -> TableContent:
 def write_table_content(file_path: Text, table_content: TableContent) -> None:
     """Writes table content to disc."""
     write_json(file_path, table_content.dict())
+
+
+def update_table_content(ocr_base_dir: Text, ocr_data_point: OCRDataPoint):
+    """Updates an ocr_result.json with a new data point."""
+
