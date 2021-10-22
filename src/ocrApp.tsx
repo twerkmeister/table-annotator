@@ -6,6 +6,7 @@ import './ocrApp.css';
 
 const num_per_session = 100
 const only_new = true
+const DO_ANNOTATE = false
 
 type OCRDataPoint = {
     image_name: string
@@ -77,7 +78,17 @@ function OCRFixItem(props: {idx: number, dataPoint: OCRDataPoint}) {
     const updateOCRDataPoint = useStore(state => state.updateOCRDataPoint)
 
     const handleInputOnBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
-        updateOCRDataPoint(props.idx, e.target.value)
+        if (DO_ANNOTATE) {
+            updateOCRDataPoint(props.idx, e.target.value)
+        }
+    }
+
+    const handleInputOnFocus = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+        e.stopPropagation()
+        const elementRect = e.target.getBoundingClientRect()
+        if(elementRect.top > window.screen.height - 100){
+            window.scrollBy({top: elementRect.top - (window.screen.height / 2)})
+        }
     }
 
     return (
@@ -90,7 +101,7 @@ function OCRFixItem(props: {idx: number, dataPoint: OCRDataPoint}) {
                 <textarea className="OCRInput" rows={5} cols={100}
                  defaultValue={props.dataPoint.human_text === null ?
                                props.dataPoint.ocr_text : props.dataPoint.human_text}
-                 onBlur={handleInputOnBlur}/>
+                 onBlur={handleInputOnBlur} onFocus={handleInputOnFocus}/>
             </div>
             <div className="OCRStatusIndicatorContainer">
                 <div className="OCRStatusIndicator"
