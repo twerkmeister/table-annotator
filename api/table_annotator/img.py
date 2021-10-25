@@ -65,7 +65,9 @@ def get_cell_image_grid(image: np.ndarray, table: Table) -> List[List[np.ndarray
 
 def cell_image_to_text(cell_image: np.ndarray, dpi: int) -> Text:
     """Uses pytesseract to extract text from binarized image."""
-    whitelist = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ./0123456789 "
+    whitelist = "abcdefghijklmnopqrstuvwxyz" \
+                "ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
+                ".,():;/-0123456789 "
     config = f"-l deu --dpi {dpi} -c tessedit_char_whitelist={whitelist}"
     return pytesseract.image_to_string(cell_image, config=config)
 
