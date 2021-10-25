@@ -21,9 +21,9 @@
 }
 
 .columnLine {
-    width: 5px;
-    background: blueviolet;
-    opacity: 0.3;
+    border-left: 1px dashed rgba(0, 0, 0, 8);
+    width: 4px;
+    background: rgba(138, 43, 226, 0.3);
     height: 100%;
     position: absolute;
 }
@@ -39,9 +39,10 @@
 }
 
 .rowLine {
-    height: 5px;
-    background: orangered;
-    opacity: 0.3;
+    border-top: 1px dashed rgba(0, 0, 0, 8);
+    height: 3px;
+    background: rgba(255, 69, 0, 0.3);
+    /*opacity: 0.3;*/
     width: 100%;
     position: absolute;
 }

@@ -566,7 +566,7 @@ function GuessedRowLine(props: {tableIdx: number}) {
 
     return (<div className="rowLine"
                  style={{top: `${newRowGuesses[props.tableIdx]}px`,
-                         background: "green"}}/>)
+                         background: "rgba(0, 128, 0, 0.3)"}}/>)
 }
 
 function ColumnSetterSpace(){
