@@ -98,10 +98,11 @@ function OCRFixItem(props: {idx: number, dataPoint: OCRDataPoint}) {
                      height={props.dataPoint.image_height} alt={`cell at ${props.dataPoint.image_path}`}/>
             </div>
             <div className="OCRInputContainer">
-                <textarea className="OCRInput" rows={5} cols={100}
+                <textarea className="OCRInput" cols={100}
                  defaultValue={props.dataPoint.human_text === null ?
                                props.dataPoint.ocr_text : props.dataPoint.human_text}
-                 onBlur={handleInputOnBlur} onFocus={handleInputOnFocus}/>
+                 onBlur={handleInputOnBlur} onFocus={handleInputOnFocus}
+                 style={{height:props.dataPoint.image_height}}/>
             </div>
             <div className="OCRStatusIndicatorContainer">
                 <div className="OCRStatusIndicator"
