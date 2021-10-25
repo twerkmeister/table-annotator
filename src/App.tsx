@@ -313,7 +313,8 @@ const useStore = create<AnnotatorState>((set, get) => ({
         const selectedTable = get().selectedTable
         if(typeof(newRowGuesses) === "undefined" ||
             typeof(selectedTable) === "undefined" ||
-            typeof(newRowGuesses[selectedTable]) === "undefined") return
+            typeof(newRowGuesses[selectedTable]) === "undefined" ||
+            newRowGuesses[selectedTable] === null) return
 
         const tables = get().tables
         const newRowPosition = newRowGuesses[selectedTable]
@@ -562,7 +563,10 @@ function NewRowLine() {
 function GuessedRowLine(props: {tableIdx: number}) {
     const newRowGuesses = useStore(state => state.newRowGuesses)
     if(typeof(newRowGuesses) === "undefined" ||
-        typeof(newRowGuesses[props.tableIdx]) === "undefined") return null
+        newRowGuesses === null ||
+        newRowGuesses.length <= props.tableIdx ||
+        typeof(newRowGuesses[props.tableIdx]) === "undefined" ||
+        newRowGuesses[props.tableIdx] === null) return null
 
     return (<div className="rowLine"
                  style={{top: `${newRowGuesses[props.tableIdx]}px`,
