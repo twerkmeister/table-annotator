@@ -57,9 +57,14 @@ def table_ocr(image_path: Text, output_dir: Text):
             cleaned_cell_images
         )
 
+        # (disabled for now as it takes a long time with little benefit)
+        # ocr_results = table_annotator.img.apply_to_cells(
+        #     functools.partial(table_annotator.img.cell_image_to_text, dpi=image_dpi),
+        #     padded_cell_images
+        # )
+
         ocr_results = table_annotator.img.apply_to_cells(
-            functools.partial(table_annotator.img.cell_image_to_text, dpi=image_dpi),
-            padded_cell_images
+            lambda x: "", padded_cell_images
         )
 
         cell_contents = table_annotator.img.apply_to_cells(
