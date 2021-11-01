@@ -1,6 +1,5 @@
 from typing import Text, Any, List
 import json
-import functools
 import os
 
 import cv2
@@ -33,7 +32,6 @@ def read_tables_for_image(image_path: Text) -> List[Table]:
         return read_tables(json_file_path)
 
 
-@functools.lru_cache(1000)
 def read_image(image_path: Text) -> np.ndarray:
     """Reads an image from disc."""
     return cv2.imread(image_path)
