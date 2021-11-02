@@ -3,13 +3,15 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import OCRApp from './ocrApp';
+import {getPathParts} from './path';
 import reportWebVitals from './reportWebVitals';
 
 ReactDOM.render(
   <React.StrictMode>
   {
-      window.location.pathname === "/ocr" ?
-          <OCRApp /> : <App/>
+      getPathParts().app === "ocr" ?
+          <OCRApp /> : getPathParts().app === "tables" ?
+              <App /> : <div>Wrong Path</div>
   }
   </React.StrictMode>,
   document.getElementById('root')

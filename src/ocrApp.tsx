@@ -2,11 +2,12 @@ import React, {useEffect} from 'react';
 import create from 'zustand'
 import { GlobalHotKeys } from "react-hotkeys";
 import axios from 'axios';
+import {getPathParts} from './path';
 import './ocrApp.css';
 
 const num_per_session = 100
-const only_new = true
-const DO_ANNOTATE = false
+const only_new = false
+const DO_ANNOTATE = true
 
 type OCRDataPoint = {
     image_name: string
@@ -28,18 +29,20 @@ type OCRFixerState = {
 const useStore = create<OCRFixerState>((set, get) => ({
     ocrDataPoints: undefined,
     fetchOCRDataPoints: async () => {
-        const response = await fetch("/ocr/data_points")
+        const subdir = getPathParts().subdir
+        const response = await fetch(`/${subdir}/data_points`)
         const ocrDataPoints: OCRDataPoint[] = (await response.json())["data_points"]
         const relevantOCRDataPoints = only_new ? ocrDataPoints.filter(dp => dp.human_text === null) : ocrDataPoints
         set({ocrDataPoints: relevantOCRDataPoints.slice(0, num_per_session)})
     },
     updateOCRDataPoint: async (idx: number, human_text: string) => {
         const ocrDataPoints = get().ocrDataPoints
+        const subdir = getPathParts().subdir
         if(typeof(ocrDataPoints) === "undefined") return
         const updatedOCRDataPoint = {...ocrDataPoints[idx], human_text}
         const updatedOCRDataPoints = [...ocrDataPoints.slice(0, idx), updatedOCRDataPoint,
                                       ...ocrDataPoints.slice(idx + 1)]
-        axios.post("/ocr/data_points", updatedOCRDataPoint)
+        axios.post(`/${subdir}/data_points`, updatedOCRDataPoint)
         set({ocrDataPoints: updatedOCRDataPoints})
     }
 }))

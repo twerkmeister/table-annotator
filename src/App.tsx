@@ -2,7 +2,9 @@ import React, {useEffect} from 'react';
 import create from 'zustand'
 import { GlobalHotKeys } from "react-hotkeys";
 import axios from 'axios';
+import {getPathParts} from './path';
 import './App.css';
+
 
 const keyMap = {
     PREVIOUS_IMAGE: "a",
@@ -141,7 +143,8 @@ const useStore = create<AnnotatorState>((set, get) => ({
     tableDeletionMarkCount: 0,
     tables: [],
     fetchImages: async() => {
-        const response = await fetch("/images")
+        const subdir = getPathParts().subdir
+        const response = await fetch(`/${subdir}/images`)
         const images = (await response.json())["images"]
         set({images, currentImageIndex: 0})
     },
@@ -151,7 +154,8 @@ const useStore = create<AnnotatorState>((set, get) => ({
         const image = images[idx]
         if(typeof(image) === "undefined") return
 
-        const table_response = await fetch(`/tables/${image.name}`)
+        const subdir = getPathParts().subdir
+        const table_response = await fetch(`/${subdir}/tables/${image.name}`)
         const tables = (await table_response.json())["tables"]
         set({ currentImageIndex: idx, rotationDegrees: 0, documentPosition: undefined,
             tables, unfinishedTable: undefined, selectedTable: undefined, selectedRow: undefined,
@@ -331,14 +335,15 @@ const useStore = create<AnnotatorState>((set, get) => ({
 
 const pushTablesToApi = async(state: AnnotatorState, previousState: AnnotatorState) => {
     if(state.tables === previousState.tables) return
+    const subdir = getPathParts().subdir
 
     const {currentImageIndex, images, tables} = state
     if(typeof(currentImageIndex) === "undefined" || typeof(images) === "undefined") return
     const image = images[currentImageIndex]
     if(typeof(image) === "undefined") return
-    await axios.post(`/tables/${image.name}`, tables)
+    await axios.post(`/${subdir}/tables/${image.name}`, tables)
 
-    const response = await fetch(`/tables/${image.name}/next_rows`)
+    const response = await fetch(`/${subdir}/tables/${image.name}/next_rows`)
     const newRowGuesses = (await response.json())["next_rows"]
     if(response.status === 200){
         useStore.setState({newRowGuesses})
