@@ -1,6 +1,5 @@
 from typing import Text, Optional
 import os
-from functools import wraps
 from flask import Flask, send_from_directory, make_response, request
 from flask.cli import ScriptInfo
 
@@ -23,22 +22,37 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
     @app.route('/<subdir>/images')
     def list_images(subdir: Text):
         workdir = get_workdir(subdir)
-        relevant_files = table_annotator.io.list_images(workdir)
+        image_names = table_annotator.io.list_images(workdir)
         images_with_metadata = []
-        for f in relevant_files:
-            image = table_annotator.io.read_image(
-                os.path.join(workdir, f))
+        for image_name in image_names:
+            image_path = os.path.join(workdir, image_name)
+            image = table_annotator.io.read_image(image_path)
             width, height = table_annotator.img.get_dimensions(image)
+            is_finished = table_annotator.io.is_image_locked(image_path)
             center = {"x": width//2, "y": height // 2}
-            images_with_metadata.append({"src": f"image/{f}", "width": width,
+            images_with_metadata.append({"src": f"image/{image_name}", "width": width,
                                          "height": height, "center": center,
-                                         "name": f})
+                                         "name": image_name, "finished": is_finished})
         return {"images": images_with_metadata}
 
-    @app.route('/<subdir>/image/<name>')
-    def get_image(subdir: Text, name: Text):
+    @app.route('/<subdir>/image/<image_name>')
+    def get_image(subdir: Text, image_name: Text):
         workdir = get_workdir(subdir)
-        return send_from_directory(workdir, name)
+        return send_from_directory(workdir, image_name)
+
+    @app.route('/<subdir>/image/<image_name>/status', methods=["PUT"])
+    def set_image_status(subdir: Text, image_name: Text):
+        workdir = get_workdir(subdir)
+        image_path = os.path.join(workdir, image_name)
+        lock_file_path = table_annotator.io.lock_file_for_image(image_path)
+
+        finished = request.json["finished"]
+        if finished:
+            open(lock_file_path, 'w').close()
+        else:
+            os.remove(lock_file_path)
+
+        return {"msg": "okay!"}
 
     @app.route('/<subdir>/tables/<image_name>', methods=["POST"])
     def store_tables(subdir: Text, image_name: Text):

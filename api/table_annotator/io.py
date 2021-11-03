@@ -5,7 +5,7 @@ import os
 import cv2
 import numpy as np
 import PIL
-from table_annotator.types import Table, TableContent, OCRDataPoint
+from table_annotator.types import Table, TableContent
 
 
 def read_json(file_path: Text) -> Any:
@@ -67,6 +67,12 @@ def write_table_content(file_path: Text, table_content: TableContent) -> None:
     write_json(file_path, table_content.dict())
 
 
-def update_table_content(ocr_base_dir: Text, ocr_data_point: OCRDataPoint):
-    """Updates an ocr_result.json with a new data point."""
+def lock_file_for_image(image_path: Text) -> Text:
+    """Returns the corresponding lock file for an image."""
+    return os.path.splitext(image_path)[0] + ".lock"
 
+
+def is_image_locked(image_path: Text) -> bool:
+    """Checks whether lock file exists for image."""
+    lock_file_path = lock_file_for_image(image_path)
+    return os.path.exists(lock_file_path)
