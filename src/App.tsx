@@ -14,7 +14,8 @@ const keyMap = {
     ESC: "esc",
     ZERO: "0",
     BACKSPACE_OR_DELETE: ["Backspace", "Delete"],
-    R: "r"
+    R: "r",
+    F: "f"
 };
 
 type Point = {
@@ -53,7 +54,8 @@ type Image = {
     width: number,
     height: number,
     center: Point,
-    name: string
+    name: string,
+    finished: boolean
 }
 
 type UnfinishedTable = {
@@ -124,6 +126,7 @@ type AnnotatorState = {
     deleteColumn: () => void
     deleteRow: () => void
     acceptRowGuess: () => void
+    toggleImageStatus: () => void
 }
 
 
@@ -160,6 +163,19 @@ const useStore = create<AnnotatorState>((set, get) => ({
         set({ currentImageIndex: idx, rotationDegrees: 0, documentPosition: undefined,
             tables, unfinishedTable: undefined, selectedTable: undefined, selectedRow: undefined,
             selectedColumn: undefined, newRowGuesses: undefined})
+
+    },
+    toggleImageStatus: async() => {
+        console.log("uip")
+        const images = get().images
+        if(typeof(images) === "undefined") return
+        const currentImageIndex = get().currentImageIndex
+        const image = images[currentImageIndex]
+        if(typeof(image) === "undefined") return
+
+        const newImage = {...image, finished: !image.finished}
+        const newImages = [...images.slice(0,currentImageIndex), newImage, ...images.slice(currentImageIndex+1)]
+        set({images: newImages})
 
     },
     outlineTable: (p: Point, rotationDegrees: number) => {
@@ -370,6 +386,7 @@ function App() {
     const selectedRow = useStore(state => state.selectedRow)
     const cancelActions = useStore(state => state.cancelActions)
     const acceptRowGuess = useStore(state => state.acceptRowGuess)
+    const toggleImageStatus = useStore(state => state.toggleImageStatus)
 
     useEffect(() => {
         if(typeof(images) === "undefined") {
@@ -401,7 +418,8 @@ function App() {
         ZERO: () => setRotationDegrees(0),
         ESC: cancelActions,
         BACKSPACE_OR_DELETE: deleteFunc,
-        R: acceptRowGuess
+        R: acceptRowGuess,
+        F: toggleImageStatus
     }
 
     if(typeof(images) != "undefined" && images.length > 0) {
@@ -409,6 +427,7 @@ function App() {
         return (
             <div className="App" onMouseMove={e => handleMouseMove(e)}>
                 <GlobalHotKeys keyMap={keyMap} handlers={hotkeyHandlers} allowChanges={true}>
+                    <div>{image.finished ? "done" : "work in progress"}</div>
                     <DocumentImage {...image} />
                     {tables.map((t, i) => {
                         return (
