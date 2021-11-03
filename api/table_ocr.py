@@ -11,7 +11,7 @@ import table_annotator.io
 from table_annotator.types import CellContent, TableContent
 
 
-def table_ocr(image_path: Text, output_dir: Text):
+def table_ocr(image_path: Text):
     image = table_annotator.io.read_image(image_path)
     image_dpi = table_annotator.io.get_image_dpi(image_path)
     tables = table_annotator.io.read_tables_for_image(image_path)
@@ -20,10 +20,10 @@ def table_ocr(image_path: Text, output_dir: Text):
         return
 
     file_base = os.path.splitext(os.path.basename(image_path))[0]
-
+    dirname = os.path.dirname(image_path)
     for idx, t in enumerate(tables):
         # TODO: Early termination when nothing has changed
-        output_folder_name = os.path.join(output_dir, file_base, f"{idx:02d}")
+        output_folder_name = os.path.join(dirname, file_base, f"{idx:02d}")
         debug_folder_name = os.path.join(output_folder_name, "debug")
 
         ocr_result_path = os.path.join(output_folder_name, "ocr_result.json")
@@ -40,8 +40,6 @@ def table_ocr(image_path: Text, output_dir: Text):
 
         os.makedirs(output_folder_name, exist_ok=True)
         os.makedirs(debug_folder_name, exist_ok=True)
-
-
 
         cell_images = table_annotator.img.get_cell_image_grid(image, t)
 
@@ -102,16 +100,14 @@ if __name__ == "__main__":
     parser.add_argument("image_path",
                         help='Path to the image or folder of images you want to '
                              'extract tables for')
-    parser.add_argument("output_dir",
-                        help="Path to the directory used for output")
 
     args = parser.parse_args()
     if os.path.isdir(args.image_path):
         image_files = table_annotator.io.list_images(args.image_path)
         for image_file in tqdm.tqdm(image_files):
-            table_ocr(os.path.join(args.image_path, image_file), args.output_dir)
+            table_ocr(os.path.join(args.image_path, image_file))
     else:
-        table_ocr(args.image_path, args.output_dir)
+        table_ocr(args.image_path)
 
 
 

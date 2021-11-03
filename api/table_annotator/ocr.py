@@ -13,7 +13,8 @@ def collect_ocr_data_points(workdir: Text) -> List[OCRDataPoint]:
     data_files = glob.glob(f"{workdir}/*/*/ocr_result.json", recursive=True)
     for data_file in data_files:
         table_content = table_annotator.io.read_table_content(data_file)
-        _, _, image_name, table_idx, _ = data_file.split("/")
+        path_parts = data_file.split("/")
+        image_name, table_idx = path_parts[-3], path_parts[-2]
         for cell_id, cell in table_content.cells.items():
             cell_image_path = os.path.join(workdir, image_name,
                                            table_idx, f"{cell_id}.jpg")

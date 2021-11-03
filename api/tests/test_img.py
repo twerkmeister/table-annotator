@@ -8,15 +8,14 @@ from table_annotator.types import Point, Rectangle
 
 
 @pytest.mark.parametrize("img_path, width, height",
-                         [("test_images/ducks_1.jpeg", 620, 465),
-                          ("test_images/ducks_2.jpg", 640, 427)])
+                         [("test_data/01/0100_5312606_1.jpg", 1264, 880)])
 def test_get_dimensions(img_path: Text, width: int, height: int) -> None:
     image = table_annotator.io.read_image(img_path)
     assert (width, height) == table_annotator.img.get_dimensions(image)
 
 
 def test_crop() -> None:
-    img_path = "test_images/bluegreen.png"
+    img_path = "test_data/01/bluegreen.png"
     image = table_annotator.io.read_image(img_path)
 
     blue_part = table_annotator.img.crop(image,
@@ -32,7 +31,7 @@ def test_crop() -> None:
 
 
 def test_get_image_rectangle_borders() -> None:
-    img_path = "test_images/bluegreen.png"
+    img_path = "test_data/01/bluegreen.png"
     image = table_annotator.io.read_image(img_path)
 
     oversized_part = table_annotator.img.crop(image,
@@ -42,8 +41,8 @@ def test_get_image_rectangle_borders() -> None:
 
 
 def test_extract_table() -> None:
-    img_path = "test_images/0100_5312606_1.jpg"
-    table_json_path = "test_images/0100_5312606_1.json"
+    img_path = "test_data/01/0100_5312606_1.jpg"
+    table_json_path = "test_data/01/0100_5312606_1.json"
 
     image = table_annotator.io.read_image(img_path)
     table = table_annotator.io.read_tables(table_json_path)[0]
@@ -56,7 +55,7 @@ def test_extract_table() -> None:
 
 
 def test_get_cell_grid() -> None:
-    table_json_path = "test_images/0100_5312606_1.json"
+    table_json_path = "test_data/01/0100_5312606_1.json"
     table = table_annotator.io.read_tables(table_json_path)[0]
 
     expected_rows = len(table.rows) + 1
@@ -79,8 +78,8 @@ def test_get_cell_grid() -> None:
 
 
 def test_get_cell_image_grid() -> None:
-    img_path = "test_images/0100_5312606_1.jpg"
-    table_json_path = "test_images/0100_5312606_1.json"
+    img_path = "test_data/01/0100_5312606_1.jpg"
+    table_json_path = "test_data/01/0100_5312606_1.json"
 
     image = table_annotator.io.read_image(img_path)
     table = table_annotator.io.read_tables(table_json_path)[0]
