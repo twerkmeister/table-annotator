@@ -1,5 +1,6 @@
 from typing import Text, Optional
 import os
+from multiprocessing import Process
 from flask import Flask, send_from_directory, make_response, request
 from flask.cli import ScriptInfo
 
@@ -7,6 +8,7 @@ import table_annotator.img
 import table_annotator.io
 import table_annotator.ocr
 from table_annotator.types import OCRDataPoint
+from table_ocr import table_ocr
 
 DATA_PATH = "data_path"
 
@@ -46,11 +48,29 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
         image_path = os.path.join(workdir, image_name)
         lock_file_path = table_annotator.io.lock_file_for_image(image_path)
 
+        if not os.path.isfile(image_path):
+            return make_response({"msg": "The image for which you tried set a status "
+                                         "does not exist."}, 404)
+
         finished = request.json["finished"]
         if finished:
             open(lock_file_path, 'w').close()
         else:
             os.remove(lock_file_path)
+
+        return {"msg": "okay!"}
+
+    @app.route('/<subdir>/image/<image_name>/segment', methods=["POST"])
+    def segment_image(subdir: Text, image_name: Text):
+        workdir = get_workdir(subdir)
+        image_path = os.path.join(workdir, image_name)
+
+        if not os.path.isfile(image_path):
+            return make_response({"msg": "The image you tried to segment "
+                                         "does not exist."}, 404)
+
+        task = Process(target=table_ocr, args=(image_path, False))
+        task.start()
 
         return {"msg": "okay!"}
 

@@ -6,7 +6,7 @@ import {getPathParts} from './path';
 import './ocrApp.css';
 
 const num_per_session = 100
-const only_new = false
+const only_new = true
 const DO_ANNOTATE = true
 
 type OCRDataPoint = {

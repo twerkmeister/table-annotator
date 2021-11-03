@@ -11,12 +11,15 @@ import table_annotator.io
 from table_annotator.types import CellContent, TableContent
 
 
-def table_ocr(image_path: Text):
+def table_ocr(image_path: Text, force_overwrite: bool = False):
     image = table_annotator.io.read_image(image_path)
     image_dpi = table_annotator.io.get_image_dpi(image_path)
     tables = table_annotator.io.read_tables_for_image(image_path)
 
+    print(f"Started table ocr for {image_path}")
+
     if len(tables) == 0:
+        print("No tables, stopping ...")
         return
 
     file_base = os.path.splitext(os.path.basename(image_path))[0]
@@ -30,9 +33,11 @@ def table_ocr(image_path: Text):
         if os.path.exists(ocr_result_path):
             existing_table_content = \
                 table_annotator.io.read_table_content(ocr_result_path)
-            if any([cell.human_text for cell in existing_table_content.cells.values()]):
+            if not force_overwrite and \
+                    any([cell.human_text
+                        for cell in existing_table_content.cells.values()]):
                 print(f"Skipping table ocr for {output_folder_name} because human "
-                      f"annotation already exists")
+                      f"annotation already exists and overwrite wasn't forced")
                 continue
 
         if os.path.exists(output_folder_name):
@@ -93,21 +98,34 @@ def table_ocr(image_path: Text):
                                                padded_cell_images[i][j])
 
         table_annotator.io.write_table_content(ocr_result_path, table_content)
+        print(f"finished table ocr for {image_path}")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Extract text from table cells')
+    parser.add_argument(
+        "-f",
+        "--force",
+        help="Overwrites ocr results even if human annotation already exists.",
+        action="store_const",
+        dest="force",
+        const=True,
+        default=False
+    )
     parser.add_argument("image_path",
                         help='Path to the image or folder of images you want to '
                              'extract tables for')
 
     args = parser.parse_args()
     if os.path.isdir(args.image_path):
+        if args.force:
+            print("Warning: forcing is disabled for processing entire folders. Run it"
+                  " in a loop externally if you know what you are doing.")
         image_files = table_annotator.io.list_images(args.image_path)
         for image_file in tqdm.tqdm(image_files):
             table_ocr(os.path.join(args.image_path, image_file))
     else:
-        table_ocr(args.image_path)
+        table_ocr(args.image_path, args.force)
 
 
 
