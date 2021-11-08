@@ -1,0 +1,27 @@
+::-webkit-scrollbar {
+    -webkit-appearance: none;
+    width: 7px;
+}
+::-webkit-scrollbar-thumb {
+    border-radius: 4px;
+    background-color: rgba(0,0,0,.5);
+    box-shadow: 0 0 1px rgba(255,255,255,.5);
+}
+
+.OverviewApp {
+    margin: 100px auto 100px auto;
+    width: 75%;
+    text-align: center;
+}
+
+.linkHeader {
+    font-size: 18px;
+}
+
+.linkBox {
+    margin: 0px auto 100px auto;
+    width: 100%;
+    height: 250px;
+    text-align: center;
+    border: solid black;
+}

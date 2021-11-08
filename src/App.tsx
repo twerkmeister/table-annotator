@@ -4,7 +4,7 @@ import { GlobalHotKeys } from "react-hotkeys";
 import axios from 'axios';
 import {getPathParts} from './path';
 import './App.css';
-
+import {Point, Rectangle, Image} from './types'
 
 const keyMap = {
     PREVIOUS_IMAGE: "a",
@@ -17,11 +17,6 @@ const keyMap = {
     R: "r",
     F: "f"
 };
-
-type Point = {
-    x: number,
-    y: number
-}
 
 function subtractPoints(p: Point, p2: Point): Point {
     return {x: p.x - p2.x, y: p.y - p2.y}
@@ -42,20 +37,6 @@ function rotatePoint(p: Point, degrees: number, rotationCenter: Point = {x: 0, y
         y: translated.x * sinAngle + translated.y * cosAngle
     }
     return addPoints(rotated, rotationCenter)
-}
-
-type Rectangle = {
-    topLeft: Point,
-    bottomRight: Point
-}
-
-type Image = {
-    src: string,
-    width: number,
-    height: number,
-    center: Point,
-    name: string,
-    finished: boolean
 }
 
 type UnfinishedTable = {

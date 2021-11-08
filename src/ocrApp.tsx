@@ -4,21 +4,11 @@ import { GlobalHotKeys } from "react-hotkeys";
 import axios from 'axios';
 import {getPathParts} from './path';
 import './ocrApp.css';
+import {OCRDataPoint} from './types';
 
 const num_per_session = 100
 const only_new = true
 const DO_ANNOTATE = true
-
-type OCRDataPoint = {
-    image_name: string
-    table_idx: string
-    cell_id: string
-    ocr_text: string
-    human_text: string | null
-    image_path: string
-    image_width: number
-    image_height: number
-}
 
 type OCRFixerState = {
     ocrDataPoints?: OCRDataPoint[]
@@ -58,7 +48,7 @@ function OCRApp() {
     })
     if(typeof(ocrDataPoints) != "undefined" && ocrDataPoints.length > 0) {
         return (
-            <div className="App">
+            <div className="OCRApp">
                 {
                     ocrDataPoints.map((dataPoint, i) => {
                         return (<OCRFixItem key={i} idx={i} dataPoint={dataPoint}/>)
