@@ -87,8 +87,8 @@ function OCRFixItem(props: {idx: number, dataPoint: OCRDataPoint}) {
     return (
         <div className="OCRFixItem">
             <div className="CellImageContainer">
-                <img className="CellImage" src={props.dataPoint.image_path} width={props.dataPoint.image_width}
-                     height={props.dataPoint.image_height} alt={`cell at ${props.dataPoint.image_path}`}/>
+                <img className="CellImage" src={props.dataPoint.external_image_path} width={props.dataPoint.image_width}
+                     height={props.dataPoint.image_height} alt={`cell at ${props.dataPoint.external_image_path}`}/>
             </div>
             <div className="OCRInputContainer">
                 <textarea className="OCRInput" cols={100}

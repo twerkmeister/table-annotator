@@ -6,7 +6,7 @@ export type OCRDataPoint = {
     cell_id: string
     ocr_text: string
     human_text: string | null
-    image_path: string
+    external_image_path: string
     image_width: number
     image_height: number
 }

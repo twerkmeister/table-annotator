@@ -26,7 +26,8 @@ def collect_ocr_data_points(workdir: Text) -> List[OCRDataPoint]:
                 OCRDataPoint(image_name=image_name, table_idx=table_idx,
                              cell_id=cell_id, ocr_text=cell.ocr_text,
                              human_text=cell.human_text,
-                             image_path=external_image_path,
+                             image_path=cell_image_path,
+                             external_image_path=external_image_path,
                              image_width=image_width,
                              image_height=image_height)
             )

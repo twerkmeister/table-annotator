@@ -50,6 +50,7 @@ class OCRDataPoint(BaseModel):
     ocr_text: Text
     human_text: Optional[Text]
     image_path: Text
+    external_image_path: Text
     image_width: int
     image_height: int
 
