@@ -24,6 +24,8 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
     @app.route('/<subdir>/images')
     def list_images(subdir: Text):
         workdir = get_workdir(subdir)
+        if not os.path.isdir(workdir):
+            return {"images": []}
         image_names = table_annotator.io.list_images(workdir)
         images_with_metadata = []
         for image_name in image_names:
