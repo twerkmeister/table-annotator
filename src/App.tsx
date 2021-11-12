@@ -15,7 +15,9 @@ const keyMap = {
     ZERO: "0",
     BACKSPACE_OR_DELETE: ["Backspace", "Delete"],
     R: "r",
-    F: "f"
+    F: "f",
+    UP: "shift+w",
+    DOWN: "shift+s"
 };
 
 function subtractPoints(p: Point, p2: Point): Point {
@@ -108,6 +110,7 @@ type AnnotatorState = {
     deleteRow: () => void
     acceptRowGuess: () => void
     toggleImageStatus: () => void
+    adjustRowGuess: (change: number) => void
 }
 
 
@@ -332,6 +335,19 @@ const useStore = create<AnnotatorState>((set, get) => ({
         const newTable = {...table, rows: newRows}
         const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable+1)]
         set({tables: newTables, tableDeletionMarkCount: 0})
+    },
+    adjustRowGuess: (change: number) => {
+        const newRowGuesses = get().newRowGuesses
+        const selectedTable = get().selectedTable
+        if(typeof(newRowGuesses) === "undefined" ||
+            typeof(selectedTable) === "undefined") return
+        const currentRowGuess = newRowGuesses[selectedTable]
+        if (typeof(currentRowGuess) === "undefined" ||
+            currentRowGuess=== null) return
+
+        const adjustedRowGuesses = [...newRowGuesses.slice(0, selectedTable),
+            currentRowGuess + change, ...newRowGuesses.slice(selectedTable+1)]
+        set({newRowGuesses: adjustedRowGuesses})
     }
 }))
 
@@ -372,6 +388,7 @@ function App() {
     const selectedRow = useStore(state => state.selectedRow)
     const cancelActions = useStore(state => state.cancelActions)
     const acceptRowGuess = useStore(state => state.acceptRowGuess)
+    const adjustRowGuess = useStore(state => state.adjustRowGuess)
     const toggleImageStatus = useStore(state => state.toggleImageStatus)
 
     useEffect(() => {
@@ -405,7 +422,9 @@ function App() {
         ESC: cancelActions,
         BACKSPACE_OR_DELETE: deleteFunc,
         R: acceptRowGuess,
-        F: toggleImageStatus
+        F: toggleImageStatus,
+        UP: () => adjustRowGuess(-1),
+        DOWN: () => adjustRowGuess(1)
     }
 
     if(typeof(images) != "undefined" && images.length > 0) {
