@@ -11,16 +11,48 @@ from table_annotator.types import Rectangle, Point, Table
 BORDER_OFFSET = 5
 ROW_COLUMN_WIDTH = 3
 
+T = TypeVar('T')
+A = TypeVar('A')
+B = TypeVar('B')
+
+CellGrid = List[List[T]]
+
+
+def apply_to_cells(f: Callable[[A], B],
+                   cells:  CellGrid[A]) -> CellGrid[B]:
+    """Applies a function f to all cell images and returns the resulting cell images."""
+    return [[f(cell) for cell in row] for row in cells]
+
 
 def get_dimensions(image: np.ndarray) -> Tuple[int, int]:
     """Returns the width and height of the given image on disc."""
     return image.shape[1], image.shape[0]
 
 
+def join_grid(cell_image_grid: CellGrid[np.ndarray]) -> np.ndarray:
+    """Joins the images of the cells together."""
+    row_images = []
+    for row in cell_image_grid:
+        row_images.append(
+            np.concatenate(row, axis=1)
+        )
+    return np.concatenate(row_images, axis=0)
+
+
+def take_rows(cell_grid: CellGrid[A], rows: List[int]) -> CellGrid[A]:
+    """Extracts rows of the CellGrid and returns a new CellGrid."""
+    return [cell_grid[r] for r in rows]
+
+
+def take_columns(cell_grid: CellGrid[A], columns: List[int]) -> CellGrid[A]:
+    """Extracts columns of the CellGrid and returns a new CellGrid."""
+    return [[cell_grid[r][c] for c in columns] for r in range(len(cell_grid))]
+
+
 def crop(image: np.ndarray, rect: Rectangle) -> np.ndarray:
     """Extracts a rectangular part from the image."""
     return image[max(rect.topLeft.y, 0):max(rect.bottomRight.y, 0),
-           max(rect.topLeft.x, 0):max(rect.bottomRight.x, 0)]
+                 max(rect.topLeft.x, 0):max(rect.bottomRight.x, 0)]
 
 
 def rotate(image: np.ndarray, degrees: float) -> np.ndarray:
@@ -28,38 +60,40 @@ def rotate(image: np.ndarray, degrees: float) -> np.ndarray:
     return ndimage.rotate(image, degrees, reshape=False, order=0)
 
 
-def extract_table(image: np.ndarray, table: Table) -> np.ndarray:
+def extract_table_image(image: np.ndarray, table: Table) -> np.ndarray:
     """Extracts the image part relating to the given table."""
     image_rotated_for_table = rotate(image, - table.rotationDegrees)
     offset = Point(x=BORDER_OFFSET, y=BORDER_OFFSET)
     return crop(image_rotated_for_table, table.outline.translate(offset))
 
 
-def get_cell_grid(table: Table) -> List[List[Rectangle]]:
+def get_cell_grid(table: Table) -> CellGrid[Rectangle]:
     """Turns the columns and rows of a table into cell rectangles."""
-    cells = []
+    cells: List[List[Rectangle]] = []
     rows = [0] + table.rows + [table.outline.height()]
     columns = [0] + table.columns + [table.outline.width()]
     for r_i in range(len(rows) - 1):
-        cells.append([])
+        row_cells = []
         for c_i in range(len(columns) - 1):
             top_left = Point(x=columns[c_i],
                              y=rows[r_i])
             bottom_right = Point(x=columns[c_i + 1],
                                  y=rows[r_i + 1])
-            cells[-1].append(Rectangle(topLeft=top_left, bottomRight=bottom_right))
+            row_cells.append(Rectangle(topLeft=top_left, bottomRight=bottom_right))
+        cells.append(row_cells)
     return cells
 
 
-def get_cell_image_grid(image: np.ndarray, table: Table) -> List[List[np.ndarray]]:
+def get_cell_image_grid(image: np.ndarray, table: Table) -> CellGrid[np.ndarray]:
     """Extracts cells as separate images."""
-    table_image = extract_table(image, table)
+    table_image = extract_table_image(image, table)
     cell_grid = get_cell_grid(table)
     cell_image_grid = []
     for row in cell_grid:
-        cell_image_grid.append([])
+        row_cells = []
         for cell in row:
-            cell_image_grid[-1].append(crop(table_image, cell))
+            row_cells.append(crop(table_image, cell))
+        cell_image_grid.append(row_cells)
     return cell_image_grid
 
 
@@ -89,16 +123,6 @@ def remove_small_contours(image: np.ndarray) -> np.ndarray:
 
     cv2.drawContours(mask, too_small_contours, -1, 255, -1)
     return image + mask
-
-
-T = TypeVar('T')
-C = TypeVar('C')
-
-
-def apply_to_cells(f: Callable[[C], T],
-                   cells:  List[List[C]]) -> List[List[T]]:
-    """Applies a function f to all cell images and returns the resulting cell images."""
-    return [[f(cell) for cell in row] for row in cells]
 
 
 @functools.lru_cache(maxsize=1000)
