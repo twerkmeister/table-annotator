@@ -41,12 +41,13 @@ def join_grid(cell_image_grid: CellGrid[np.ndarray]) -> np.ndarray:
 
 def take_rows(cell_grid: CellGrid[A], rows: List[int]) -> CellGrid[A]:
     """Extracts rows of the CellGrid and returns a new CellGrid."""
-    return [cell_grid[r] for r in rows]
+    return [cell_grid[r] for r in rows if 0 <= r < len(cell_grid)]
 
 
 def take_columns(cell_grid: CellGrid[A], columns: List[int]) -> CellGrid[A]:
     """Extracts columns of the CellGrid and returns a new CellGrid."""
-    return [[cell_grid[r][c] for c in columns] for r in range(len(cell_grid))]
+    return [[cell_grid[r][c] for c in columns if 0 <= c < len(cell_grid[r])]
+            for r in range(len(cell_grid))]
 
 
 def crop(image: np.ndarray, rect: Rectangle) -> np.ndarray:

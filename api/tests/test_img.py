@@ -99,7 +99,7 @@ def test_take_rows() -> None:
     cell_grid = table_annotator.img.get_cell_grid(table)
 
     assert len(cell_grid) == len(table.rows) + 1
-    reduced_cell_grid = table_annotator.img.take_rows(cell_grid, [0, 3])
+    reduced_cell_grid = table_annotator.img.take_rows(cell_grid, [-1, 0, 3, 10000])
 
     assert len(reduced_cell_grid) == 2
 
@@ -114,7 +114,7 @@ def test_take_columns() -> None:
     cell_grid = table_annotator.img.get_cell_grid(table)
 
     assert all([len(row) == len(table.columns) + 1 for row in cell_grid])
-    reduced_cell_grid = table_annotator.img.take_columns(cell_grid, [0, 2])
+    reduced_cell_grid = table_annotator.img.take_columns(cell_grid, [-1, 0, 2, 500])
 
     assert all([len(row) == 2 for row in reduced_cell_grid])
 
