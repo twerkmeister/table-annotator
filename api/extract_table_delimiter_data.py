@@ -1,21 +1,22 @@
 import argparse
 import os
 from typing import Text, Callable, List
-
-import cv2
+import random
+# import cv2
+# import numpy as np
 
 import table_annotator.io
 import table_annotator.img
 
 
-def total_height(height: int) -> Callable[[int, List[int]], int]:
-    def internal(r_i: int, row_px_delimiters: List[int]) -> int:
-        return row_px_delimiters[r_i] + height
+def pixel_based_height(height: int) -> Callable[[int, int, List[int]], int]:
+    def internal(r_i: int, jitter: int, row_px_delimiters: List[int]) -> int:
+        return row_px_delimiters[r_i] + height + jitter
     return internal
 
 
-def line_based_height(lines: int) -> Callable[[int, List[int]], int]:
-    def internal(r_i: int, row_px_delimiters: List[int]) -> int:
+def line_based_height(lines: int) -> Callable[[int, int, List[int]], int]:
+    def internal(r_i: int, jitter: int, row_px_delimiters: List[int]) -> int:
         target_line = min(r_i + lines, len(row_px_delimiters) - 1)
         return row_px_delimiters[target_line]
     return internal
@@ -36,9 +37,8 @@ def extract_table_delimiter_data(data_path: Text, target_path: Text) -> None:
     os.makedirs(target_path, exist_ok=True)
 
     height_functions = [
-        total_height(300),
-        total_height(200),
-        total_height(100),
+        pixel_based_height(300),
+        pixel_based_height(200),
         line_based_height(1),
         line_based_height(2),
         line_based_height(3),
@@ -56,11 +56,17 @@ def extract_table_delimiter_data(data_path: Text, target_path: Text) -> None:
 
             for r_i, row_task_px_start in enumerate(row_px_delimiters[:-1]):
                 for h_i, height_func in enumerate(height_functions):
-                    row_task_px_end = height_func(r_i, row_px_delimiters)
+                    if r_i == 0:
+                        jitter = 0
+                    else:
+                        jitter = random.randint(-4, 6)
 
-                    row_task_image = table_image[row_task_px_start:row_task_px_end]
+                    row_task_px_start_tmp = row_task_px_start + jitter
+                    row_task_px_end = height_func(r_i, jitter, row_px_delimiters)
 
-                    regression_target = row_px_delimiters[r_i+1] - row_task_px_start
+                    row_task_image = table_image[row_task_px_start_tmp:row_task_px_end]
+
+                    regression_target = row_px_delimiters[r_i+1] - row_task_px_start_tmp
 
                     if regression_target >= row_task_image.shape[0] or \
                             r_i == len(row_px_delimiters) - 2:
@@ -69,7 +75,8 @@ def extract_table_delimiter_data(data_path: Text, target_path: Text) -> None:
                     decision_target = int(bool(regression_target))
 
                     row_task_targets = [regression_target,
-                                        decision_target]
+                                        decision_target,
+                                        jitter]
 
                     row_task_identifier = f"{table_identifier}_r{r_i:03d}_h{h_i:02d}"
                     tasks.append((row_task_identifier, row_task_targets, row_task_image))
@@ -79,11 +86,12 @@ def extract_table_delimiter_data(data_path: Text, target_path: Text) -> None:
                 if row_task_image.tobytes() in written_images:
                     continue
 
+                # row_task_image = np.copy(row_task_image)
                 # cv2.line(row_task_image,
                 #          (0, row_task_targets[0]),
                 #          (row_task_image.shape[1], row_task_targets[0]),
                 #          (0, 255, 0),
-                #          thickness=3)
+                #          thickness=1)
 
                 row_task_image_path = os.path.join(target_path,
                                                    f"{row_task_identifier}.jpg")
