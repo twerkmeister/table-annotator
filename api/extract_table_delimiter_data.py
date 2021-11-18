@@ -2,8 +2,8 @@ import argparse
 import os
 from typing import Text, Callable, List
 import random
-import cv2
-import numpy as np
+# import cv2
+# import numpy as np
 
 import table_annotator.io
 import table_annotator.img
@@ -93,8 +93,7 @@ def extract_table_delimiter_data(data_path: Text, target_path: Text) -> None:
                         decision_target = int(bool(regression_target))
 
                         row_task_targets = [regression_target,
-                                            decision_target,
-                                            jitter]
+                                            decision_target]
 
                         row_task_identifier = \
                             f"{table_identifier}_r{r_i:03d}_cm{c_i+1:02d}_h{h_i:02d}"
@@ -106,12 +105,12 @@ def extract_table_delimiter_data(data_path: Text, target_path: Text) -> None:
                 if row_task_image.tobytes() in written_images:
                     continue
 
-                row_task_image = np.copy(row_task_image)
-                cv2.line(row_task_image,
-                         (0, row_task_targets[0]),
-                         (row_task_image.shape[1], row_task_targets[0]),
-                         (0, 255, 0),
-                         thickness=1)
+                # row_task_image = np.copy(row_task_image)
+                # cv2.line(row_task_image,
+                #          (0, row_task_targets[0]),
+                #          (row_task_image.shape[1], row_task_targets[0]),
+                #          (0, 255, 0),
+                #          thickness=1)
 
                 row_task_image_path = os.path.join(target_path,
                                                    f"{row_task_identifier}.jpg")
