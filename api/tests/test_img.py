@@ -107,6 +107,21 @@ def test_take_rows() -> None:
     assert cell_grid[3] == reduced_cell_grid[1]
 
 
+def test_drop_rows() -> None:
+    table_json_path = "test_data/01/0100_5312606_1.json"
+
+    table = table_annotator.io.read_tables(table_json_path)[0]
+    cell_grid = table_annotator.img.get_cell_grid(table)
+
+    assert len(cell_grid) == len(table.rows) + 1
+    reduced_cell_grid = table_annotator.img.drop_rows(cell_grid, [-1, 0, 3, 10000])
+
+    assert len(reduced_cell_grid) == len(cell_grid) - 2
+
+    assert cell_grid[1] == reduced_cell_grid[0]
+    assert cell_grid[5] == reduced_cell_grid[3]
+
+
 def test_take_columns() -> None:
     table_json_path = "test_data/01/0100_5312606_1.json"
 
@@ -124,4 +139,21 @@ def test_take_columns() -> None:
                 for row_i in range(len(cell_grid))])
 
     assert all([cell_grid[row_i][2] == reduced_cell_grid[row_i][1]
+                for row_i in range(len(cell_grid))])
+
+
+def test_drop_columns() -> None:
+    table_json_path = "test_data/01/0100_5312606_1.json"
+
+    table = table_annotator.io.read_tables(table_json_path)[0]
+    cell_grid = table_annotator.img.get_cell_grid(table)
+
+    assert all([len(row) == len(table.columns) + 1 for row in cell_grid])
+    reduced_cell_grid = table_annotator.img.drop_columns(cell_grid, [-1, 0, 2, 500])
+
+    assert all([len(row) == len(table.columns) + 1 - 2 for row in reduced_cell_grid])
+
+    assert cell_grid[0] != reduced_cell_grid[0]
+
+    assert all([cell_grid[row_i][1] == reduced_cell_grid[row_i][0]
                 for row_i in range(len(cell_grid))])

@@ -39,6 +39,23 @@ def join_grid(cell_image_grid: CellGrid[np.ndarray]) -> np.ndarray:
     return np.concatenate(row_images, axis=0)
 
 
+def drop_rows(cell_grid: CellGrid[A], rows: List[int]) -> CellGrid[A]:
+    """Extracts rows of the CellGrid and returns a new CellGrid."""
+    grid_rows = set(range(len(cell_grid)))
+    remaining_grid_rows = sorted(list(grid_rows - set(rows)))
+    return take_rows(cell_grid, remaining_grid_rows)
+
+
+def drop_columns(cell_grid: CellGrid[A], columns: List[int]) -> CellGrid[A]:
+    """Extracts rows of the CellGrid and returns a new CellGrid."""
+    if len(cell_grid) == 0:
+        return cell_grid
+
+    grid_columns = set(range(len(cell_grid[0])))
+    remaining_grid_columns = sorted(list(grid_columns - set(columns)))
+    return take_columns(cell_grid, remaining_grid_columns)
+
+
 def take_rows(cell_grid: CellGrid[A], rows: List[int]) -> CellGrid[A]:
     """Extracts rows of the CellGrid and returns a new CellGrid."""
     return [cell_grid[r] for r in rows if 0 <= r < len(cell_grid)]
