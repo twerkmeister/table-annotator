@@ -161,8 +161,10 @@ const useStore = create<AnnotatorState>((set, get) => ({
         const newImages = [...images.slice(0,currentImageIndex), newImage, ...images.slice(currentImageIndex+1)]
 
         const subdir = getPathParts().subdir
-        axios.put(`/${subdir}/image/${newImage.name}/status`, {finished: newImage.finished})
-        axios.post(`/${subdir}/image/${newImage.name}/segment`, {})
+        await axios.put(`/${subdir}/image/${newImage.name}/status`, {finished: newImage.finished})
+        if(newImage.finished) {
+            axios.post(`/${subdir}/image/${newImage.name}/segment`, {})
+        }
 
         set({images: newImages})
 
