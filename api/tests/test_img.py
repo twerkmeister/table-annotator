@@ -157,3 +157,24 @@ def test_drop_columns() -> None:
 
     assert all([cell_grid[row_i][1] == reduced_cell_grid[row_i][0]
                 for row_i in range(len(cell_grid))])
+
+
+def test_cell_grid_to_list() -> None:
+    table_json_path = "test_data/01/0100_5312606_1.json"
+
+    table = table_annotator.io.read_tables(table_json_path)[0]
+    cell_grid = table_annotator.img.get_cell_grid(table)
+
+    num_cells = sum([len(row) for row in cell_grid])
+
+    cells, mapping = table_annotator.img.cell_grid_to_list(cell_grid)
+
+    assert len(cells) == len(mapping)
+    assert len(cells) == num_cells
+    assert cells[0] == cell_grid[0][0]
+    assert cells[-1] == cell_grid[-1][-1]
+
+    rebuild_cell_grid = table_annotator.img.list_to_cell_grid(cells, mapping)
+
+    assert rebuild_cell_grid == cell_grid
+

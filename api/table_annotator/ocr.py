@@ -6,7 +6,6 @@ from table_annotator.types import OCRDataPoint
 import table_annotator.io
 import table_annotator.img
 
-
 def collect_ocr_data_points(workdir: Text) -> List[OCRDataPoint]:
     """Traverses a data dir and collects the ocr data points."""
     data_points = []

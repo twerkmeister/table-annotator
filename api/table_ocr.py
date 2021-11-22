@@ -2,18 +2,24 @@ import argparse
 from typing import Text
 import os
 import shutil
-import functools
-import numpy as np
 import tqdm
+import cv2
+
 
 import table_annotator.img
 import table_annotator.io
+import table_annotator.ocr
 from table_annotator.types import CellContent, TableContent
+
+from calamari_ocr.ocr.predict.predictor import Predictor, PredictorParams
 
 
 def table_ocr(image_path: Text, force_overwrite: bool = False):
+    ocr_model = Predictor.from_checkpoint(
+        params=PredictorParams(),
+        checkpoint='/Users/thomas/workspace/aroa/calamari_models/2021-11-22_all-data.ckpt')
+
     image = table_annotator.io.read_image(image_path)
-    image_dpi = table_annotator.io.get_image_dpi(image_path)
     tables = table_annotator.io.read_tables_for_image(image_path)
 
     print(f"Started table ocr for {image_path}")
@@ -46,56 +52,29 @@ def table_ocr(image_path: Text, force_overwrite: bool = False):
         os.makedirs(output_folder_name, exist_ok=True)
         os.makedirs(debug_folder_name, exist_ok=True)
 
-        cell_images = table_annotator.img.get_cell_image_grid(image, t)
+        cell_image_grid = table_annotator.img.get_cell_image_grid(image, t)
 
-        # pipeline
-        binarized_cell_images = table_annotator.img.apply_to_cells(
-            table_annotator.img.binarize, cell_images
-        )
-        cleaned_cell_images = table_annotator.img.apply_to_cells(
-            table_annotator.img.remove_small_contours, binarized_cell_images
-        )
-        padded_cell_images = table_annotator.img.apply_to_cells(
-            functools.partial(np.pad, pad_width=20, constant_values=255),
-            cleaned_cell_images
-        )
+        cell_images_list, mapping = \
+            table_annotator.img.cell_grid_to_list(cell_image_grid)
+        cell_images_list = [cv2.cvtColor(cell_image, cv2.COLOR_BGR2GRAY)
+                            for cell_image in cell_images_list]
+        predictions = [sample.outputs.sentence
+                       for sample
+                       in ocr_model.predict_raw(cell_images_list)]
 
-        # (disabled for now as it takes a long time with little benefit)
-        # ocr_results = table_annotator.img.apply_to_cells(
-        #     functools.partial(table_annotator.img.cell_image_to_text, dpi=image_dpi),
-        #     padded_cell_images
-        # )
-
-        ocr_results = table_annotator.img.apply_to_cells(
-            lambda x: "", padded_cell_images
-        )
+        ocr_results = table_annotator.img.list_to_cell_grid(predictions, mapping)
 
         cell_contents = table_annotator.img.apply_to_cells(
             CellContent.new_from_ocr_result, ocr_results
         )
         table_content = TableContent.from_cells(cell_contents)
 
-        for i in range(len(cell_images)):
-            for j in range(len(cell_images[i])):
+        for i in range(len(cell_image_grid)):
+            for j in range(len(cell_image_grid[i])):
 
                 orig_dest_path = os.path.join(output_folder_name,
                                               f"{i:03d}_{j:03d}.jpg")
-                table_annotator.io.write_image(orig_dest_path, cell_images[i][j])
-
-                binarized_dest_path = os.path.join(debug_folder_name,
-                                                   f"{i:03d}_{j:03d}_binarized.jpg")
-                table_annotator.io.write_image(binarized_dest_path,
-                                               binarized_cell_images[i][j])
-
-                cleaned_dest_path = os.path.join(debug_folder_name,
-                                                 f"{i:03d}_{j:03d}_cleaned.jpg")
-                table_annotator.io.write_image(cleaned_dest_path,
-                                               cleaned_cell_images[i][j])
-
-                padded_dest_path = os.path.join(debug_folder_name,
-                                                 f"{i:03d}_{j:03d}_padded.jpg")
-                table_annotator.io.write_image(padded_dest_path,
-                                               padded_cell_images[i][j])
+                table_annotator.io.write_image(orig_dest_path, cell_image_grid[i][j])
 
         table_annotator.io.write_table_content(ocr_result_path, table_content)
         print(f"finished table ocr for {image_path}")

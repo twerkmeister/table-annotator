@@ -1,5 +1,5 @@
 import functools
-from typing import Tuple, List, Optional, Text, Callable, TypeVar
+from typing import Tuple, List, Optional, Text, Callable, TypeVar, Dict
 import numpy as np
 from scipy import ndimage
 import cv2
@@ -16,6 +16,31 @@ A = TypeVar('A')
 B = TypeVar('B')
 
 CellGrid = List[List[T]]
+
+
+def cell_grid_to_list(cell_grid: CellGrid[A]) -> Tuple[List[A],
+                                                       Dict[Tuple[int, int], int]]:
+    """Turns a cell grid to a list and provides a mapping to invert the process."""
+    cells = []
+    mapping = {}
+    for i in range(len(cell_grid)):
+        for j in range(len(cell_grid[i])):
+            mapping[(i, j)] = len(cells)
+            cells.append(cell_grid[i][j])
+    return cells, mapping
+
+
+def list_to_cell_grid(cells: List[A],
+                      mapping: Dict[Tuple[int, int], int]) -> CellGrid[A]:
+    """Turns a list back into a cell grid using the mapping."""
+    cell_grid = []
+    last_i = None
+    for i, j in sorted(list(mapping.keys())):
+        if i != last_i:
+            cell_grid.append([])
+        cell_grid[i].append(cells[mapping[(i, j)]])
+        last_i = i
+    return cell_grid
 
 
 def apply_to_cells(f: Callable[[A], B],
@@ -113,34 +138,6 @@ def get_cell_image_grid(image: np.ndarray, table: Table) -> CellGrid[np.ndarray]
             row_cells.append(crop(table_image, cell))
         cell_image_grid.append(row_cells)
     return cell_image_grid
-
-
-def cell_image_to_text(cell_image: np.ndarray, dpi: int) -> Text:
-    """Uses pytesseract to extract text from binarized image."""
-    whitelist = "abcdefghijklmnopqrstuvwxyz" \
-                "ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
-                ".,():;/-0123456789 "
-    config = f"-l deu --dpi {dpi} -c tessedit_char_whitelist={whitelist}"
-    return pytesseract.image_to_string(cell_image, config=config)
-
-
-def binarize(image: np.ndarray) -> np.ndarray:
-    """Binarize an image."""
-    image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    binarized = cv2.adaptiveThreshold(image_gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                                      cv2.THRESH_BINARY, 31, 10)
-    return binarized
-
-
-def remove_small_contours(image: np.ndarray) -> np.ndarray:
-    """Removes contours that are smaller than the min area size."""
-    contours = cv2.findContours(image, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    too_small_contours = [c for c in contours[0]
-                          if cv2.contourArea(c) <= 20]
-    mask = np.zeros(image.shape, dtype="uint8")
-
-    cv2.drawContours(mask, too_small_contours, -1, 255, -1)
-    return image + mask
 
 
 @functools.lru_cache(maxsize=1000)
