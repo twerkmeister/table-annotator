@@ -12,6 +12,7 @@ import table_annotator.img
 def pixel_based_height(height: int) -> Callable[[int, int, List[int]], int]:
     def internal(r_i: int, jitter: int, row_px_delimiters: List[int]) -> int:
         return row_px_delimiters[r_i] + height + jitter
+
     return internal
 
 
@@ -19,6 +20,7 @@ def line_based_height(lines: int) -> Callable[[int, int, List[int]], int]:
     def internal(r_i: int, jitter: int, row_px_delimiters: List[int]) -> int:
         target_line = min(r_i + lines, len(row_px_delimiters) - 1)
         return row_px_delimiters[target_line]
+
     return internal
 
 
@@ -56,15 +58,18 @@ def extract_table_delimiter_data(data_path: Text, target_path: Text) -> None:
             col_px_delimiters = [0] + table.columns + [table_image.shape[1]]
 
             for r_i, row_task_y_px_start in enumerate(row_px_delimiters[:-1]):
-                for c_i in [-1] + list(range(len(col_px_delimiters)-2)):
+                for c_i in [-1] + list(range(len(col_px_delimiters) - 2)):
                     if c_i == -1:
                         row_task_x_px_start = 0
                         row_task_x_px_end = table_image.shape[1]
                     else:
+                        max_col_width = len(col_px_delimiters) - c_i - 1
                         row_task_x_px_start = col_px_delimiters[c_i]
-                        row_task_x_px_end = col_px_delimiters[c_i+2]
+                        row_task_x_px_end = \
+                            col_px_delimiters[c_i + random.randint(2, max_col_width)]
 
-                    for h_i, height_func in enumerate(height_functions):
+                    for h_i, height_func in \
+                            random.sample(list(enumerate(height_functions)), 1):
                         if r_i == 0:
                             jitter = random.randint(0, 6)
                         else:
@@ -83,7 +88,7 @@ def extract_table_delimiter_data(data_path: Text, target_path: Text) -> None:
                             table_image[row_task_y_px_start_tmp:row_task_y_px_end,
                                         row_task_x_px_start_tmp: row_task_x_px_end_tmp]
 
-                        regression_target = row_px_delimiters[r_i+1] - \
+                        regression_target = row_px_delimiters[r_i + 1] - \
                                             row_task_y_px_start_tmp
 
                         if regression_target >= row_task_image.shape[0] or \
@@ -96,7 +101,7 @@ def extract_table_delimiter_data(data_path: Text, target_path: Text) -> None:
                                             decision_target]
 
                         row_task_identifier = \
-                            f"{table_identifier}_r{r_i:03d}_cm{c_i+1:02d}_h{h_i:02d}"
+                            f"{table_identifier}_r{r_i:03d}_cm{c_i + 1:02d}_h{h_i:02d}"
                         tasks.append((row_task_identifier, row_task_targets,
                                       row_task_image))
 
