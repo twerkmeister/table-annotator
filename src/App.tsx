@@ -363,7 +363,7 @@ const pushTablesToApi = async(state: AnnotatorState, previousState: AnnotatorSta
     if(typeof(image) === "undefined") return
     await axios.post(`http://localhost:5000/${subdir}/tables/${image.name}`, tables)
 
-    const response = await fetch(`http://localhost:5000/${subdir}/next_rows`)
+    const response = await fetch(`http://localhost:5000/${subdir}/tables/${image.name}/next_rows`)
     const newRowGuesses = (await response.json())["next_rows"]
     if(response.status === 200){
         useStore.setState({newRowGuesses})
