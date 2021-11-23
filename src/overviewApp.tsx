@@ -18,13 +18,13 @@ const useStore = create<OverviewAppState>((set, get) => ({
     ocrDataPoints: undefined,
     fetchOCRDataPoints: async () => {
         const subdir = getPathParts().subdir
-        const response = await fetch(`/${subdir}/data_points`)
+        const response = await fetch(`http://localhost:5000/${subdir}/data_points`)
         const ocrDataPoints: OCRDataPoint[] = (await response.json())["data_points"]
         set({ocrDataPoints})
     },
     fetchImages: async () => {
         const subdir = getPathParts().subdir
-        const response = await fetch(`/${subdir}/images`)
+        const response = await fetch(`http://localhost:5000/${subdir}/images`)
         const images = (await response.json())["images"]
         set({images})
     }
@@ -61,9 +61,9 @@ function OverviewApp() {
     return (
         <div className="OverviewApp">
             <LinkHeader text={imagesHeader}/>
-            <LinkBox background={"tables_preview.png"} dst={"tables"}/>
+            <LinkBox background={`${process.env.PUBLIC_URL}/tables_preview.png`} dst={"tables"}/>
             <LinkHeader text={ocrHeader}/>
-            <LinkBox background={"ocr_preview.png"} dst={"ocr"}/>
+            <LinkBox background={`${process.env.PUBLIC_URL}/ocr_preview.png`} dst={"ocr"}/>
 
         </div>
     )
@@ -77,7 +77,7 @@ function LinkHeader(props: {text: string}) {
 
 function LinkBox(props: {dst?: string, background: string}) {
     return (
-        <a href={`${getPathParts().subdir}/${props.dst}`}>
+        <a href={`http://localhost:3000/${getPathParts().subdir}/${props.dst}`}>
             <div className={"linkBox"} style={{background: `center / contain no-repeat url(${props.background})`}}/>
         </a>
     )

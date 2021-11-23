@@ -1,0 +1,25 @@
+version: "3.9"
+services:
+  ocr-server:
+    build: ocr-server/
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./ocr-server/:/app
+  api:
+    build: api/
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./api/:/app
+      - ./api/data:/app/data
+    depends_on:
+      - "ocr-server"
+  frontend:
+    build: .
+    ports:
+      - "3000:3000"
+    depends_on:
+      - "api"
+    volumes:
+      - ./src/:/app/src

@@ -20,7 +20,7 @@ const useStore = create<OCRFixerState>((set, get) => ({
     ocrDataPoints: undefined,
     fetchOCRDataPoints: async () => {
         const subdir = getPathParts().subdir
-        const response = await fetch(`/${subdir}/data_points`)
+        const response = await fetch(`http://localhost:5000/${subdir}/data_points`)
         const ocrDataPoints: OCRDataPoint[] = (await response.json())["data_points"]
         const relevantOCRDataPoints = only_new ? ocrDataPoints.filter(dp => dp.human_text === null) : ocrDataPoints
         set({ocrDataPoints: relevantOCRDataPoints.slice(0, num_per_session)})
@@ -32,7 +32,7 @@ const useStore = create<OCRFixerState>((set, get) => ({
         const updatedOCRDataPoint = {...ocrDataPoints[idx], human_text}
         const updatedOCRDataPoints = [...ocrDataPoints.slice(0, idx), updatedOCRDataPoint,
                                       ...ocrDataPoints.slice(idx + 1)]
-        axios.post(`/${subdir}/data_points`, updatedOCRDataPoint)
+        axios.post(`http://localhost:5000/${subdir}/data_points`, updatedOCRDataPoint)
         set({ocrDataPoints: updatedOCRDataPoints})
     }
 }))
@@ -84,10 +84,12 @@ function OCRFixItem(props: {idx: number, dataPoint: OCRDataPoint}) {
         }
     }
 
+    const subdir = getPathParts().subdir
+
     return (
         <div className="OCRFixItem">
             <div className="CellImageContainer">
-                <img className="CellImage" src={props.dataPoint.external_image_path} width={props.dataPoint.image_width}
+                <img className="CellImage" src={`http://localhost:5000/${subdir}/${props.dataPoint.external_image_path}`} width={props.dataPoint.image_width}
                      height={props.dataPoint.image_height} alt={`cell at ${props.dataPoint.external_image_path}`}/>
             </div>
             <div className="OCRInputContainer">

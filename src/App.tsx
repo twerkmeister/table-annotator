@@ -131,7 +131,7 @@ const useStore = create<AnnotatorState>((set, get) => ({
     tables: [],
     fetchImages: async() => {
         const subdir = getPathParts().subdir
-        const response = await fetch(`/${subdir}/images`)
+        const response = await fetch(`http://localhost:5000/${subdir}/images`)
         const images = (await response.json())["images"]
         set({images, currentImageIndex: 0})
     },
@@ -142,7 +142,7 @@ const useStore = create<AnnotatorState>((set, get) => ({
         if(typeof(image) === "undefined") return
 
         const subdir = getPathParts().subdir
-        const table_response = await fetch(`/${subdir}/tables/${image.name}`)
+        const table_response = await fetch(`http://localhost:5000/${subdir}/tables/${image.name}`)
         const tables = (await table_response.json())["tables"]
         set({ currentImageIndex: idx, rotationDegrees: 0, documentPosition: undefined,
             tables, unfinishedTable: undefined, selectedTable: undefined, selectedRow: undefined,
@@ -161,9 +161,9 @@ const useStore = create<AnnotatorState>((set, get) => ({
         const newImages = [...images.slice(0,currentImageIndex), newImage, ...images.slice(currentImageIndex+1)]
 
         const subdir = getPathParts().subdir
-        await axios.put(`/${subdir}/image/${newImage.name}/status`, {finished: newImage.finished})
+        await axios.put(`http://localhost:5000/${subdir}/image/${newImage.name}/status`, {finished: newImage.finished})
         if(newImage.finished) {
-            axios.post(`/${subdir}/image/${newImage.name}/segment`, {})
+            axios.post(`http://localhost:5000/${subdir}/image/${newImage.name}/segment`, {})
         }
 
         set({images: newImages})
@@ -361,9 +361,9 @@ const pushTablesToApi = async(state: AnnotatorState, previousState: AnnotatorSta
     if(typeof(currentImageIndex) === "undefined" || typeof(images) === "undefined") return
     const image = images[currentImageIndex]
     if(typeof(image) === "undefined") return
-    await axios.post(`/${subdir}/tables/${image.name}`, tables)
+    await axios.post(`http://localhost:5000/${subdir}/tables/${image.name}`, tables)
 
-    const response = await fetch(`/${subdir}/tables/${image.name}/next_rows`)
+    const response = await fetch(`http://localhost:5000/${subdir}/next_rows`)
     const newRowGuesses = (await response.json())["next_rows"]
     if(response.status === 200){
         useStore.setState({newRowGuesses})
@@ -676,7 +676,7 @@ function DocumentImage(image: Image) {
     }
 
     return (
-        <img ref={ref} className="documentImage" src={image.src} width={image.width} height={image.height}
+        <img ref={ref} className="documentImage" src={`http://localhost:5000/${image.src}`} width={image.width} height={image.height}
         style={{transform: `rotate(${rotationDegrees}deg)`}} alt="The document"
              onClick={e => handleClick(e)}/>
     )

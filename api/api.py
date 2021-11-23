@@ -3,6 +3,7 @@ import os
 from multiprocessing import Process
 from flask import Flask, send_from_directory, make_response, request
 from flask.cli import ScriptInfo
+from flask_cors import CORS
 
 import table_annotator.img
 import table_annotator.io
@@ -15,6 +16,7 @@ DATA_PATH = "data_path"
 
 def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data"):
     app = Flask(__name__)
+    CORS(app)
     app.config[DATA_PATH] = data_path
     app.logger.info(f'Starting server serving documents from directory {data_path}')
 
@@ -34,7 +36,7 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
             width, height = table_annotator.img.get_dimensions(image)
             is_finished = table_annotator.io.is_image_locked(image_path)
             center = {"x": width//2, "y": height // 2}
-            images_with_metadata.append({"src": f"image/{image_name}", "width": width,
+            images_with_metadata.append({"src": f"{subdir}/image/{image_name}", "width": width,
                                          "height": height, "center": center,
                                          "name": image_name, "finished": is_finished})
         return {"images": images_with_metadata}

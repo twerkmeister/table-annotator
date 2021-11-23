@@ -1,23 +1,19 @@
 import argparse
 from typing import Text
 import os
+import pickle
 import shutil
 import tqdm
 import cv2
-
+import requests
 
 import table_annotator.img
 import table_annotator.io
 import table_annotator.ocr
 from table_annotator.types import CellContent, TableContent
 
-from calamari_ocr.ocr.predict.predictor import Predictor, PredictorParams
-
 
 def table_ocr(image_path: Text, force_overwrite: bool = False):
-    ocr_model = Predictor.from_checkpoint(
-        params=PredictorParams(),
-        checkpoint='/Users/thomas/workspace/aroa/calamari_models/2021-11-22_all-data.ckpt')
 
     image = table_annotator.io.read_image(image_path)
     tables = table_annotator.io.read_tables_for_image(image_path)
@@ -58,9 +54,13 @@ def table_ocr(image_path: Text, force_overwrite: bool = False):
             table_annotator.img.cell_grid_to_list(cell_image_grid)
         cell_images_list = [cv2.cvtColor(cell_image, cv2.COLOR_BGR2GRAY)
                             for cell_image in cell_images_list]
-        predictions = [sample.outputs.sentence
-                       for sample
-                       in ocr_model.predict_raw(cell_images_list)]
+
+        images_serialized = [image.tolist()
+                             for image in cell_images_list]
+        r = requests.post('http://ocr-server:5001/ocr',
+                          json={"images": images_serialized})
+
+        predictions = r.json()["predictions"]
 
         ocr_results = table_annotator.img.list_to_cell_grid(predictions, mapping)
 

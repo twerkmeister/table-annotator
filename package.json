@@ -22,6 +22,7 @@
   "scripts": {
     "start": "react-scripts start",
     "start-api": "cd api && poetry run flask run --no-debugger",
+    "start-ocr-server": "cd ocr-server && poetry run flask run --no-debugger --port 5001",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
