@@ -1,5 +1,11 @@
 version: "3.9"
 services:
+  segmenting-server:
+    build: segmenting-server/
+    ports:
+      - "5002:5002"
+    volumes:
+      - ./segmenting-server/:/app
   ocr-server:
     build: ocr-server/
     ports:
@@ -15,6 +21,7 @@ services:
       - ./api/data:/app/data
     depends_on:
       - "ocr-server"
+      - "segmenting-server"
   frontend:
     build: .
     ports:

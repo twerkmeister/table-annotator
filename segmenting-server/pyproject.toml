@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "segmenting-server"
+version = "0.1.0"
+description = ""
+authors = ["Thomas Werkmeister <thomas@werkmeister.me>"]
+
+[tool.poetry.dependencies]
+python = ">=3.7,<3.10"
+table-segmenter = {git = "git@github.com:twerkmeister/table-segmenter.git"}
+Flask = "^2.0.2"
+Flask-Cors = "^3.0.10"
+python-dotenv = "^0.19.2"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
