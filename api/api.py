@@ -4,6 +4,8 @@ from multiprocessing import Process
 from flask import Flask, send_from_directory, make_response, request
 from flask.cli import ScriptInfo
 from flask_cors import CORS
+import cv2
+import requests
 
 import table_annotator.img
 import table_annotator.io
@@ -123,6 +125,30 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
                 table_annotator.img.predict_next_row_position(image_path, t))
 
         return {"next_rows": guesses}
+
+    @app.route('/<subdir>/<image_name>/segment_table/<int:table_id>', methods=["GET"])
+    def segment_table(subdir: Text, image_name: Text, table_id: int):
+        workdir = get_workdir(subdir)
+        image_path = os.path.join(workdir, image_name)
+        if not os.path.isfile(image_path):
+            return make_response({"msg": "The image does not exist."}, 404)
+
+        tables = table_annotator.io.read_tables_for_image(image_path)
+
+        if table_id not in set(range(len(tables))):
+            return make_response({"msg": "The table does not exist."}, 404)
+
+        table = tables[table_id]
+        image = table_annotator.io.read_image(image_path)
+        table_image = table_annotator.img.extract_table_image(image, table)
+        table_image_bw = cv2.cvtColor(table_image, cv2.COLOR_BGR2GRAY)
+        r = requests.post('http://segmenting-server:5002/segment',
+                          json={"table_image": table_image_bw.tolist()})
+
+        rows = r.json()["rows"]
+        print(rows) 
+
+        return {"rows": rows}
 
     @app.route('/<subdir>/data_points', methods=["GET"])
     def get_ocr_data_points(subdir: Text):

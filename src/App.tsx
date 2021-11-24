@@ -17,7 +17,8 @@ const keyMap = {
     R: "r",
     F: "f",
     UP: "shift+w",
-    DOWN: "shift+s"
+    DOWN: "shift+s",
+    X: "x"
 };
 
 function subtractPoints(p: Point, p2: Point): Point {
@@ -108,6 +109,7 @@ type AnnotatorState = {
     deleteColumn: () => void
     deleteRow: () => void
     toggleImageStatus: () => void
+    segmentTable: () => void
 }
 
 
@@ -314,6 +316,28 @@ const useStore = create<AnnotatorState>((set, get) => ({
                 set({tables: newTables, tableDeletionMarkCount: 0, selectedRow: undefined})
             }
         }
+    },
+    segmentTable: async () => {
+        const tables = get().tables
+        const selectedTable = get().selectedTable
+        const images = get().images
+        const currentImageIndex = get().currentImageIndex
+        if (typeof (selectedTable) === "undefined" ||
+            typeof (images) === "undefined") return
+        const image = images[currentImageIndex]
+        const table = tables[selectedTable]
+        if (typeof(image) === "undefined" ||
+            typeof(table) === "undefined") return
+
+        if (table.rows.length > 0) return
+        const subdir = getPathParts().subdir
+
+        const response =
+            await fetch(`http://localhost:5000/${subdir}/${image.name}/segment_table/${selectedTable}`)
+        const rows = (await response.json())["rows"]
+
+        const newTables = [...tables.slice(0, selectedTable), {...table, rows}, ...tables.slice(selectedTable + 1)]
+        set({tables: newTables})
     }
 }))
 
@@ -348,6 +372,7 @@ function App() {
     const selectedRow = useStore(state => state.selectedRow)
     const cancelActions = useStore(state => state.cancelActions)
     const toggleImageStatus = useStore(state => state.toggleImageStatus)
+    const segmentTable = useStore(state => state.segmentTable)
 
     useEffect(() => {
         if(typeof(images) === "undefined") {
@@ -380,6 +405,7 @@ function App() {
         ESC: cancelActions,
         BACKSPACE_OR_DELETE: deleteFunc,
         F: toggleImageStatus,
+        X: segmentTable,
     }
 
     if(typeof(images) != "undefined" && images.length > 0) {
