@@ -547,7 +547,7 @@ tqdm = "^4.62.3"
 type = "git"
 url = "git@github.com:twerkmeister/table-segmenter.git"
 reference = "master"
-resolved_reference = "c6ca67e02f5d6868f91b4c66cb3a486c51d838a4"
+resolved_reference = "8e2b348c046a27022ff78c1e9e03688685508e95"
 
 [[package]]
 name = "tensorboard"
