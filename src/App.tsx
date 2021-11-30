@@ -135,7 +135,14 @@ const useStore = create<AnnotatorState>((set, get) => ({
         const subdir = getPathParts().subdir
         const response = await fetch(`http://localhost:5000/${subdir}/images`)
         const images = (await response.json())["images"]
-        set({images, currentImageIndex: 0})
+        if (images.length > 0) {
+            const table_response = await fetch(`http://localhost:5000/${subdir}/tables/${images[0].name}`)
+            const tables = (await table_response.json())["tables"]
+            set({images, tables, currentImageIndex: 0})
+        } else {
+            set({images, currentImageIndex: 0})
+        }
+
     },
     setImageIndex: async(idx: number) => {
         const images = get().images
