@@ -364,15 +364,32 @@ const useStore = create<AnnotatorState>((set, get) => ({
     adjustRowGuess: (change: number) => {
         const newRowGuesses = get().newRowGuesses
         const selectedTable = get().selectedTable
-        if(typeof(newRowGuesses) === "undefined" ||
-            typeof(selectedTable) === "undefined") return
-        const currentRowGuess = newRowGuesses[selectedTable]
-        if (typeof(currentRowGuess) === "undefined" ||
-            currentRowGuess=== null) return
+        const selectedRow = get().selectedRow
+        const tables = get().tables
 
-        const adjustedRowGuesses = [...newRowGuesses.slice(0, selectedTable),
-            currentRowGuess + change, ...newRowGuesses.slice(selectedTable+1)]
-        set({newRowGuesses: adjustedRowGuesses})
+
+        if (typeof(selectedTable) === "undefined") return
+
+        if (typeof(selectedRow) !== "undefined") {
+            const table = tables[selectedTable]
+            if (typeof (table) !== "undefined") {
+                const row = table.rows[selectedRow]
+                if (typeof (row) !== "undefined") {
+                    const newRows = [...table.rows.slice(0, selectedRow), row + change, ...table.rows.slice(selectedRow + 1)]
+                    const newTable = {...table, rows: newRows}
+                    const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
+                    set({tables: newTables})
+                }
+            }
+        } else if (typeof(newRowGuesses) !== "undefined") {
+            const currentRowGuess = newRowGuesses[selectedTable]
+            if (typeof(currentRowGuess) === "undefined" ||
+                currentRowGuess=== null) return
+
+            const adjustedRowGuesses = [...newRowGuesses.slice(0, selectedTable),
+                currentRowGuess + change, ...newRowGuesses.slice(selectedTable+1)]
+            set({newRowGuesses: adjustedRowGuesses})
+        }
     }
 }))
 
