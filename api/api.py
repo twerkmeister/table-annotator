@@ -146,6 +146,7 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
                           json={"table_image": table_image_bw.tolist()})
 
         rows = r.json()["rows"]
+        rows = [r - 2 for r in rows]
 
         return {"rows": rows}
 
