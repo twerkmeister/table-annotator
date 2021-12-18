@@ -142,7 +142,7 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
         image = table_annotator.io.read_image(image_path)
         table_image = table_annotator.img.extract_table_image(image, table)
         table_image_bw = cv2.cvtColor(table_image, cv2.COLOR_BGR2GRAY)
-        r = requests.post('http://segmenting-server:5002/segment',
+        r = requests.post('http://localhost:5002/segment',
                           json={"table_image": table_image_bw.tolist()})
 
         rows = r.json()["rows"]

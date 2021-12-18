@@ -57,7 +57,7 @@ def table_ocr(image_path: Text, force_overwrite: bool = False):
 
         images_serialized = [image.tolist()
                              for image in cell_images_list]
-        r = requests.post('http://ocr-server:5001/ocr',
+        r = requests.post('http://localhost:5001/ocr',
                           json={"images": images_serialized})
 
         predictions = r.json()["predictions"]
