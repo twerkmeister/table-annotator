@@ -6,6 +6,10 @@ import {getPathParts} from './path';
 import './App.css';
 import {Point, Rectangle, Image} from './types'
 
+function flatten<T>(arr: T[][]): T[] {
+    return ([] as T[]).concat(...arr);
+}
+
 const keyMap = {
     PREVIOUS_IMAGE: "a",
     NEXT_IMAGE: "d",
@@ -18,7 +22,10 @@ const keyMap = {
     F: "f",
     UP: "shift+w",
     DOWN: "shift+s",
-    X: "x"
+    LEFT: "shift+a",
+    RIGHT: "shift+d",
+    X: "x",
+    C: "c"
 };
 
 function subtractPoints(p: Point, p2: Point): Point {
@@ -46,6 +53,11 @@ type UnfinishedTable = {
     firstPoint: Point
 }
 
+type CellIndex = {
+    row: number,
+    column: number
+}
+
 function getPageOffset(el: Element): Point {
     const rect = el.getBoundingClientRect()
     const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft
@@ -65,8 +77,21 @@ function calcRectangle(p1: Point, p2: Point): Rectangle {
 function makeTable(p1: Point, p2: Point, rotationDegrees: number): Table {
     const outline = calcRectangle(p1, p2)
     return {
-        outline, rotationDegrees, columns: [], rows: []
+        outline, rotationDegrees, columns: [], rows: [],
     }
+}
+
+function withCellGrid(table: Table): Table {
+    const rows = [0,  ...table.rows, table.outline.bottomRight.y - table.outline.topLeft.y]
+    const columns = [0, ...table.columns, table.outline.bottomRight.x - table.outline.topLeft.x]
+    const cellGrid = rows.slice(0, -1).map((_, r_i) => {
+        return columns.slice(0, -1).map((_, c_i) => {
+            const topLeft = {x: columns[c_i], y: rows[r_i]}
+            const bottomRight = {x: columns[c_i+1], y:rows[r_i+1]}
+            return {topLeft, bottomRight}
+        })
+    })
+    return {...table, cellGrid}
 }
 
 type Table = {
@@ -74,6 +99,7 @@ type Table = {
     rotationDegrees: number,
     columns: number[],
     rows: number[],
+    cellGrid?: Rectangle[][],
 }
 
 type AnnotatorState = {
@@ -82,6 +108,7 @@ type AnnotatorState = {
     selectedTable?: number,
     selectedColumn?: number,
     selectedRow?: number,
+    selectedCellColumnLine?: CellIndex,
     unfinishedTable?: UnfinishedTable,
     newColumnPosition?: number,
     newRowPosition?: number,
@@ -113,6 +140,9 @@ type AnnotatorState = {
     toggleImageStatus: () => void
     segmentTable: () => void
     adjustRowGuess: (change: number) => void
+    addCellGrid: () => void
+    selectCellColumnLine: (row: number, column: number) => void,
+    adjustColumn: (change: number) => void
 }
 
 
@@ -126,6 +156,7 @@ const useStore = create<AnnotatorState>((set, get) => ({
     newColumnPosition: undefined,
     newRowPosition: undefined,
     newRowGuesses: undefined,
+    selectedCellColumnLine: undefined,
     mousePosition: {x: 0, y: 0},
     documentPosition: undefined,
     rotationDegrees: 0,
@@ -155,7 +186,7 @@ const useStore = create<AnnotatorState>((set, get) => ({
         const tables = (await table_response.json())["tables"]
         set({ currentImageIndex: idx, rotationDegrees: 0, documentPosition: undefined,
             tables, unfinishedTable: undefined, selectedTable: undefined, selectedRow: undefined,
-            selectedColumn: undefined, newRowGuesses: undefined})
+            selectedColumn: undefined, newRowGuesses: undefined, selectedCellColumnLine: undefined})
 
     },
     toggleImageStatus: async() => {
@@ -207,7 +238,7 @@ const useStore = create<AnnotatorState>((set, get) => ({
     selectTable: (idx?: number) => {
         set({selectedTable: idx, newColumnPosition: undefined,
             newRowPosition: undefined, tableDeletionMarkCount: 0,
-            selectedColumn: undefined, selectedRow: undefined})
+            selectedColumn: undefined, selectedRow: undefined, selectedCellColumnLine: undefined})
     },
     selectColumn: (idx?: number) => {
         set({selectedColumn: idx, selectedRow: undefined, tableDeletionMarkCount: 0})
@@ -397,6 +428,60 @@ const useStore = create<AnnotatorState>((set, get) => ({
                 currentRowGuess + change, ...newRowGuesses.slice(selectedTable+1)]
             set({newRowGuesses: adjustedRowGuesses})
         }
+    },
+    addCellGrid: () => {
+        const tables = get().tables
+        const selectedTable = get().selectedTable
+        if (typeof (selectedTable) === "undefined" ) return
+
+        const table = tables[selectedTable]
+        if (typeof (table) === "undefined") return
+
+        const tableWithCellGrid = withCellGrid(table)
+        const newTables = [...tables.slice(0, selectedTable), tableWithCellGrid, ...tables.slice(selectedTable+1)]
+        set({tables: newTables, tableDeletionMarkCount: 0, selectedRow: undefined, selectedColumn: undefined})
+    },
+    selectCellColumnLine: (row: number, column: number) => {
+        set({selectedCellColumnLine: {row, column}})
+    },
+    adjustColumn: (change: number) => {
+        const selectedTable = get().selectedTable
+        const selectedColumn = get().selectedColumn
+        const tables = get().tables
+        const selectedColumnLine = get().selectedCellColumnLine
+
+        if (typeof (selectedTable) === "undefined" ) return
+        const table = tables[selectedTable]
+        if (typeof (table) === "undefined") return
+
+        if (typeof(selectedColumn) !== "undefined") {
+            const column = table.columns[selectedColumn]
+            if (typeof (column) !== "undefined") {
+                const newColumns = [...table.columns.slice(0, selectedColumn), column + change,
+                    ...table.columns.slice(selectedColumn + 1)]
+                const newTable = {...table, columns: newColumns}
+                const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
+                set({tables: newTables})
+            }
+        } else if (typeof(selectedColumnLine) !== "undefined" && typeof(table.cellGrid) !== "undefined") {
+            const relevantRow = table.cellGrid[selectedColumnLine.row]
+            if (typeof(relevantRow) === "undefined") return
+            const leftCell = relevantRow[selectedColumnLine.column]
+            const rightCell = relevantRow[selectedColumnLine.column + 1]
+            if (typeof(leftCell) === "undefined" || typeof(rightCell) === "undefined") return
+            const leftCellWidth = leftCell.bottomRight.x - leftCell.topLeft.x
+            const rightCellWidth = rightCell.bottomRight.x - rightCell.topLeft.x
+            if (leftCellWidth + change < 10 || rightCellWidth - change < 10) return
+            const newLeftCell = {...leftCell, bottomRight: {x: leftCell.bottomRight.x + change, y: leftCell.bottomRight.y }}
+            const newRightCell = {...rightCell, topLeft: {x: rightCell.topLeft.x + change, y: rightCell.topLeft.y}}
+            const newCellRow = [...relevantRow.slice(0, selectedColumnLine.column), newLeftCell, newRightCell,
+                                ...relevantRow.slice(selectedColumnLine.column + 2)]
+            const newCellGrid = [...table.cellGrid.slice(0, selectedColumnLine.row), newCellRow,
+                                 ...table.cellGrid.slice(selectedColumnLine.row + 1)]
+            const newTable = {...table, cellGrid: newCellGrid}
+            const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
+            set({tables: newTables})
+        }
     }
 }))
 
@@ -440,6 +525,8 @@ function App() {
     const adjustRowGuess = useStore(state => state.adjustRowGuess)
     const toggleImageStatus = useStore(state => state.toggleImageStatus)
     const segmentTable = useStore(state => state.segmentTable)
+    const addCellGrid = useStore(state => state.addCellGrid)
+    const adjustColumn = useStore(state => state.adjustColumn)
 
     useEffect(() => {
         if(typeof(images) === "undefined") {
@@ -475,7 +562,10 @@ function App() {
         F: toggleImageStatus,
         X: segmentTable,
         UP: () => adjustRowGuess(-1),
-        DOWN: () => adjustRowGuess(1)
+        DOWN: () => adjustRowGuess(1),
+        LEFT: () => adjustColumn(-2),
+        RIGHT: () => adjustColumn(2),
+        C: addCellGrid
     }
 
     if(typeof(images) != "undefined" && images.length > 0) {
@@ -493,7 +583,8 @@ function App() {
                                           tableIdx={i}
                                           tableRotation={t.rotationDegrees}
                                           columns={t.columns}
-                                          rows={t.rows}/>
+                                          rows={t.rows}
+                                          cellGrid={t.cellGrid}/>
                         )
                     })}
                     {typeof(unfinishedTable) != "undefined" ? <StartedTable {...unfinishedTable}
@@ -543,7 +634,8 @@ function StartedTable(props: { firstPoint: Point, imageCenter: Point } ) {
 }
 
 function TableElement(props: {tableTopLeft: Point, tableBottomRight: Point, tableRotation: number,
-                              tableIdx: number, imageCenter: Point, columns: number[], rows: number[]}) {
+                              tableIdx: number, imageCenter: Point, columns: number[], rows: number[],
+                              cellGrid?: Rectangle[][]}) {
     const rotationDegrees = useStore(state => state.rotationDegrees)
     const selectTable = useStore(state => state.selectTable)
     const selectedTable = useStore(state => state.selectedTable)
@@ -556,15 +648,8 @@ function TableElement(props: {tableTopLeft: Point, tableBottomRight: Point, tabl
         selectTable(props.tableIdx)
     }
 
-    return (
-        <div className="table"
-             style={{transform: `rotate(${rotationDegrees - props.tableRotation}deg) translate(${props.tableTopLeft.x}px, ${props.tableTopLeft.y}px)`,
-                     width: `${props.tableBottomRight.x - props.tableTopLeft.x}px`,
-                     height: `${props.tableBottomRight.y - props.tableTopLeft.y}px`,
-                     transformOrigin: `${props.imageCenter.x}px ${props.imageCenter.y}px`,
-                     borderColor: borderColor,
-                     cursor: isSelected ? "default" : "pointer"}}
-             onClick={e => handleClick(e)}>
+    const body = typeof(props.cellGrid) === "undefined" ? (
+        <div>
             {props.columns.map((c, i) => {
                 return (
                     <ColumnLine key={i} idx={i} position={c} parentTableSelected={isSelected}/>
@@ -581,7 +666,60 @@ function TableElement(props: {tableTopLeft: Point, tableBottomRight: Point, tabl
             {isSelected ? <NewRowLine/> : null}
             {isSelected ? <GuessedRowLine tableIdx={props.tableIdx}/> : null}
         </div>
+    ) : (
+        <div>
+            {flatten(props.cellGrid.map((row, row_i) => {
+                return row.map((rect, column_i) => {
+                    return <CellColumnLine row={row_i} column={column_i} parentTableSelected={isSelected}
+                                           height={rect.bottomRight.y - rect.topLeft.y} left={rect.bottomRight.x}
+                                           top={rect.topLeft.y}/>
+                })
+            }))}
+            {flatten(props.cellGrid.map((row, row_i) => {
+                return row.map((rect, column_i) => {
+                    return <CellRowLine width={rect.bottomRight.x - rect.topLeft.x} left={rect.topLeft.x}
+                                           top={rect.bottomRight.y}/>
+                })
+            }))}
+        </div>
     )
+
+
+    return (
+        <div className="table"
+             style={{transform: `rotate(${rotationDegrees - props.tableRotation}deg) translate(${props.tableTopLeft.x}px, ${props.tableTopLeft.y}px)`,
+                     width: `${props.tableBottomRight.x - props.tableTopLeft.x}px`,
+                     height: `${props.tableBottomRight.y - props.tableTopLeft.y}px`,
+                     transformOrigin: `${props.imageCenter.x}px ${props.imageCenter.y}px`,
+                     borderColor: borderColor,
+                     cursor: isSelected ? "default" : "pointer"}}
+             onClick={e => handleClick(e)}>
+            {body}
+        </div>
+    )
+}
+
+function CellColumnLine(props: {row: number, column: number, left: number, top: number, height: number,
+                                parentTableSelected: boolean}) {
+    const selectCellColumnLine = useStore(state => state.selectCellColumnLine)
+    const selectedCellColumnLine = useStore(state => state.selectedCellColumnLine)
+
+    const handleMouseClick = (e: React.MouseEvent<Element, MouseEvent>) => {
+        if(props.parentTableSelected) {
+            selectCellColumnLine(props.row, props.column)
+            e.stopPropagation()
+        }
+    }
+
+    const isSelected = props.parentTableSelected && typeof(selectedCellColumnLine) !== "undefined" && 
+        props.row === selectedCellColumnLine.row && props.column === selectedCellColumnLine.column
+
+    return (<div className="cellColumnLine" onClick={handleMouseClick}
+                 style={{left: `${props.left}px`,
+                     top: `${props.top}px`,
+                     height: `${props.height}px`,
+                     cursor: isSelected ? "default" : "pointer",
+                     background: isSelected ? "blue" : ""}}/>)
 }
 
 function ColumnLine(props: {position: number, idx: number, parentTableSelected: boolean}) {
@@ -603,6 +741,7 @@ function ColumnLine(props: {position: number, idx: number, parentTableSelected: 
                      background: isSelected ? "blue" : ""}}/>)
 }
 
+
 function RowLine(props: {position: number, idx: number, parentTableSelected: boolean}) {
     const selectRow = useStore(state => state.selectRow)
     const selectedRow = useStore(state => state.selectedRow)
@@ -620,6 +759,14 @@ function RowLine(props: {position: number, idx: number, parentTableSelected: boo
                  style={{top: `${props.position}px`,
                      cursor: isSelected ? "default": "pointer",
                      background: isSelected ? "brown" : ""}}/>)
+}
+
+
+function CellRowLine(props: {left: number, top: number, width: number}) {
+    return (<div className="cellRowLine"
+                 style={{top: `${props.top}px`,
+                     left: `${props.left}px`,
+                     width: `${props.width}px`}}/>)
 }
 
 function NewColumnLine() {

@@ -28,6 +28,13 @@
     position: absolute;
 }
 
+.cellColumnLine {
+    border-left: 1px dashed rgba(0, 0, 0, 8);
+    width: 4px;
+    background: rgba(138, 43, 226, 0.3);
+    position: absolute;
+}
+
 .columnSetterSpace {
     position: absolute;
     width: 100%;
@@ -44,6 +51,14 @@
     background: rgba(255, 69, 0, 0.3);
     /*opacity: 0.3;*/
     width: 100%;
+    position: absolute;
+}
+
+.cellRowLine {
+    border-top: 1px dashed rgba(0, 0, 0, 8);
+    height: 3px;
+    background: rgba(255, 69, 0, 0.3);
+    /*opacity: 0.3;*/
     position: absolute;
 }
 
