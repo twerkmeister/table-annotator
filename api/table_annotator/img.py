@@ -6,16 +6,14 @@ import cv2
 import pytesseract
 
 import table_annotator.io
-from table_annotator.types import Rectangle, Point, Table
+from table_annotator.types import Rectangle, Point, Table, CellGrid
 
 BORDER_OFFSET = 5
 ROW_COLUMN_WIDTH = 3
 
-T = TypeVar('T')
 A = TypeVar('A')
 B = TypeVar('B')
 
-CellGrid = List[List[T]]
 
 
 def cell_grid_to_list(cell_grid: CellGrid[A]) -> Tuple[List[A],
@@ -130,9 +128,8 @@ def get_cell_grid(table: Table) -> CellGrid[Rectangle]:
 def get_cell_image_grid(image: np.ndarray, table: Table) -> CellGrid[np.ndarray]:
     """Extracts cells as separate images."""
     table_image = extract_table_image(image, table)
-    cell_grid = get_cell_grid(table)
     cell_image_grid = []
-    for row in cell_grid:
+    for row in table.cellGrid or []:
         row_cells = []
         for cell in row:
             row_cells.append(crop(table_image, cell))

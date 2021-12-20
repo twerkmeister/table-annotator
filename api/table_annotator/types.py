@@ -1,5 +1,9 @@
-from typing import List, Text, Optional, Dict
+from typing import List, Text, Optional, Dict, TypeVar
 from pydantic import BaseModel
+
+
+T = TypeVar('T')
+CellGrid = List[List[T]]
 
 
 class Point(BaseModel):
@@ -32,6 +36,7 @@ class Table(BaseModel):
     rotationDegrees: float
     columns: List[int]
     rows: List[int]
+    cellGrid: Optional[CellGrid[Rectangle]]
 
 
 class CellContent(BaseModel):

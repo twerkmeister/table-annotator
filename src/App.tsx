@@ -489,16 +489,20 @@ const pushTablesToApi = async(state: AnnotatorState, previousState: AnnotatorSta
     if(state.tables === previousState.tables) return
     const subdir = getPathParts().subdir
 
-    const {currentImageIndex, images, tables} = state
-    if(typeof(currentImageIndex) === "undefined" || typeof(images) === "undefined") return
+    const {currentImageIndex, images, tables, selectedTable} = state
+    if(typeof(currentImageIndex) === "undefined" || typeof(images) === "undefined" ||
+        typeof(selectedTable) === "undefined") return
+    const table = tables[selectedTable]
     const image = images[currentImageIndex]
-    if(typeof(image) === "undefined") return
+    if(typeof(image) === "undefined" || typeof(table) === "undefined") return
     await axios.post(`http://localhost:5000/${subdir}/tables/${image.name}`, tables)
 
-    const response = await fetch(`http://localhost:5000/${subdir}/tables/${image.name}/next_rows`)
-    const newRowGuesses = (await response.json())["next_rows"]
-    if(response.status === 200){
-        useStore.setState({newRowGuesses})
+    if (typeof(table.cellGrid) === "undefined") {
+        const response = await fetch(`http://localhost:5000/${subdir}/tables/${image.name}/next_rows`)
+        const newRowGuesses = (await response.json())["next_rows"]
+        if (response.status === 200) {
+            useStore.setState({newRowGuesses})
+        }
     }
 }
 
@@ -563,8 +567,8 @@ function App() {
         X: segmentTable,
         UP: () => adjustRowGuess(-1),
         DOWN: () => adjustRowGuess(1),
-        LEFT: () => adjustColumn(-2),
-        RIGHT: () => adjustColumn(2),
+        LEFT: () => adjustColumn(-10),
+        RIGHT: () => adjustColumn(10),
         C: addCellGrid
     }
 

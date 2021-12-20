@@ -82,7 +82,7 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
 
     @app.route('/<subdir>/tables/<image_name>', methods=["POST"])
     def store_tables(subdir: Text, image_name: Text):
-        """Stores the tables and returns guesses for next rows."""
+        """Stores the tables."""
         workdir = get_workdir(subdir)
         image_path = os.path.join(workdir, image_name)
         if not os.path.isfile(image_path):
@@ -103,8 +103,9 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
                                          "table data does not exist."}, 404)
 
         tables = table_annotator.io.read_tables_for_image(image_path)
+        tables_json = {"tables": [{k: v for k, v in t.dict().items() if v is not None} for t in tables]}
 
-        return {"tables": [t.dict() for t in tables]}
+        return tables_json
 
     @app.route('/<subdir>/tables/<image_name>/next_rows', methods=["GET"])
     def get_prediction_for_next_row(subdir: Text, image_name: Text):
