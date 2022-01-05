@@ -7,6 +7,13 @@ import table_annotator.io
 import table_annotator.img
 
 
+def collect_all_ocr_data_points(main_data_dir: Text) -> List[OCRDataPoint]:
+    """Collects ocr data points from all data dirs."""
+    workdirs = [f"{main_data_dir}/{workdir}" for workdir in os.listdir(main_data_dir)]
+    data_points = [collect_ocr_data_points(workdir) for workdir in workdirs]
+    return [point for sublist in data_points for point in sublist]
+
+
 def collect_ocr_data_points(workdir: Text) -> List[OCRDataPoint]:
     """Traverses a data dir and collects the ocr data points."""
     data_points = []
