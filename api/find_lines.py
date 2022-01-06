@@ -77,10 +77,7 @@ def find_lines(image: np.ndarray) -> List[np.ndarray]:
         np.sum(np.square(np.diff(image_inverted, axis=1)), axis=1)
     image_squeezed = image_squeezed + image_horizontal_squared_diffs
     gaussian_window = scipy.signal.windows.gaussian(window_size, 5)
-    smaller_gaussian_window = scipy.signal.windows.gaussian(window_size//2, 2.5)
-    # dual_gaussian_window = np.concatenate([smaller_gaussian_window, smaller_gaussian_window])
-    values = np.convolve(image_horizontal_squared_diffs, gaussian_window, 'same')
-    # values += np.convolve(image_squeezed, dual_gaussian_window, 'same')
+    values = np.convolve(image_squeezed, gaussian_window, 'same')
     value_diffs = np.diff(values)
     diff_signs = np.sign(value_diffs)
     sign_diffs = np.diff(diff_signs)
