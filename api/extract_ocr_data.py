@@ -7,8 +7,7 @@ import table_annotator.io
 import find_lines
 
 
-def extract_ocr_data(data_path: Text, target_path: Text,
-                     use_empty_sign: bool, apply_blur: bool = False) -> None:
+def extract_ocr_data(data_path: Text, target_path: Text) -> None:
     """Extracts ocr data points to a simpler file format."""
     data_points = table_annotator.ocr.collect_ocr_data_points(data_path)
     if len(data_points) == 0:
@@ -44,13 +43,11 @@ def extract_ocr_data(data_path: Text, target_path: Text,
 
             image_file = os.path.join(target_path, f"{target_identifier}.jpg")
             image_adjusted = cv2.cvtColor(line_image, cv2.COLOR_BGR2GRAY)
-            if apply_blur:
-                image_adjusted = cv2.medianBlur(image_adjusted, 3)
             table_annotator.io.write_image(image_file, image_adjusted)
 
             groundtruth_file = os.path.join(target_path, f"{target_identifier}.gt.txt")
             with open(groundtruth_file, mode="w", encoding="utf-8") as gtf:
-                if use_empty_sign and text == "":
+                if text == "":
                     gtf.write("␢")  # empty sign
                 else:
                     gtf.write(text)
@@ -71,14 +68,5 @@ if __name__ == "__main__":
                         help='Path to the folder where you want to store the extracted '
                              'data')
 
-    parser.add_argument("-e", "--empty", action="store_true", default=False,
-                        dest="use_empty_sign", help="Whether to use the empty sign ␢"
-                                                    "for empty ocr files. ")
-
-    parser.add_argument("-b", "--blur", action="store_true", default=False,
-                        dest="apply_blur", help="Whether to apply blurring "
-                                                "to the image.")
-
     args = parser.parse_args()
-    extract_ocr_data(args.data_path, args.target_path,
-                     args.use_empty_sign, args.apply_blur)
+    extract_ocr_data(args.data_path, args.target_path)
