@@ -36,7 +36,7 @@ def create_app(script_info: Optional[ScriptInfo] = None):
         return {"predictions": merged_predictions}
 
     @app.route('/plain-ocr', methods=["POST"])
-    def ocr():
+    def plain_ocr():
         images = [np.array(img, dtype="uint8") for img in request.json["images"]]
 
         predictions = [sample.outputs.sentence
