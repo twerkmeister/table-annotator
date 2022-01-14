@@ -62,13 +62,13 @@ def table_ocr(image_path: Text, force_overwrite: bool = False):
 
         predictions: List[Text] = r.json()["predictions"]
 
-        predictions_without_empty_lines = [
-            prediction.replace("␢\n", "").replace("\n␢", "")
-            for prediction in predictions
-        ]
+        # predictions_without_empty_lines = [
+        #     prediction.replace("␢\n", "").replace("\n␢", "")
+        #     for prediction in predictions
+        # ]
 
         ocr_results = table_annotator.img.list_to_cell_grid(
-            predictions_without_empty_lines, mapping)
+            predictions, mapping)
 
         cell_contents = table_annotator.img.apply_to_cells(
             CellContent.new_from_ocr_result, ocr_results
