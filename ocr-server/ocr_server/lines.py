@@ -7,8 +7,7 @@ import scipy.signal
 
 def find_line(image: np.ndarray, window_size: int = 30) -> np.ndarray:
     """Extracts a single line from the image"""
-    image_bw = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    image_inverted = cv2.bitwise_not(image_bw)
+    image_inverted = cv2.bitwise_not(image)
     image_as_column = np.sum(image_inverted, axis=1)
 
     window_values = [np.sum(image_as_column[idx:idx + window_size])
