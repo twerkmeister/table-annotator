@@ -5,7 +5,7 @@ from flask_cors import CORS
 import numpy as np
 from calamari_ocr.ocr.predict.predictor import Predictor, PredictorParams
 
-from ocr_server.lines import find_lines
+from ocr_server.lines import find_lines, find_line
 
 
 def create_app(script_info: Optional[ScriptInfo] = None):
@@ -20,10 +20,12 @@ def create_app(script_info: Optional[ScriptInfo] = None):
     def ocr():
         images = [np.array(img, dtype="uint8") for img in request.json["images"]]
 
-        images_text_lines = [find_lines(image) for image in images]
+        images_text_lines = [find_lines(image) if image.shape[0] > 40
+                             else [find_line(image)]
+                             for image in images]
         num_text_lines = [len(text_lines) for text_lines in images_text_lines]
         flattened_line_images = [line for image_lines in images_text_lines
-                                for line in image_lines]
+                                 for line in image_lines]
         predictions = [sample.outputs.sentence
                        for sample in ocr_model.predict_raw(flattened_line_images)]
 
@@ -34,15 +36,6 @@ def create_app(script_info: Optional[ScriptInfo] = None):
             merged_predictions.append(lines_merged)
 
         return {"predictions": merged_predictions}
-
-    @app.route('/plain-ocr', methods=["POST"])
-    def plain_ocr():
-        images = [np.array(img, dtype="uint8") for img in request.json["images"]]
-
-        predictions = [sample.outputs.sentence
-                       for sample in ocr_model.predict_raw(images)]
-
-        return {"predictions": predictions}
 
     app.logger.info(f'Starting ocr server')
     return app

@@ -5,6 +5,22 @@ import cv2
 import scipy.signal
 
 
+def find_line(image: np.ndarray, window_size: int = 30) -> np.ndarray:
+    """Extracts a single line from the image"""
+    image_bw = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    image_inverted = cv2.bitwise_not(image_bw)
+    image_as_column = np.sum(image_inverted, axis=1)
+
+    window_values = [np.sum(image_as_column[idx:idx + window_size])
+                     for idx in range(image_as_column.shape[0])]
+    best_window_start = np.argmax(window_values)
+
+    start = max(best_window_start, 0)
+    end = min(best_window_start + window_size, image_as_column.shape[0])
+
+    return image[start:end]
+
+
 def find_lines(image: np.ndarray) -> List[np.ndarray]:
     """Split a cell image into multiple text lines."""
     window_size = 30
