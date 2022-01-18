@@ -1,11 +1,7 @@
-import functools
-from typing import Tuple, List, Optional, Text, Callable, TypeVar, Dict
+from typing import Tuple, List, Callable, TypeVar, Dict
 import numpy as np
 from scipy import ndimage
-import cv2
-import pytesseract
 
-import table_annotator.io
 from table_annotator.types import Rectangle, Point, Table, CellGrid
 
 BORDER_OFFSET = 5
@@ -13,7 +9,6 @@ ROW_COLUMN_WIDTH = 3
 
 A = TypeVar('A')
 B = TypeVar('B')
-
 
 
 def cell_grid_to_list(cell_grid: CellGrid[A]) -> Tuple[List[A],
@@ -136,60 +131,5 @@ def get_cell_image_grid(image: np.ndarray, table: Table) -> CellGrid[np.ndarray]
         cell_image_grid.append(row_cells)
     return cell_image_grid
 
-
-@functools.lru_cache(maxsize=1000)
-def get_table_image_bw(image_path: Text,
-                       table_outline: Rectangle,
-                       rotation_degrees: float) -> np.ndarray:
-    image = table_annotator.io.read_image(image_path)
-    image_rotated_for_table = rotate(image, - rotation_degrees)
-    offset = Point(x=BORDER_OFFSET, y=BORDER_OFFSET)
-    table_image = crop(image_rotated_for_table, table_outline.translate(offset))
-    return cv2.cvtColor(table_image, cv2.COLOR_BGR2GRAY)
-
-
-def predict_next_row_position(image_path: Text, table: Table) -> Optional[int]:
-    """Guesses the position of the next row."""
-    if len(table.rows) == 0:
-        return None
-    elif len(table.rows) == 1:
-        last_row_height = table.rows[0]
-    else:
-        last_row_height = table.rows[-1] - table.rows[-2]
-
-    table_image = get_table_image_bw(image_path, table.outline, table.rotationDegrees)
-
-    last_row_position = table.rows[-1]
-    search_area = 10  # px
-    next_row_position_search_center = last_row_position + last_row_height
-    candidate_row_positions = list(range(next_row_position_search_center - search_area,
-                                         next_row_position_search_center + search_area))
-    candidate_row_positions = [crp for crp in candidate_row_positions
-                               if crp < table.outline.height()]
-
-    if len(candidate_row_positions) == 0:
-        return None
-
-    row_positions = [last_row_position] + candidate_row_positions
-
-    row_images = [table_image[row_pos:row_pos + ROW_COLUMN_WIDTH]
-                  for row_pos in row_positions]
-
-    row_images_discretized_counts = [np.histogram(row_img, bins=range(0, 256, 51))[0]
-                                     for row_img in row_images]
-
-    prev_row_discretized_counts = row_images_discretized_counts[0]
-    candidate_rows_discretized_counts = row_images_discretized_counts[1:]
-
-    similarities = [cosine_similarity(prev_row_discretized_counts, crdc)
-                    for crdc in candidate_rows_discretized_counts]
-
-    max_sim_position = np.argmax(similarities)
-
-    return candidate_row_positions[max_sim_position]
-
-
-def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
-    return np.dot(a, b) / (np.sqrt(np.dot(a, a)) * np.sqrt(np.dot(b, b)))
 
 

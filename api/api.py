@@ -107,26 +107,6 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
 
         return tables_json
 
-    @app.route('/<subdir>/tables/<image_name>/next_rows', methods=["GET"])
-    def get_prediction_for_next_row(subdir: Text, image_name: Text):
-        workdir = get_workdir(subdir)
-        image_path = os.path.join(workdir, image_name)
-        if not os.path.isfile(image_path):
-            return make_response({"msg": "The image for which you tried to retrieve "
-                                         "table data does not exist."}, 404)
-
-        tables = table_annotator.io.read_tables_for_image(image_path)
-
-        if len(tables) == 0:
-            return {"next_rows": None}
-
-        guesses = []
-        for t in tables:
-            guesses.append(
-                table_annotator.img.predict_next_row_position(image_path, t))
-
-        return {"next_rows": guesses}
-
     @app.route('/<subdir>/<image_name>/segment_table/<int:table_id>', methods=["GET"])
     def segment_table(subdir: Text, image_name: Text, table_id: int):
         workdir = get_workdir(subdir)

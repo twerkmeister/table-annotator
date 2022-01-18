@@ -18,7 +18,6 @@ const keyMap = {
     ESC: "esc",
     ZERO: "0",
     BACKSPACE_OR_DELETE: ["Backspace", "Delete"],
-    R: "r",
     F: "f",
     UP: "shift+w",
     DOWN: "shift+s",
@@ -136,10 +135,9 @@ type AnnotatorState = {
     deleteTable: () => void
     deleteColumn: () => void
     deleteRow: () => void
-    acceptRowGuess: () => void
     toggleImageStatus: () => void
     segmentTable: () => void
-    adjustRowGuess: (change: number) => void
+    adjustRow: (change: number) => void
     addCellGrid: () => void
     selectCellColumnLine: (row: number, column: number) => void,
     adjustColumn: (change: number) => void
@@ -155,7 +153,6 @@ const useStore = create<AnnotatorState>((set, get) => ({
     selectedRow: undefined,
     newColumnPosition: undefined,
     newRowPosition: undefined,
-    newRowGuesses: undefined,
     selectedCellColumnLine: undefined,
     mousePosition: {x: 0, y: 0},
     documentPosition: undefined,
@@ -380,26 +377,7 @@ const useStore = create<AnnotatorState>((set, get) => ({
 
         const newTables = [...tables.slice(0, selectedTable), {...table, rows}, ...tables.slice(selectedTable + 1)]
         set({tables: newTables})},
-    acceptRowGuess: () => {
-        const newRowGuesses = get().newRowGuesses
-        const selectedTable = get().selectedTable
-        if(typeof(newRowGuesses) === "undefined" ||
-            typeof(selectedTable) === "undefined" ||
-            typeof(newRowGuesses[selectedTable]) === "undefined" ||
-            newRowGuesses[selectedTable] === null) return
-
-        const tables = get().tables
-        const newRowPosition = newRowGuesses[selectedTable]
-        const table = tables[selectedTable]
-        if (typeof(table) === "undefined" ||
-            typeof(newRowPosition) === "undefined") return
-
-        const newRows = [...table.rows, newRowPosition].sort((a, b) => a - b)
-        const newTable = {...table, rows: newRows}
-        const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable+1)]
-        set({tables: newTables, tableDeletionMarkCount: 0})
-    },
-    adjustRowGuess: (change: number) => {
+    adjustRow: (change: number) => {
         const newRowGuesses = get().newRowGuesses
         const selectedTable = get().selectedTable
         const selectedRow = get().selectedRow
@@ -419,14 +397,6 @@ const useStore = create<AnnotatorState>((set, get) => ({
                     set({tables: newTables})
                 }
             }
-        } else if (typeof(newRowGuesses) !== "undefined") {
-            const currentRowGuess = newRowGuesses[selectedTable]
-            if (typeof(currentRowGuess) === "undefined" ||
-                currentRowGuess=== null) return
-
-            const adjustedRowGuesses = [...newRowGuesses.slice(0, selectedTable),
-                currentRowGuess + change, ...newRowGuesses.slice(selectedTable+1)]
-            set({newRowGuesses: adjustedRowGuesses})
         }
     },
     addCellGrid: () => {
@@ -496,14 +466,6 @@ const pushTablesToApi = async(state: AnnotatorState, previousState: AnnotatorSta
     const image = images[currentImageIndex]
     if(typeof(image) === "undefined" || typeof(table) === "undefined") return
     await axios.post(`http://localhost:5000/${subdir}/tables/${image.name}`, tables)
-
-    if (typeof(table.cellGrid) === "undefined") {
-        const response = await fetch(`http://localhost:5000/${subdir}/tables/${image.name}/next_rows`)
-        const newRowGuesses = (await response.json())["next_rows"]
-        if (response.status === 200) {
-            useStore.setState({newRowGuesses})
-        }
-    }
 }
 
 const unsubTables = useStore.subscribe(pushTablesToApi)
@@ -525,8 +487,7 @@ function App() {
     const selectedColumn = useStore(state => state.selectedColumn)
     const selectedRow = useStore(state => state.selectedRow)
     const cancelActions = useStore(state => state.cancelActions)
-    const acceptRowGuess = useStore(state => state.acceptRowGuess)
-    const adjustRowGuess = useStore(state => state.adjustRowGuess)
+    const adjustRow = useStore(state => state.adjustRow)
     const toggleImageStatus = useStore(state => state.toggleImageStatus)
     const segmentTable = useStore(state => state.segmentTable)
     const addCellGrid = useStore(state => state.addCellGrid)
@@ -562,13 +523,12 @@ function App() {
         ZERO: () => setRotationDegrees(0),
         ESC: cancelActions,
         BACKSPACE_OR_DELETE: deleteFunc,
-        R: acceptRowGuess,
         F: toggleImageStatus,
         X: segmentTable,
-        UP: () => adjustRowGuess(-1),
-        DOWN: () => adjustRowGuess(1),
-        LEFT: () => adjustColumn(-10),
-        RIGHT: () => adjustColumn(10),
+        UP: () => adjustRow(-1),
+        DOWN: () => adjustRow(1),
+        LEFT: () => adjustColumn(-5),
+        RIGHT: () => adjustColumn(5),
         C: addCellGrid
     }
 
