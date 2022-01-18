@@ -5,7 +5,7 @@ import os
 import cv2
 import numpy as np
 import PIL
-from table_annotator.types import Table, TableContent
+from table_annotator.types import Table
 
 
 def read_json(file_path: Text) -> Any:
@@ -55,13 +55,3 @@ def list_images(path: Text) -> List[Text]:
     files = os.listdir(path)
     allowed_extensions = {".jpeg", ".jpg"}
     return [f for f in files if os.path.splitext(f)[1] in allowed_extensions]
-
-
-def read_table_content(file_path: Text) -> TableContent:
-    """Reads tables from disc."""
-    return TableContent(**read_json(file_path))
-
-
-def write_table_content(file_path: Text, table_content: TableContent) -> None:
-    """Writes table content to disc."""
-    write_json(file_path, table_content.dict())

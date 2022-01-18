@@ -2,14 +2,14 @@ import argparse
 import os
 from typing import Text
 import cv2
-import table_annotator.ocr
 import table_annotator.io
 import find_lines
 
 
 def extract_ocr_data(data_path: Text, target_path: Text) -> None:
     """Extracts ocr data points to a simpler file format."""
-    data_points = table_annotator.ocr.collect_ocr_data_points(data_path)
+    # TODO: ui unification
+    data_points = []
     if len(data_points) == 0:
         print("No datapoints found...")
         return

@@ -1,16 +1,4 @@
 
-
-export type OCRDataPoint = {
-    image_name: string
-    table_idx: string
-    cell_id: string
-    ocr_text: string
-    human_text: string | null
-    external_image_path: string
-    image_width: number
-    image_height: number
-}
-
 export type Point = {
     x: number,
     y: number
@@ -27,4 +15,27 @@ export type Image = {
     height: number,
     center: Point,
     name: string
+}
+
+export type CellContent = {
+    ocr_text: string,
+    human_text?: string
+}
+
+export type UnfinishedTable = {
+    firstPoint: Point
+}
+
+export type CellIndex = {
+    row: number,
+    column: number
+}
+
+export type Table = {
+    outline: Rectangle,
+    rotationDegrees: number,
+    columns: number[],
+    rows: number[],
+    cellGrid?: Rectangle[][],
+    cellContents?: CellContent[][],
 }

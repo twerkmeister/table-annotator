@@ -4,7 +4,7 @@ import { GlobalHotKeys } from "react-hotkeys";
 import axios from 'axios';
 import {getDataDir} from './path';
 import './App.css';
-import {Point, Rectangle, Image} from './types'
+import {Point, Rectangle, Image, Table, CellIndex, UnfinishedTable} from './types'
 
 function flatten<T>(arr: T[][]): T[] {
     return ([] as T[]).concat(...arr);
@@ -48,14 +48,6 @@ function rotatePoint(p: Point, degrees: number, rotationCenter: Point = {x: 0, y
     return addPoints(rotated, rotationCenter)
 }
 
-type UnfinishedTable = {
-    firstPoint: Point
-}
-
-type CellIndex = {
-    row: number,
-    column: number
-}
 
 function getPageOffset(el: Element): Point {
     const rect = el.getBoundingClientRect()
@@ -93,14 +85,6 @@ function withCellGrid(table: Table): Table {
     return {...table, cellGrid}
 }
 
-type Table = {
-    outline: Rectangle,
-    rotationDegrees: number,
-    columns: number[],
-    rows: number[],
-    cellGrid?: Rectangle[][],
-}
-
 type AnnotatorState = {
     images?: Image[],
     currentImageIndex: number,
@@ -136,6 +120,7 @@ type AnnotatorState = {
     deleteColumn: () => void
     deleteRow: () => void
     segmentTable: () => void
+    predictTableContent: () => void
     adjustRow: (change: number) => void
     addCellGrid: () => void
     selectCellColumnLine: (row: number, column: number) => void,
@@ -351,10 +336,34 @@ const useStore = create<AnnotatorState>((set, get) => ({
         const dataDir = getDataDir()
 
         const response =
-            await fetch(`http://localhost:5000/${dataDir}/${image.name}/segment_table/${selectedTable}`)
+            await fetch(`http://localhost:5000/${dataDir}/${image.name}/predict_table_structure/${selectedTable}`)
         const rows = (await response.json())["rows"]
 
         const newTables = [...tables.slice(0, selectedTable), {...table, rows}, ...tables.slice(selectedTable + 1)]
+        set({tables: newTables})},
+    predictTableContent: async () => {
+        const tables = get().tables
+        const selectedTable = get().selectedTable
+        const images = get().images
+        const currentImageIndex = get().currentImageIndex
+        if (typeof (selectedTable) === "undefined" ||
+            typeof (images) === "undefined") return
+        const image = images[currentImageIndex]
+        const table = tables[selectedTable]
+        if (typeof(image) === "undefined" ||
+            typeof(table) === "undefined") return
+
+        if (typeof(table.cellGrid) === "undefined" ||
+            typeof(table.cellContents) !== "undefined") return
+
+        const dataDir = getDataDir()
+
+        const response =
+            await fetch(`http://localhost:5000/${dataDir}/${image.name}/predict_table_contents/${selectedTable}`)
+        const cellContents = (await response.json())["contents"]
+
+        const newTables = [...tables.slice(0, selectedTable), {...table, cellContents},
+            ...tables.slice(selectedTable + 1)]
         set({tables: newTables})},
     adjustRow: (change: number) => {
         const newRowGuesses = get().newRowGuesses
@@ -468,6 +477,7 @@ function App() {
     const cancelActions = useStore(state => state.cancelActions)
     const adjustRow = useStore(state => state.adjustRow)
     const segmentTable = useStore(state => state.segmentTable)
+    const predictTableContents = useStore(state => state.predictTableContent)
     const addCellGrid = useStore(state => state.addCellGrid)
     const adjustColumn = useStore(state => state.adjustColumn)
 
@@ -502,6 +512,7 @@ function App() {
         ESC: cancelActions,
         BACKSPACE_OR_DELETE: deleteFunc,
         X: segmentTable,
+        F: predictTableContents,
         UP: () => adjustRow(-1),
         DOWN: () => adjustRow(1),
         LEFT: () => adjustColumn(-5),

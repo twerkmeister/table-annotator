@@ -1,6 +1,5 @@
 from typing import Text, Optional
 import os
-from multiprocessing import Process
 from flask import Flask, send_from_directory, make_response, request
 from flask.cli import ScriptInfo
 from flask_cors import CORS
@@ -10,8 +9,7 @@ import requests
 import table_annotator.img
 import table_annotator.io
 import table_annotator.ocr
-from table_annotator.types import OCRDataPoint
-from table_ocr import table_ocr
+import table_annotator.cellgrid
 
 DATA_PATH = "data_path"
 
@@ -47,20 +45,6 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
         workdir = get_workdir(subdir)
         return send_from_directory(workdir, image_name)
 
-    @app.route('/<subdir>/image/<image_name>/segment', methods=["POST"])
-    def segment_image(subdir: Text, image_name: Text):
-        workdir = get_workdir(subdir)
-        image_path = os.path.join(workdir, image_name)
-
-        if not os.path.isfile(image_path):
-            return make_response({"msg": "The image you tried to segment "
-                                         "does not exist."}, 404)
-
-        task = Process(target=table_ocr, args=(image_path, False))
-        task.start()
-
-        return {"msg": "okay!"}
-
     @app.route('/<subdir>/tables/<image_name>', methods=["POST"])
     def store_tables(subdir: Text, image_name: Text):
         """Stores the tables."""
@@ -88,8 +72,9 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
 
         return tables_json
 
-    @app.route('/<subdir>/<image_name>/segment_table/<int:table_id>', methods=["GET"])
-    def segment_table(subdir: Text, image_name: Text, table_id: int):
+    @app.route('/<subdir>/<image_name>/predict_table_structure/<int:table_id>',
+               methods=["GET"])
+    def predict_table_structure(subdir: Text, image_name: Text, table_id: int):
         workdir = get_workdir(subdir)
         image_path = os.path.join(workdir, image_name)
         if not os.path.isfile(image_path):
@@ -111,38 +96,28 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
 
         return {"rows": rows}
 
-    @app.route('/<subdir>/data_points', methods=["GET"])
-    def get_ocr_data_points(subdir: Text):
-        workdir = get_workdir(subdir)
-        data_points = table_annotator.ocr.collect_ocr_data_points(workdir)
-        return {"data_points": [dp.dict() for dp in data_points]}
-
-    @app.route('/<subdir>/cell_image/<document_name>/<table_idx>/<cell_id>',
+    @app.route('/<subdir>/<image_name>/predict_table_contents/<int:table_id>',
                methods=["GET"])
-    def get_cell_image(subdir: Text, document_name: Text,
-                       table_idx: Text, cell_id: Text):
+    def predict_table_contents(subdir: Text, image_name: Text, table_id: int):
         workdir = get_workdir(subdir)
-        directory = os.path.join(workdir, document_name, table_idx)
-        return send_from_directory(directory, f"{cell_id}.jpg")
+        image_path = os.path.join(workdir, image_name)
 
-    @app.route('/<subdir>/data_points', methods=["POST"])
-    def save_ocr_data_point(subdir: Text):
-        workdir = get_workdir(subdir)
-        ocr_data_point = OCRDataPoint(**request.json)
-        ocr_data_path = os.path.join(workdir,
-                                     ocr_data_point.image_name,
-                                     ocr_data_point.table_idx,
-                                     "ocr_result.json")
+        if not os.path.isfile(image_path):
+            return make_response({"msg": "The image does not exist."}, 404)
 
-        if not os.path.isfile(ocr_data_path):
-            return make_response({"msg": "Cannot find the ocr results "
-                                         "you tried to update"}, 404)
+        tables = table_annotator.io.read_tables_for_image(image_path)
 
-        table_content = table_annotator.io.read_table_content(ocr_data_path)
-        table_content.update(ocr_data_point)
-        table_annotator.io.write_table_content(ocr_data_path, table_content)
+        if table_id not in set(range(len(tables))):
+            return make_response({"msg": "The table does not exist."}, 404)
 
-        return {"msg": "okay!"}
+        image = table_annotator.io.read_image(image_path)
+        table = tables[table_id]
+
+        table_contents = table_annotator.ocr.table_ocr(image, table)
+
+        return {"contents": table_annotator.cellgrid.apply_to_cells(
+            lambda cc: {k: v for k, v in cc.dict().items() if v is not None},
+            table_contents)}
 
     return app
 

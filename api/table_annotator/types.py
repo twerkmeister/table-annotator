@@ -1,7 +1,6 @@
 from typing import List, Text, Optional, Dict, TypeVar
 from pydantic import BaseModel
 
-
 T = TypeVar('T')
 CellGrid = List[List[T]]
 
@@ -31,14 +30,6 @@ class Rectangle(BaseModel):
                      self.bottomRight.x, self.bottomRight.y))
 
 
-class Table(BaseModel):
-    outline: Rectangle
-    rotationDegrees: float
-    columns: List[int]
-    rows: List[int]
-    cellGrid: Optional[CellGrid[Rectangle]]
-
-
 class CellContent(BaseModel):
     ocr_text: Text
     human_text: Optional[Text]
@@ -48,36 +39,10 @@ class CellContent(BaseModel):
         return cls(ocr_text=ocr_result, human_text=None)
 
 
-class OCRDataPoint(BaseModel):
-    image_name: Text
-    table_idx: Text
-    cell_id: Text
-    ocr_text: Text
-    human_text: Optional[Text]
-    image_path: Text
-    external_image_path: Text
-    image_width: int
-    image_height: int
-
-
-class TableContent(BaseModel):
-    cells: Dict[Text, CellContent]
-
-    @classmethod
-    def from_cells(cls, cells: List[List[CellContent]]):
-        cells_dict = {}
-        for i in range(len(cells)):
-            for j in range(len(cells[i])):
-                cells_dict[f"{i:03d}_{j:03d}"] = cells[i][j]
-        return cls(cells=cells_dict)
-
-    def update(self, data_point: OCRDataPoint) -> None:
-        if data_point.cell_id not in self.cells:
-            raise ValueError(f"Cannot insert a new data point with "
-                             f"cell id {data_point.cell_id} into ocr results of "
-                             f"{data_point.image_name}/{data_point.table_idx}")
-
-        self.cells[data_point.cell_id].human_text = data_point.human_text
-
-
-
+class Table(BaseModel):
+    outline: Rectangle
+    rotationDegrees: float
+    columns: List[int]
+    rows: List[int]
+    cellGrid: Optional[CellGrid[Rectangle]]
+    contents: Optional[CellGrid[CellContent]]
