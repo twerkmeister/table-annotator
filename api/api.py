@@ -36,35 +36,16 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
             image_path = os.path.join(workdir, image_name)
             image = table_annotator.io.read_image(image_path)
             width, height = table_annotator.img.get_dimensions(image)
-            is_finished = table_annotator.io.is_image_locked(image_path)
             center = {"x": width//2, "y": height // 2}
             images_with_metadata.append({"src": f"{subdir}/image/{image_name}", "width": width,
                                          "height": height, "center": center,
-                                         "name": image_name, "finished": is_finished})
+                                         "name": image_name})
         return {"images": images_with_metadata}
 
     @app.route('/<subdir>/image/<image_name>')
     def get_image(subdir: Text, image_name: Text):
         workdir = get_workdir(subdir)
         return send_from_directory(workdir, image_name)
-
-    @app.route('/<subdir>/image/<image_name>/status', methods=["PUT"])
-    def set_image_status(subdir: Text, image_name: Text):
-        workdir = get_workdir(subdir)
-        image_path = os.path.join(workdir, image_name)
-        lock_file_path = table_annotator.io.lock_file_for_image(image_path)
-
-        if not os.path.isfile(image_path):
-            return make_response({"msg": "The image for which you tried set a status "
-                                         "does not exist."}, 404)
-
-        finished = request.json["finished"]
-        if finished:
-            open(lock_file_path, 'w').close()
-        else:
-            os.remove(lock_file_path)
-
-        return {"msg": "okay!"}
 
     @app.route('/<subdir>/image/<image_name>/segment', methods=["POST"])
     def segment_image(subdir: Text, image_name: Text):

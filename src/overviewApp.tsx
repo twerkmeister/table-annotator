@@ -48,7 +48,7 @@ function OverviewApp() {
         typeof(images) === "undefined" ?
             "Still loading image data..." : images.length === 0 ?
             "There are no images to annotate..." :
-            `${images.filter(i => i.finished).length}/${images.length} documents annotated`
+            `${images.length} documents`
     )
 
     const ocrHeader = (

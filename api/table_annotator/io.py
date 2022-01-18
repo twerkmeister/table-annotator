@@ -65,14 +65,3 @@ def read_table_content(file_path: Text) -> TableContent:
 def write_table_content(file_path: Text, table_content: TableContent) -> None:
     """Writes table content to disc."""
     write_json(file_path, table_content.dict())
-
-
-def lock_file_for_image(image_path: Text) -> Text:
-    """Returns the corresponding lock file for an image."""
-    return os.path.splitext(image_path)[0] + ".lock"
-
-
-def is_image_locked(image_path: Text) -> bool:
-    """Checks whether lock file exists for image."""
-    lock_file_path = lock_file_for_image(image_path)
-    return os.path.exists(lock_file_path)

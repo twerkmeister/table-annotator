@@ -135,7 +135,6 @@ type AnnotatorState = {
     deleteTable: () => void
     deleteColumn: () => void
     deleteRow: () => void
-    toggleImageStatus: () => void
     segmentTable: () => void
     adjustRow: (change: number) => void
     addCellGrid: () => void
@@ -184,26 +183,6 @@ const useStore = create<AnnotatorState>((set, get) => ({
         set({ currentImageIndex: idx, rotationDegrees: 0, documentPosition: undefined,
             tables, unfinishedTable: undefined, selectedTable: undefined, selectedRow: undefined,
             selectedColumn: undefined, newRowGuesses: undefined, selectedCellColumnLine: undefined})
-
-    },
-    toggleImageStatus: async() => {
-        console.log("uip")
-        const images = get().images
-        if(typeof(images) === "undefined") return
-        const currentImageIndex = get().currentImageIndex
-        const image = images[currentImageIndex]
-        if(typeof(image) === "undefined") return
-
-        const newImage = {...image, finished: !image.finished}
-        const newImages = [...images.slice(0,currentImageIndex), newImage, ...images.slice(currentImageIndex+1)]
-
-        const subdir = getPathParts().subdir
-        await axios.put(`http://localhost:5000/${subdir}/image/${newImage.name}/status`, {finished: newImage.finished})
-        if(newImage.finished) {
-            axios.post(`http://localhost:5000/${subdir}/image/${newImage.name}/segment`, {})
-        }
-
-        set({images: newImages})
 
     },
     outlineTable: (p: Point, rotationDegrees: number) => {
@@ -488,7 +467,6 @@ function App() {
     const selectedRow = useStore(state => state.selectedRow)
     const cancelActions = useStore(state => state.cancelActions)
     const adjustRow = useStore(state => state.adjustRow)
-    const toggleImageStatus = useStore(state => state.toggleImageStatus)
     const segmentTable = useStore(state => state.segmentTable)
     const addCellGrid = useStore(state => state.addCellGrid)
     const adjustColumn = useStore(state => state.adjustColumn)
@@ -523,7 +501,6 @@ function App() {
         ZERO: () => setRotationDegrees(0),
         ESC: cancelActions,
         BACKSPACE_OR_DELETE: deleteFunc,
-        F: toggleImageStatus,
         X: segmentTable,
         UP: () => adjustRow(-1),
         DOWN: () => adjustRow(1),
@@ -537,7 +514,6 @@ function App() {
         return (
             <div className="App" onMouseMove={e => handleMouseMove(e)}>
                 <GlobalHotKeys keyMap={keyMap} handlers={hotkeyHandlers} allowChanges={true}>
-                    <div>{image.finished ? "done" : "work in progress"}</div>
                     <DocumentImage {...image} />
                     {tables.map((t, i) => {
                         return (

@@ -26,6 +26,5 @@ export type Image = {
     width: number,
     height: number,
     center: Point,
-    name: string,
-    finished: boolean
+    name: string
 }

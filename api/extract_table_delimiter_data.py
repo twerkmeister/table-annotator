@@ -28,13 +28,7 @@ def extract_table_delimiter_data(data_path: Text, target_path: Text) -> None:
     """Extracts training data for table segmentation."""
 
     image_paths = table_annotator.io.list_images(data_path)
-    full_image_paths = [os.path.join(data_path, ip) for ip in image_paths]
-    locked_image_paths = [ip
-                          for ip in full_image_paths
-                          if table_annotator.io.is_image_locked(ip)]
-    if len(locked_image_paths) == 0:
-        print("No finished images found...")
-        return
+    image_paths = [os.path.join(data_path, ip) for ip in image_paths]
 
     os.makedirs(target_path, exist_ok=True)
 
@@ -46,7 +40,7 @@ def extract_table_delimiter_data(data_path: Text, target_path: Text) -> None:
         line_based_height(3),
     ]
 
-    for image_path in locked_image_paths:
+    for image_path in image_paths:
         img_name = os.path.splitext(os.path.basename(image_path))[0]
         image = table_annotator.io.read_image(image_path)
         tables = table_annotator.io.read_tables_for_image(image_path)
