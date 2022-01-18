@@ -2,18 +2,14 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
-import OCRApp from './ocrApp';
-import OverviewApp from './overviewApp';
-import {getPathParts} from './path';
+import {getDataDir} from './path';
 import reportWebVitals from './reportWebVitals';
 
 ReactDOM.render(
   <React.StrictMode>
   {
-      typeof(getPathParts().subdir) === "undefined" ?
-          <div>Wrong Path</div> : getPathParts().app === "ocr" ?
-          <OCRApp /> : getPathParts().app === "tables" ?
-              <App /> : <OverviewApp/>
+      typeof(getDataDir()) === "undefined" ?
+          <div>Missing data path</div> : <App />
   }
   </React.StrictMode>,
   document.getElementById('root')

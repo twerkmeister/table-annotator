@@ -1,19 +1,11 @@
 
-type PathParts = {
-    subdir?: string
-    app?: string
-}
-
-
-function getPathParts(): PathParts {
+function getDataDir(): string | undefined {
     const splitPath = window.location.pathname.split("/").filter(p => p.length > 0)
-    if(splitPath.length === 2) {
-        return {subdir: splitPath[0], app: splitPath[1]}
-    } else if (splitPath.length === 1) {
-        return {subdir: splitPath[0], app: undefined}
+    if(splitPath.length >= 1) {
+        return splitPath[0]
     } else {
-        return {subdir: undefined, app: undefined}
+        return undefined
     }
 }
 
-export {getPathParts}
+export {getDataDir}

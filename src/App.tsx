@@ -2,7 +2,7 @@ import React, {useEffect} from 'react';
 import create from 'zustand'
 import { GlobalHotKeys } from "react-hotkeys";
 import axios from 'axios';
-import {getPathParts} from './path';
+import {getDataDir} from './path';
 import './App.css';
 import {Point, Rectangle, Image} from './types'
 
@@ -159,11 +159,11 @@ const useStore = create<AnnotatorState>((set, get) => ({
     tableDeletionMarkCount: 0,
     tables: [],
     fetchImages: async() => {
-        const subdir = getPathParts().subdir
-        const response = await fetch(`http://localhost:5000/${subdir}/images`)
+        const dataDir = getDataDir()
+        const response = await fetch(`http://localhost:5000/${dataDir}/images`)
         const images = (await response.json())["images"]
         if (images.length > 0) {
-            const table_response = await fetch(`http://localhost:5000/${subdir}/tables/${images[0].name}`)
+            const table_response = await fetch(`http://localhost:5000/${dataDir}/tables/${images[0].name}`)
             const tables = (await table_response.json())["tables"]
             set({images, tables, currentImageIndex: 0})
         } else {
@@ -177,8 +177,8 @@ const useStore = create<AnnotatorState>((set, get) => ({
         const image = images[idx]
         if(typeof(image) === "undefined") return
 
-        const subdir = getPathParts().subdir
-        const table_response = await fetch(`http://localhost:5000/${subdir}/tables/${image.name}`)
+        const dataDir = getDataDir()
+        const table_response = await fetch(`http://localhost:5000/${dataDir}/tables/${image.name}`)
         const tables = (await table_response.json())["tables"]
         set({ currentImageIndex: idx, rotationDegrees: 0, documentPosition: undefined,
             tables, unfinishedTable: undefined, selectedTable: undefined, selectedRow: undefined,
@@ -348,10 +348,10 @@ const useStore = create<AnnotatorState>((set, get) => ({
             typeof(table) === "undefined") return
 
         if (table.rows.length > 0) return
-        const subdir = getPathParts().subdir
+        const dataDir = getDataDir()
 
         const response =
-            await fetch(`http://localhost:5000/${subdir}/${image.name}/segment_table/${selectedTable}`)
+            await fetch(`http://localhost:5000/${dataDir}/${image.name}/segment_table/${selectedTable}`)
         const rows = (await response.json())["rows"]
 
         const newTables = [...tables.slice(0, selectedTable), {...table, rows}, ...tables.slice(selectedTable + 1)]
@@ -436,7 +436,7 @@ const useStore = create<AnnotatorState>((set, get) => ({
 
 const pushTablesToApi = async(state: AnnotatorState, previousState: AnnotatorState) => {
     if(state.tables === previousState.tables) return
-    const subdir = getPathParts().subdir
+    const dataDir = getDataDir()
 
     const {currentImageIndex, images, tables, selectedTable} = state
     if(typeof(currentImageIndex) === "undefined" || typeof(images) === "undefined" ||
@@ -444,7 +444,7 @@ const pushTablesToApi = async(state: AnnotatorState, previousState: AnnotatorSta
     const table = tables[selectedTable]
     const image = images[currentImageIndex]
     if(typeof(image) === "undefined" || typeof(table) === "undefined") return
-    await axios.post(`http://localhost:5000/${subdir}/tables/${image.name}`, tables)
+    await axios.post(`http://localhost:5000/${dataDir}/tables/${image.name}`, tables)
 }
 
 const unsubTables = useStore.subscribe(pushTablesToApi)
