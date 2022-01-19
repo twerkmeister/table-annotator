@@ -1,15 +1,20 @@
-from typing import Text, Optional
+from functools import partial
+from typing import Text, Optional, Dict, Tuple
 import os
-from flask import Flask, send_from_directory, make_response, request
+from flask import Flask, send_from_directory, make_response, request, send_file
 from flask.cli import ScriptInfo
 from flask_cors import CORS
 import cv2
+import io
+import PIL.Image
+import numpy as np
 import requests
 
 import table_annotator.img
 import table_annotator.io
 import table_annotator.ocr
 import table_annotator.cellgrid
+from table_annotator.types import Table, CellGrid
 
 DATA_PATH = "data_path"
 
@@ -19,6 +24,8 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
     CORS(app)
     app.config[DATA_PATH] = data_path
     app.logger.info(f'Starting server serving documents from directory {data_path}')
+
+    cell_image_cache: Dict[Tuple[Text, Table], CellGrid[np.ndarray]] = {}
 
     def get_workdir(subdir: Text) -> Text:
         return os.path.join(app.config[DATA_PATH], subdir)
@@ -118,6 +125,39 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
         return {"contents": table_annotator.cellgrid.apply_to_cells(
             lambda cc: {k: v for k, v in cc.dict().items() if v is not None},
             table_contents)}
+
+    @app.route('/<subdir>/<image_name>/cell_image/<int:table_id>/<int:row>/<int:col>',
+               methods=["GET"])
+    def get_cell_image(subdir: Text, image_name: Text,
+                       table_id: int, row: int, col: int):
+        workdir = get_workdir(subdir)
+        image_path = os.path.join(workdir, image_name)
+
+        if not os.path.isfile(image_path):
+            return make_response({"msg": "The image does not exist."}, 404)
+
+        tables = table_annotator.io.read_tables_for_image(image_path)
+
+        if table_id not in set(range(len(tables))):
+            return make_response({"msg": "The table does not exist."}, 404)
+
+        table = tables[table_id]
+        if (image_path, table) not in cell_image_cache:
+            image = table_annotator.io.read_image(image_path)
+            cell_image_grid = table_annotator.cellgrid.get_cell_image_grid(image, table)
+            convert_image = partial(cv2.cvtColor, code=cv2.COLOR_BGR2RGB)
+            cell_image_grid = table_annotator.cellgrid.apply_to_cells(convert_image,
+                                                                      cell_image_grid)
+            cell_image_cache[(image_path, table)] = cell_image_grid
+
+        cell_img = cell_image_cache[(image_path, table)][row][col]
+        img = PIL.Image.fromarray(cell_img.astype('uint8'))
+
+        file_object = io.BytesIO()
+        img.save(file_object, 'JPEG')
+        file_object.seek(0)
+
+        return send_file(file_object, mimetype='image/JPEG')
 
     return app
 

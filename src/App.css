@@ -1,6 +1,11 @@
+body {
+    background: #4a4a4a;
+}
+
 .App {
     margin: 100px auto 100px auto;
     width: 75%;
+    background: #4a4a4a;
 }
 
 .documentImage{
@@ -70,4 +75,23 @@
     opacity: 0.3;
     top: 0px;
     left: -30px;
+}
+
+.dataCell {
+    float: left;
+}
+
+.dataRow {
+    clear: both;
+}
+
+.splitTable {
+    margin: 0 auto 0 auto;
+
+}
+
+.dataInput {
+    resize: none;
+    background: lightgray;
+    font-size: 18px;
 }

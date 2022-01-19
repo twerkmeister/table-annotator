@@ -5,7 +5,7 @@ import axios from 'axios';
 import {getDataDir} from './path';
 import './App.css';
 import {Point, Rectangle, Image, Table, CellIndex, UnfinishedTable} from './types'
-
+import {makeRectangle, height, width, getPageOffset, rotatePoint, subtractPoints, addPoints} from './geometry'
 function flatten<T>(arr: T[][]): T[] {
     return ([] as T[]).concat(...arr);
 }
@@ -19,6 +19,7 @@ const keyMap = {
     ZERO: "0",
     BACKSPACE_OR_DELETE: ["Backspace", "Delete"],
     F: "f",
+    H: "h",
     UP: "shift+w",
     DOWN: "shift+s",
     LEFT: "shift+a",
@@ -27,43 +28,6 @@ const keyMap = {
     C: "c"
 };
 
-function subtractPoints(p: Point, p2: Point): Point {
-    return {x: p.x - p2.x, y: p.y - p2.y}
-}
-
-function addPoints(p: Point, p2: Point): Point {
-    return {x: p.x + p2.x, y: p.y + p2.y}
-}
-
-function rotatePoint(p: Point, degrees: number, rotationCenter: Point = {x: 0, y: 0}): Point {
-    const radians = degrees * Math.PI / 180
-    const sinAngle = Math.sin(radians);
-    const cosAngle = Math.cos(radians);
-
-    const translated = subtractPoints(p, rotationCenter)
-    const rotated = {
-        x: translated.x * cosAngle - translated.y * sinAngle,
-        y: translated.x * sinAngle + translated.y * cosAngle
-    }
-    return addPoints(rotated, rotationCenter)
-}
-
-
-function getPageOffset(el: Element): Point {
-    const rect = el.getBoundingClientRect()
-    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop
-
-    return { y: rect.top + scrollTop, x: rect.left + scrollLeft }
-}
-
-function makeRectangle(p1: Point, p2: Point): Rectangle {
-    const [topLeftX, bottomRightX] = p1.x <= p2.x ? [p1.x, p2.x] : [p2.x, p1.x]
-    const [topLeftY, bottomRightY] = p1.y <= p2.y ? [p1.y, p2.y] : [p2.y, p1.y]
-    const topLeft = {x: topLeftX, y: topLeftY}
-    const bottomRight = {x: bottomRightX, y: bottomRightY}
-    return {topLeft, bottomRight}
-}
 
 function makeTable(p1: Point, p2: Point, rotationDegrees: number): Table {
     const outline = makeRectangle(p1, p2)
@@ -101,6 +65,7 @@ type AnnotatorState = {
     rotationDegrees: number,
     tableDeletionMarkCount: number,
     tables: Table[],
+    dataMode: boolean,
     fetchImages: () => void
     setImageIndex: (idx: number) => void
     outlineTable: (p: Point, rotationDegrees: number) => void,
@@ -123,8 +88,10 @@ type AnnotatorState = {
     predictTableContent: () => void
     adjustRow: (change: number) => void
     addCellGrid: () => void
-    selectCellColumnLine: (row: number, column: number) => void,
+    selectCellColumnLine: (row: number, column: number) => void
     adjustColumn: (change: number) => void
+    setDataMode: (dataMode: boolean) => void
+    updateCellText: (i: number, j: number, text: string) => void
 }
 
 
@@ -143,6 +110,7 @@ const useStore = create<AnnotatorState>((set, get) => ({
     rotationDegrees: 0,
     tableDeletionMarkCount: 0,
     tables: [],
+    dataMode: false,
     fetchImages: async() => {
         const dataDir = getDataDir()
         const response = await fetch(`http://localhost:5000/${dataDir}/images`)
@@ -440,6 +408,28 @@ const useStore = create<AnnotatorState>((set, get) => ({
             const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
             set({tables: newTables})
         }
+    },
+    setDataMode: (dataMode: boolean) => {
+        const selectedTable = get().selectedTable
+        const tables = get().tables
+        if(typeof(selectedTable) === "undefined") return
+        const table = tables[selectedTable]
+        if(typeof(table) === "undefined" || typeof(table.cellContents) === "undefined") return
+        set({dataMode})
+    },
+    updateCellText: (i: number, j: number, text: string) => {
+        const selectedTable = get().selectedTable
+        const tables = get().tables
+        if(typeof(selectedTable) === "undefined") return
+        const table = tables[selectedTable]
+        if(typeof(table) === "undefined" || typeof(table.cellContents) === "undefined") return
+        const newCell = {...table.cellContents[i][j], human_text: text}
+        const relevantRow = table.cellContents[i]
+        const newCellRow = [...relevantRow.slice(0, j), newCell, ...relevantRow.slice(j + 1)]
+        const newCellContents = [...table.cellContents.slice(0, i), newCellRow, ...table.cellContents.slice(i + 1)]
+        const newTable = {...table, cellContents: newCellContents}
+        const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
+        set({tables: newTables})
     }
 }))
 
@@ -478,6 +468,8 @@ function App() {
     const predictTableContents = useStore(state => state.predictTableContent)
     const addCellGrid = useStore(state => state.addCellGrid)
     const adjustColumn = useStore(state => state.adjustColumn)
+    const setDataMode = useStore(state => state.setDataMode)
+    const dataMode = useStore(state => state.dataMode)
 
     useEffect(() => {
         if(typeof(images) === "undefined") {
@@ -510,6 +502,7 @@ function App() {
         ESC: cancelActions,
         BACKSPACE_OR_DELETE: deleteFunc,
         X: segmentTable,
+        H: () => setDataMode(!dataMode),
         F: predictTableContents,
         UP: () => adjustRow(-1),
         DOWN: () => adjustRow(1),
@@ -523,21 +516,27 @@ function App() {
         return (
             <div className="App" onMouseMove={e => handleMouseMove(e)}>
                 <GlobalHotKeys keyMap={keyMap} handlers={hotkeyHandlers} allowChanges={true}>
-                    <DocumentImage {...image} />
-                    {tables.map((t, i) => {
-                        return (
-                            <TableElement key={i} tableTopLeft={t.outline.topLeft}
-                                          tableBottomRight={t.outline.bottomRight}
-                                          imageCenter={image.center}
-                                          tableIdx={i}
-                                          tableRotation={t.rotationDegrees}
-                                          columns={t.columns}
-                                          rows={t.rows}
-                                          cellGrid={t.cellGrid}/>
-                        )
-                    })}
-                    {typeof(unfinishedTable) != "undefined" ? <StartedTable {...unfinishedTable}
-                                                                            imageCenter={image.center} /> : null}
+                    {!dataMode ?
+                        <div>
+                            <DocumentImage {...image} />
+                            {
+                                tables.map((t, i) => {
+                                    return (
+                                        <TableElement key={i} tableTopLeft={t.outline.topLeft}
+                                                      tableBottomRight={t.outline.bottomRight}
+                                                      imageCenter={image.center}
+                                                      tableIdx={i}
+                                                      tableRotation={t.rotationDegrees}
+                                                      columns={t.columns}
+                                                      rows={t.rows}
+                                                      cellGrid={t.cellGrid}/>
+                                    )
+                                })
+                            }
+                            {typeof(unfinishedTable) != "undefined" ? <StartedTable {...unfinishedTable}
+                                imageCenter={image.center} /> : null}
+                        </div> : <SplitTable image_name={image.name}/>
+                    }
                 </GlobalHotKeys>
             </div>
         );
@@ -550,6 +549,60 @@ function App() {
             <div>Still loading...</div>
         )
     }
+}
+
+function SplitTable(props: {image_name: string}) {
+    const dataDir = getDataDir()
+    const tables = useStore(state => state.tables)
+    const selectedTable = useStore(state => state.selectedTable)
+    const updateCellText = useStore(state => state.updateCellText)
+    if(typeof(selectedTable) === "undefined") return null
+    const table = tables[selectedTable]
+    if(typeof(table) === "undefined" ) return null
+    if(typeof(table.cellGrid) === "undefined") return null
+    if(typeof(table.cellContents) === "undefined") return null
+
+    const handleInputOnBlur = (i: number, j: number ) => (e: React.FocusEvent<HTMLTextAreaElement>) => {
+        updateCellText(i, j, e.target.value)
+    }
+
+    return (
+        <div className="splitTable">
+            {table.cellGrid.map((row, i) => {
+                return (
+                    <div key={i} className="dataRow">
+                        {
+                            row.map((cell, j) => {
+                                return (
+                                    <div key={j} className="dataCell">
+                                        <div>
+                                            <img src={`http://localhost:5000/${dataDir}/${props.image_name}/cell_image/${selectedTable}/${i}/${j}`}
+                                                 width={width(cell)}
+                                                 height={height(cell)}
+                                                 alt={`cell at ${i} ${j}`} />
+                                        </div>
+                                        <div>
+                                            <textarea className="dataInput"
+                                                      defaultValue={table.cellContents ?
+                                                          table.cellContents[i][j].human_text ?
+                                                              table.cellContents[i][j].human_text :
+                                                              table.cellContents[i][j].ocr_text
+                                                          : ""}
+                                                      style={{width: `${width(cell)-6}px`,
+                                                          height: `${height(cell)*2-6}px`}}
+                                                      onBlur={handleInputOnBlur(i, j)}
+                                            />
+                                        </div>
+                                    </div>
+                                )
+                            })
+                        }
+                    </div>
+                )
+                })
+            }
+        </div>
+    )
 }
 
 function StartedTable(props: { firstPoint: Point, imageCenter: Point } ) {

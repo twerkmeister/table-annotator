@@ -38,7 +38,6 @@ def apply_to_cells(f: Callable[[A], B],
     return [[f(cell) for cell in row] for row in cells]
 
 
-
 def join_grid(cell_image_grid: CellGrid[np.ndarray]) -> np.ndarray:
     """Joins the images of the cells together."""
     row_images = []
@@ -79,19 +78,19 @@ def take_columns(cell_grid: CellGrid[A], columns: List[int]) -> CellGrid[A]:
 
 def get_cell_grid(table: Table) -> CellGrid[Rectangle]:
     """Turns the columns and rows of a table into cell rectangles."""
-    cells: List[List[Rectangle]] = []
+    cell_grid = []
     rows = [0] + table.rows + [table.outline.height()]
     columns = [0] + table.columns + [table.outline.width()]
     for r_i in range(len(rows) - 1):
-        row_cells = []
+        row_of_cells: List[Rectangle] = []
         for c_i in range(len(columns) - 1):
             top_left = Point(x=columns[c_i],
                              y=rows[r_i])
             bottom_right = Point(x=columns[c_i + 1],
                                  y=rows[r_i + 1])
-            row_cells.append(Rectangle(topLeft=top_left, bottomRight=bottom_right))
-        cells.append(row_cells)
-    return cells
+            row_of_cells.append(Rectangle(topLeft=top_left, bottomRight=bottom_right))
+        cell_grid.append(row_of_cells)
+    return cell_grid
 
 
 def get_cell_image_grid(image: np.ndarray, table: Table) -> CellGrid[np.ndarray]:

@@ -1,4 +1,4 @@
-from typing import List, Text, Optional, Dict, TypeVar
+from typing import List, Text, Optional, TypeVar
 from pydantic import BaseModel
 
 T = TypeVar('T')
@@ -45,4 +45,10 @@ class Table(BaseModel):
     columns: List[int]
     rows: List[int]
     cellGrid: Optional[CellGrid[Rectangle]]
-    contents: Optional[CellGrid[CellContent]]
+    cellContents: Optional[CellGrid[CellContent]]
+
+    def __hash__(self) -> int:
+        cell_outlines = tuple([cell for row in self.cellGrid for cell in row])
+        return hash((self.outline, self.rotationDegrees,
+                     tuple(self.rows), tuple(self.columns),
+                     tuple(cell_outlines)))
