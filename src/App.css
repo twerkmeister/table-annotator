@@ -77,16 +77,13 @@ body {
     left: -30px;
 }
 
-.dataCell {
-    float: left;
-}
-
 .dataRow {
-    clear: both;
+    display: flex;
 }
 
 .splitTable {
-    margin: 0 auto 0 auto;
+    margin: 0 auto;
+    width: min-content;
 
 }
 
