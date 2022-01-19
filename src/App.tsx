@@ -57,7 +57,7 @@ function getPageOffset(el: Element): Point {
     return { y: rect.top + scrollTop, x: rect.left + scrollLeft }
 }
 
-function calcRectangle(p1: Point, p2: Point): Rectangle {
+function makeRectangle(p1: Point, p2: Point): Rectangle {
     const [topLeftX, bottomRightX] = p1.x <= p2.x ? [p1.x, p2.x] : [p2.x, p1.x]
     const [topLeftY, bottomRightY] = p1.y <= p2.y ? [p1.y, p2.y] : [p2.y, p1.y]
     const topLeft = {x: topLeftX, y: topLeftY}
@@ -66,7 +66,7 @@ function calcRectangle(p1: Point, p2: Point): Rectangle {
 }
 
 function makeTable(p1: Point, p2: Point, rotationDegrees: number): Table {
-    const outline = calcRectangle(p1, p2)
+    const outline = makeRectangle(p1, p2)
     return {
         outline, rotationDegrees, columns: [], rows: [],
     }
@@ -447,12 +447,10 @@ const pushTablesToApi = async(state: AnnotatorState, previousState: AnnotatorSta
     if(state.tables === previousState.tables) return
     const dataDir = getDataDir()
 
-    const {currentImageIndex, images, tables, selectedTable} = state
-    if(typeof(currentImageIndex) === "undefined" || typeof(images) === "undefined" ||
-        typeof(selectedTable) === "undefined") return
-    const table = tables[selectedTable]
+    const {currentImageIndex, images, tables} = state
+    if(typeof(currentImageIndex) === "undefined" || typeof(images) === "undefined") return
     const image = images[currentImageIndex]
-    if(typeof(image) === "undefined" || typeof(table) === "undefined") return
+    if(typeof(image) === "undefined") return
     await axios.post(`http://localhost:5000/${dataDir}/tables/${image.name}`, tables)
 }
 
@@ -568,7 +566,7 @@ function StartedTable(props: { firstPoint: Point, imageCenter: Point } ) {
             }
         }
         const mouseOffsetPosition = {x: mousePosition.x - documentPosition.x, y: mousePosition.y - documentPosition.y}
-        const rectangle = calcRectangle(props.firstPoint, mouseOffsetPosition)
+        const rectangle = makeRectangle(props.firstPoint, mouseOffsetPosition)
         return (
             <div className="table"
                  style={{
