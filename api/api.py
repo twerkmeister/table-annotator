@@ -1,6 +1,7 @@
 from functools import partial
 from typing import Text, Optional, Dict, Tuple
 import os
+import csv
 from flask import Flask, send_from_directory, make_response, request, send_file
 from flask.cli import ScriptInfo
 from flask_cors import CORS
@@ -14,9 +15,10 @@ import table_annotator.img
 import table_annotator.io
 import table_annotator.ocr
 import table_annotator.cellgrid
-from table_annotator.types import Table, CellGrid
+from table_annotator.types import Table, CellGrid, CellContent
 
 DATA_PATH = "data_path"
+csv.register_dialect('unix+', dialect="unix", doublequote=False, escapechar='\\')
 
 
 def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data"):
@@ -41,10 +43,11 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
             image_path = os.path.join(workdir, image_name)
             image = table_annotator.io.read_image(image_path)
             width, height = table_annotator.img.get_dimensions(image)
-            center = {"x": width//2, "y": height // 2}
-            images_with_metadata.append({"src": f"{subdir}/image/{image_name}", "width": width,
-                                         "height": height, "center": center,
-                                         "name": image_name})
+            center = {"x": width // 2, "y": height // 2}
+            images_with_metadata.append(
+                {"src": f"{subdir}/image/{image_name}", "width": width,
+                 "height": height, "center": center,
+                 "name": image_name})
         return {"images": images_with_metadata}
 
     @app.route('/<subdir>/image/<image_name>')
@@ -75,7 +78,9 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
                                          "table data does not exist."}, 404)
 
         tables = table_annotator.io.read_tables_for_image(image_path)
-        tables_json = {"tables": [{k: v for k, v in t.dict().items() if v is not None} for t in tables]}
+        tables_json = {
+            "tables": [{k: v for k, v in t.dict().items() if v is not None} for t in
+                       tables]}
 
         return tables_json
 
@@ -159,5 +164,33 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
 
         return send_file(file_object, mimetype='image/JPEG')
 
-    return app
+    @app.route('/<subdir>/<image_name>/export_data/<int:table_id>',
+               methods=["GET"])
+    def export_data(subdir: Text, image_name: Text, table_id: int):
+        workdir = get_workdir(subdir)
+        image_path = os.path.join(workdir, image_name)
+        if not os.path.isfile(image_path):
+            return make_response({"msg": "The image does not exist."}, 404)
 
+        tables = table_annotator.io.read_tables_for_image(image_path)
+
+        if table_id not in set(range(len(tables))):
+            return make_response({"msg": "The table does not exist."}, 404)
+
+        table = tables[table_id]
+        if table.cellContents is None:
+            return make_response({"msg": "The table does not have content yet."}, 404)
+
+        file_object = io.StringIO()
+        writer = csv.writer(file_object, dialect="unix+")
+        text_rows = table_annotator.cellgrid.apply_to_cells(CellContent.extract_text,
+                                                            table.cellContents)
+        writer.writerows(text_rows)
+        file_object.seek(0)
+        content = file_object.read()
+        return send_file(io.BytesIO(content.encode(encoding="utf-8")),
+                         mimetype="text/csv",
+                         attachment_filename=f"{image_name}_{table_id}.csv",
+                         as_attachment=True)
+
+    return app

@@ -25,8 +25,45 @@ const keyMap = {
     LEFT: "shift+a",
     RIGHT: "shift+d",
     X: "x",
-    C: "c"
+    C: "c",
+    T: "t"
 };
+
+function downloadCSV(dataDir?: string, imageName?: string, tableId?: number): void {
+    if (typeof(dataDir) === "undefined" || typeof(imageName) === "undefined" ||
+        typeof(tableId) === "undefined") return
+    fetch(`http://localhost:5000/${dataDir}/${imageName}/export_data/${tableId}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'text/csv',
+        },
+    })
+        .then((response) => response.blob())
+        .then((blob) => {
+            // Create blob link to download
+            const url = window.URL.createObjectURL(
+                new Blob([blob]),
+            );
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute(
+                'download',
+                `${imageName}_${tableId}.csv`,
+            );
+
+            // Append to html link element page
+            document.body.appendChild(link);
+
+            // Start download
+            link.click();
+
+            // Clean up and remove the link
+            if (link.parentNode) {
+                link.parentNode.removeChild(link);
+            }
+        });
+}
+
 
 
 function makeTable(p1: Point, p2: Point, rotationDegrees: number): Table {
@@ -470,6 +507,7 @@ function App() {
     const adjustColumn = useStore(state => state.adjustColumn)
     const setDataMode = useStore(state => state.setDataMode)
     const dataMode = useStore(state => state.dataMode)
+    const dataDir = getDataDir()
 
     useEffect(() => {
         if(typeof(images) === "undefined") {
@@ -508,7 +546,12 @@ function App() {
         DOWN: () => adjustRow(1),
         LEFT: () => adjustColumn(-5),
         RIGHT: () => adjustColumn(5),
-        C: addCellGrid
+        C: addCellGrid,
+        T: () => {
+            if(typeof(images) === "undefined") return
+            const image = images[imageIdx]
+            if(typeof(image) === "undefined") return
+            downloadCSV(dataDir, image.name, selectedTable)}
     }
 
     if(typeof(images) != "undefined" && images.length > 0) {
