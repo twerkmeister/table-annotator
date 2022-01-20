@@ -2,8 +2,8 @@ import argparse
 import os
 from typing import Text, Callable, List
 import random
-# import cv2
-# import numpy as np
+import cv2
+import numpy as np
 
 import table_annotator.io
 import table_annotator.img
@@ -49,67 +49,50 @@ def extract_table_delimiter_data(data_path: Text, target_path: Text) -> None:
             table_image = table_annotator.img.extract_table_image(image, table)
             tasks = []
             row_px_delimiters = [0] + table.rows + [table_image.shape[0]]
-            col_px_delimiters = [0] + table.columns + [table_image.shape[1]]
 
             for r_i, row_task_y_px_start in enumerate(row_px_delimiters[:-1]):
-                for c_i in [-1] + list(range(len(col_px_delimiters) - 2)):
-                    if c_i == -1:
-                        row_task_x_px_start = 0
-                        row_task_x_px_end = table_image.shape[1]
+
+                for h_i, height_func in \
+                        random.sample(list(enumerate(height_functions)), 3):
+                    if r_i == 0:
+                        jitter = random.randint(0, 6)
                     else:
-                        max_col_width = len(col_px_delimiters) - c_i - 1
-                        row_task_x_px_start = col_px_delimiters[c_i]
-                        row_task_x_px_end = \
-                            col_px_delimiters[c_i + random.randint(2, max_col_width)]
+                        jitter = random.randint(-4, 6)
 
-                    for h_i, height_func in \
-                            random.sample(list(enumerate(height_functions)), 1):
-                        if r_i == 0:
-                            jitter = random.randint(0, 6)
-                        else:
-                            jitter = random.randint(-4, 6)
+                    row_task_y_px_start_tmp = row_task_y_px_start + jitter
+                    row_task_y_px_end = height_func(r_i, jitter, row_px_delimiters)
 
-                        row_task_y_px_start_tmp = row_task_y_px_start + jitter
-                        row_task_y_px_end = height_func(r_i, jitter, row_px_delimiters)
+                    row_task_image = \
+                        table_image[row_task_y_px_start_tmp:row_task_y_px_end]
 
-                        row_task_x_px_start_tmp = max(0, row_task_x_px_start +
-                                                      random.randint(-10, 20))
-                        row_task_x_px_end_tmp = min(table_image.shape[1],
-                                                    row_task_x_px_end +
-                                                    random.randint(-10, 20))
+                    regression_target = row_px_delimiters[r_i + 1] - \
+                                        row_task_y_px_start_tmp
 
-                        row_task_image = \
-                            table_image[row_task_y_px_start_tmp:row_task_y_px_end,
-                                        row_task_x_px_start_tmp: row_task_x_px_end_tmp]
+                    if regression_target >= row_task_image.shape[0] or \
+                            r_i == len(row_px_delimiters) - 2:
+                        regression_target = 0
 
-                        regression_target = row_px_delimiters[r_i + 1] - \
-                                            row_task_y_px_start_tmp
+                    decision_target = int(bool(regression_target))
 
-                        if regression_target >= row_task_image.shape[0] or \
-                                r_i == len(row_px_delimiters) - 2:
-                            regression_target = 0
+                    row_task_targets = [regression_target,
+                                        decision_target]
 
-                        decision_target = int(bool(regression_target))
-
-                        row_task_targets = [regression_target,
-                                            decision_target]
-
-                        row_task_identifier = \
-                            f"{table_identifier}_r{r_i:03d}_cm{c_i + 1:02d}_h{h_i:02d}"
-                        tasks.append((row_task_identifier, row_task_targets,
-                                      row_task_image))
+                    row_task_identifier = \
+                        f"{table_identifier}_r{r_i:03d}_h{h_i:02d}"
+                    tasks.append((row_task_identifier, row_task_targets,
+                                  row_task_image))
 
             written_images = set()
             for row_task_identifier, row_task_targets, row_task_image in tasks:
                 if row_task_image.tobytes() in written_images:
                     continue
 
-                # row_task_image = np.copy(row_task_image)
-                # cv2.line(row_task_image,
-                #          (0, row_task_targets[0]),
-                #          (row_task_image.shape[1], row_task_targets[0]),
-                #          (0, 255, 0),
-                #          thickness=1)
+                row_task_image = np.copy(row_task_image)
+                cv2.line(row_task_image,
+                         (0, row_task_targets[0]),
+                         (row_task_image.shape[1], row_task_targets[0]),
+                         (0, 255, 0),
+                         thickness=1)
 
                 row_task_image_path = os.path.join(target_path,
                                                    f"{row_task_identifier}.jpg")
