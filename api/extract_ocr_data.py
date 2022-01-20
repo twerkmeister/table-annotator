@@ -4,7 +4,7 @@ from typing import Text
 import cv2
 import table_annotator.io
 import table_annotator.cellgrid
-import find_lines
+import table_annotator.lines
 from table_annotator.types import CellContent
 
 
@@ -39,10 +39,11 @@ def extract_ocr_data(data_path: Text, target_path: Text) -> None:
                     cell_image = cell_image_grid[row_i][col_i]
                     text_lines = cell_text.split("\n")
                     if len(text_lines) == 1:
-                        line_images = [find_lines.find_line_single(cell_image)]
+                        line_images = \
+                            [table_annotator.lines.find_line_single(cell_image)]
                     else:
                         multi_line_images += 1
-                        line_images = find_lines.find_lines(cell_image)
+                        line_images = table_annotator.lines.find_lines(cell_image)
 
                     if len(line_images) != len(text_lines):
                         line_mismatches += 1
