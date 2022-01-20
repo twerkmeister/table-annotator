@@ -148,11 +148,13 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
 
         table = tables[table_id]
         if (image_path, table) not in cell_image_cache:
+            print("creating cache")
             image = table_annotator.io.read_image(image_path)
             cell_image_grid = table_annotator.cellgrid.get_cell_image_grid(image, table)
             convert_image = partial(cv2.cvtColor, code=cv2.COLOR_BGR2RGB)
             cell_image_grid = table_annotator.cellgrid.apply_to_cells(convert_image,
                                                                       cell_image_grid)
+
             cell_image_cache[(image_path, table)] = cell_image_grid
 
         cell_img = cell_image_cache[(image_path, table)][row][col]
@@ -185,6 +187,12 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
         writer = csv.writer(file_object, dialect="unix+")
         text_rows = table_annotator.cellgrid.apply_to_cells(CellContent.extract_text,
                                                             table.cellContents)
+
+        def replace_newlines(text: Text) -> Text:
+            return text.replace("\n", " ").replace(" ␢", "").replace("␢", "")
+
+        text_rows = table_annotator.cellgrid.apply_to_cells(replace_newlines,
+                                                            text_rows)
         writer.writerows(text_rows)
         file_object.seek(0)
         content = file_object.read()

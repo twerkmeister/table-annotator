@@ -542,8 +542,8 @@ function App() {
         X: segmentTable,
         H: () => setDataMode(!dataMode),
         F: predictTableContents,
-        UP: () => adjustRow(-1),
-        DOWN: () => adjustRow(1),
+        UP: () => adjustRow(-2),
+        DOWN: () => adjustRow(2),
         LEFT: () => adjustColumn(-5),
         RIGHT: () => adjustColumn(5),
         C: addCellGrid,
@@ -632,7 +632,7 @@ function SplitTable(props: {image_name: string}) {
                                                               table.cellContents[i][j].ocr_text
                                                           : ""}
                                                       style={{width: `${width(cell)-6}px`,
-                                                          height: `${height(cell)*2-6}px`}}
+                                                          height: `${Math.round(height(cell)*1.3-6)}px`}}
                                                       onBlur={handleInputOnBlur(i, j)}
                                             />
                                         </div>
