@@ -709,7 +709,6 @@ function TableElement(props: {tableTopLeft: Point, tableBottomRight: Point, tabl
             {isSelected ? <RowSetterSpace/> : null}
             {isSelected ? <NewColumnLine/> : null}
             {isSelected ? <NewRowLine/> : null}
-            {isSelected ? <GuessedRowLine tableIdx={props.tableIdx}/> : null}
         </div>
     ) : (
         <div>
@@ -830,19 +829,6 @@ function NewRowLine() {
     } else {
         return null
     }
-}
-
-function GuessedRowLine(props: {tableIdx: number}) {
-    const newRowGuesses = useStore(state => state.newRowGuesses)
-    if(typeof(newRowGuesses) === "undefined" ||
-        newRowGuesses === null ||
-        newRowGuesses.length <= props.tableIdx ||
-        typeof(newRowGuesses[props.tableIdx]) === "undefined" ||
-        newRowGuesses[props.tableIdx] === null) return null
-
-    return (<div className="rowLine"
-                 style={{top: `${newRowGuesses[props.tableIdx]}px`,
-                         background: "rgba(0, 128, 0, 0.3)"}}/>)
 }
 
 function ColumnSetterSpace(){
