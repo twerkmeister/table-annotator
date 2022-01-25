@@ -713,7 +713,7 @@ function TableElement(props: {tableTopLeft: Point, tableBottomRight: Point, tabl
     ) : (
         <div>
             {flatten(props.cellGrid.map((row, row_i) => {
-                return row.map((rect, column_i) => {
+                return row.slice(0, -1).map((rect, column_i) => {
                     return <CellColumnLine row={row_i} column={column_i} parentTableSelected={isSelected}
                                            height={rect.bottomRight.y - rect.topLeft.y} left={rect.bottomRight.x}
                                            top={rect.topLeft.y}/>
