@@ -1,4 +1,6 @@
 
+import {DataTypes} from "./dataModel";
+
 export type Point = {
     x: number,
     y: number
@@ -38,4 +40,5 @@ export type Table = {
     rows: number[],
     cellGrid?: Rectangle[][],
     cellContents?: CellContent[][],
+    columnTypes?: string[][],
 }

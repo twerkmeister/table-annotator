@@ -6,9 +6,16 @@ import {getDataDir} from './path';
 import './App.css';
 import {Point, Rectangle, Image, Table, CellIndex, UnfinishedTable} from './types'
 import {makeRectangle, height, width, getPageOffset, rotatePoint, subtractPoints, addPoints} from './geometry'
+import {DataTypes, DataTypesOptions} from "./dataModel";
+import MultiSelect from "./components/MultiSelect";
+
+
+
 function flatten<T>(arr: T[][]): T[] {
     return ([] as T[]).concat(...arr);
 }
+
+
 
 const keyMap = {
     PREVIOUS_IMAGE: "a",
@@ -129,6 +136,7 @@ type AnnotatorState = {
     adjustColumn: (change: number) => void
     setDataMode: (dataMode: boolean) => void
     updateCellText: (i: number, j: number, text: string) => void
+    setColumnTypes: (column: number, types: string[]) => void
 }
 
 
@@ -366,8 +374,9 @@ const useStore = create<AnnotatorState>((set, get) => ({
         const response =
             await fetch(`http://localhost:5000/${dataDir}/${image.name}/predict_table_contents/${selectedTable}`)
         const cellContents = (await response.json())["contents"]
+        const columnTypes = table.cellGrid[0].map((cell, i) => [])
 
-        const newTables = [...tables.slice(0, selectedTable), {...table, cellContents},
+        const newTables = [...tables.slice(0, selectedTable), {...table, cellContents, columnTypes},
             ...tables.slice(selectedTable + 1)]
         set({tables: newTables})},
     adjustRow: (change: number) => {
@@ -465,6 +474,18 @@ const useStore = create<AnnotatorState>((set, get) => ({
         const newCellRow = [...relevantRow.slice(0, j), newCell, ...relevantRow.slice(j + 1)]
         const newCellContents = [...table.cellContents.slice(0, i), newCellRow, ...table.cellContents.slice(i + 1)]
         const newTable = {...table, cellContents: newCellContents}
+        const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
+        set({tables: newTables})
+    },
+    setColumnTypes: (column: number, types: string[]) => {
+        const selectedTable = get().selectedTable
+        const tables = get().tables
+        if(typeof(selectedTable) === "undefined") return
+        const table = tables[selectedTable]
+        if(typeof(table) === "undefined" || typeof(table.columnTypes) === "undefined") return
+
+        const newColumnTypes = [...table.columnTypes.slice(0, column), types, ...table.columnTypes.slice(column+1)]
+        const newTable = {...table, columnTypes: newColumnTypes}
         const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
         set({tables: newTables})
     }
@@ -599,14 +620,21 @@ function SplitTable(props: {image_name: string}) {
     const tables = useStore(state => state.tables)
     const selectedTable = useStore(state => state.selectedTable)
     const updateCellText = useStore(state => state.updateCellText)
+    const setColumnTypes = useStore(state => state.setColumnTypes)
     if(typeof(selectedTable) === "undefined") return null
     const table = tables[selectedTable]
     if(typeof(table) === "undefined" ) return null
     if(typeof(table.cellGrid) === "undefined") return null
     if(typeof(table.cellContents) === "undefined") return null
+    const columnTypes = table.columnTypes
+    if(typeof(columnTypes) === "undefined") return null
 
     const handleInputOnBlur = (i: number, j: number ) => (e: React.FocusEvent<HTMLTextAreaElement>) => {
         updateCellText(i, j, e.target.value)
+    }
+
+    const onChangeType = (col: number) => (selectedTypes: string[]) => {
+        setColumnTypes(col, selectedTypes)
     }
 
     return (
@@ -617,30 +645,41 @@ function SplitTable(props: {image_name: string}) {
                         {
                             row.map((cell, j) => {
                                 return (
-                                    <div key={j} className="dataCell">
+                                    <div>
                                         <div>
-                                            <img src={`http://localhost:5000/${dataDir}/${props.image_name}/cell_image/${selectedTable}/${i}/${j}`}
-                                                 width={width(cell)}
-                                                 height={height(cell)}
-                                                 alt={`cell at ${i} ${j}`} />
+                                        {i !== 0 ? null :
+                                            <MultiSelect
+                                                title={columnTypes[j].length.toString() || "0"}
+                                                items={DataTypesOptions}
+                                                selectedItems={columnTypes[j]}
+                                                onChange={onChangeType(j)}
+                                            />}
                                         </div>
-                                        <div>
-                                            <textarea className="dataInput"
-                                                      defaultValue={table.cellContents ?
-                                                          table.cellContents[i][j].human_text ?
-                                                              table.cellContents[i][j].human_text :
-                                                              table.cellContents[i][j].ocr_text
-                                                          : ""}
-                                                      style={{width: `${width(cell)-6}px`,
-                                                          height: `${Math.round(height(cell)*1.3-6)}px`}}
-                                                      onBlur={handleInputOnBlur(i, j)}
-                                            />
+                                        <div key={j} className="dataCell">
+                                            <div>
+                                                <img src={`http://localhost:5000/${dataDir}/${props.image_name}/cell_image/${selectedTable}/${i}/${j}`}
+                                                     width={width(cell)}
+                                                     height={height(cell)}
+                                                     alt={`cell at ${i} ${j}`} />
+                                            </div>
+                                            <div>
+                                                <textarea className="dataInput"
+                                                          defaultValue={table.cellContents ?
+                                                              table.cellContents[i][j].human_text ?
+                                                                  table.cellContents[i][j].human_text :
+                                                                  table.cellContents[i][j].ocr_text
+                                                              : ""}
+                                                          style={{width: `${width(cell)-6}px`,
+                                                              height: `${Math.round(height(cell)*1.3-6)}px`}}
+                                                          onBlur={handleInputOnBlur(i, j)}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 )
                             })
                         }
-                    </div>
+                </div>
                 )
                 })
             }

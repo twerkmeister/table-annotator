@@ -51,6 +51,7 @@ class Table(BaseModel):
     rows: List[int]
     cellGrid: Optional[CellGrid[Rectangle]]
     cellContents: Optional[CellGrid[CellContent]]
+    columnTypes: Optional[List[List[Text]]]
 
     def __hash__(self) -> int:
         cell_outlines = tuple([cell for row in self.cellGrid for cell in row])

@@ -185,6 +185,7 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
 
         file_object = io.StringIO()
         writer = csv.writer(file_object, dialect="unix+")
+        writer.writerow([";".join(types) for types in table.columnTypes])
         text_rows = table_annotator.cellgrid.apply_to_cells(CellContent.extract_text,
                                                             table.cellContents)
 
