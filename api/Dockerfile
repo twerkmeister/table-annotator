@@ -11,7 +11,7 @@ COPY pyproject.toml poetry.lock /app/
 
 RUN poetry install --no-interaction
 
-COPY .flaskenv api.py extract_ocr_data.py extract_table_delimiter_data.py table_ocr.py /app/
+COPY .flaskenv api.py extract_ocr_data.py extract_table_delimiter_data.py /app/
 COPY table_annotator /app/table_annotator/
 COPY tests /app/tests/
 
