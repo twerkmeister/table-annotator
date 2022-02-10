@@ -3,19 +3,19 @@ services:
   segmenting-server:
     build: segmenting-server/
     ports:
-      - "5002:5002"
+      - "127.0.0.1:5002:5002"
     volumes:
       - ./segmenting-server/:/app
   ocr-server:
     build: ocr-server/
     ports:
-      - "5001:5001"
+      - "127.0.0.1:5001:5001"
     volumes:
       - ./ocr-server/:/app
   api:
     build: api/
     ports:
-      - "5000:5000"
+      - "127.0.0.1:5000:5000"
     volumes:
       - ./api/:/app
       - ./api/data:/app/data
@@ -25,7 +25,7 @@ services:
   frontend:
     build: .
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     depends_on:
       - "api"
     volumes:
