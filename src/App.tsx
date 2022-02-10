@@ -39,7 +39,7 @@ const keyMap = {
 function downloadCSV(dataDir?: string, imageName?: string, tableId?: number): void {
     if (typeof(dataDir) === "undefined" || typeof(imageName) === "undefined" ||
         typeof(tableId) === "undefined") return
-    fetch(`http://localhost:5000/${dataDir}/${imageName}/export_data/${tableId}`, {
+    fetch(`/${dataDir}/${imageName}/export_data/${tableId}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'text/csv',
@@ -158,10 +158,10 @@ const useStore = create<AnnotatorState>((set, get) => ({
     dataMode: false,
     fetchImages: async() => {
         const dataDir = getDataDir()
-        const response = await fetch(`http://localhost:5000/${dataDir}/images`)
+        const response = await fetch(`/${dataDir}/images`)
         const images = (await response.json())["images"]
         if (images.length > 0) {
-            const table_response = await fetch(`http://localhost:5000/${dataDir}/tables/${images[0].name}`)
+            const table_response = await fetch(`/${dataDir}/tables/${images[0].name}`)
             const tables = (await table_response.json())["tables"]
             set({images, tables, currentImageIndex: 0})
         } else {
@@ -176,7 +176,7 @@ const useStore = create<AnnotatorState>((set, get) => ({
         if(typeof(image) === "undefined") return
 
         const dataDir = getDataDir()
-        const table_response = await fetch(`http://localhost:5000/${dataDir}/tables/${image.name}`)
+        const table_response = await fetch(`/${dataDir}/tables/${image.name}`)
         const tables = (await table_response.json())["tables"]
         set({ currentImageIndex: idx, rotationDegrees: 0, documentPosition: undefined,
             tables, unfinishedTable: undefined, selectedTable: undefined, selectedRow: undefined,
@@ -349,7 +349,7 @@ const useStore = create<AnnotatorState>((set, get) => ({
         const dataDir = getDataDir()
 
         const response =
-            await fetch(`http://localhost:5000/${dataDir}/${image.name}/predict_table_structure/${selectedTable}`)
+            await fetch(`/${dataDir}/${image.name}/predict_table_structure/${selectedTable}`)
         const rows = (await response.json())["rows"]
 
         const newTables = [...tables.slice(0, selectedTable), {...table, rows}, ...tables.slice(selectedTable + 1)]
@@ -372,7 +372,7 @@ const useStore = create<AnnotatorState>((set, get) => ({
         const dataDir = getDataDir()
 
         const response =
-            await fetch(`http://localhost:5000/${dataDir}/${image.name}/predict_table_contents/${selectedTable}`)
+            await fetch(`/${dataDir}/${image.name}/predict_table_contents/${selectedTable}`)
         const cellContents = (await response.json())["contents"]
         const columnTypes = table.cellGrid[0].map((cell, i) => [])
 
@@ -499,7 +499,7 @@ const pushTablesToApi = async(state: AnnotatorState, previousState: AnnotatorSta
     if(typeof(currentImageIndex) === "undefined" || typeof(images) === "undefined") return
     const image = images[currentImageIndex]
     if(typeof(image) === "undefined") return
-    await axios.post(`http://localhost:5000/${dataDir}/tables/${image.name}`, tables)
+    await axios.post(`/${dataDir}/tables/${image.name}`, tables)
 }
 
 const unsubTables = useStore.subscribe(pushTablesToApi)
@@ -657,7 +657,7 @@ function SplitTable(props: {image_name: string}) {
                                         </div>
                                         <div key={j} className="dataCell">
                                             <div>
-                                                <img src={`http://localhost:5000/${dataDir}/${props.image_name}/cell_image/${selectedTable}/${i}/${j}`}
+                                                <img src={`/${dataDir}/${props.image_name}/cell_image/${selectedTable}/${i}/${j}`}
                                                      width={width(cell)}
                                                      height={height(cell)}
                                                      alt={`cell at ${i} ${j}`} />
@@ -942,7 +942,7 @@ function DocumentImage(image: Image) {
     }
 
     return (
-        <img ref={ref} className="documentImage" src={`http://localhost:5000/${image.src}`} width={image.width} height={image.height}
+        <img ref={ref} className="documentImage" src={`/${image.src}`} width={image.width} height={image.height}
         style={{transform: `rotate(${rotationDegrees}deg)`}} alt="The document"
              onClick={e => handleClick(e)}/>
     )
