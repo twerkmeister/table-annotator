@@ -4,7 +4,7 @@ import { GlobalHotKeys } from "react-hotkeys";
 import axios from 'axios';
 import {getDataDir} from './path';
 import './App.css';
-import {Point, Rectangle, Image, Table, CellIndex, UnfinishedTable} from './types'
+import {Point, Rectangle, Image, Table, CellIndex, UnfinishedTable, CellContent} from './types'
 import {makeRectangle, height, width, getPageOffset, rotatePoint, subtractPoints, addPoints} from './geometry'
 import {DataTypes, DataTypesOptions} from "./dataModel";
 import MultiSelect from "./components/MultiSelect";
@@ -18,22 +18,23 @@ function flatten<T>(arr: T[][]): T[] {
 
 
 const keyMap = {
-    PREVIOUS_IMAGE: "a",
-    NEXT_IMAGE: "d",
-    INCREASE_ROTATION: "w",
-    DECREASE_ROTATION: "s",
+    PREVIOUS_IMAGE: "b",
+    NEXT_IMAGE: "n",
+    INCREASE_ROTATION: "e",
+    DECREASE_ROTATION: "q",
     ESC: "esc",
     ZERO: "0",
     BACKSPACE_OR_DELETE: ["Backspace", "Delete"],
-    F: "f",
-    H: "h",
-    UP: "shift+w",
-    DOWN: "shift+s",
-    LEFT: "shift+a",
-    RIGHT: "shift+d",
-    X: "x",
-    C: "c",
-    T: "t"
+    UP: "w",
+    LEFT: "a",
+    DOWN: "s",
+    RIGHT: "d",
+    ANNOTATE_ROWS_AUTOMATICALLY: "z",
+    REFINE_COLUMNS: "v",
+    START_OCR: "o",
+    TABLE_VIEW: "t",
+    EXPORT: "x",
+    HELP: "h",
 };
 
 function downloadCSV(dataDir?: string, imageName?: string, tableId?: number): void {
@@ -170,6 +171,8 @@ const useStore = create<AnnotatorState>((set, get) => ({
 
     },
     setImageIndex: async(idx: number) => {
+        const dataMode = get().dataMode
+        if (dataMode) return
         const images = get().images
         if(typeof(images) === "undefined") return
         const image = images[idx]
@@ -407,7 +410,9 @@ const useStore = create<AnnotatorState>((set, get) => ({
         if (typeof (selectedTable) === "undefined" ) return
 
         const table = tables[selectedTable]
-        if (typeof (table) === "undefined") return
+        if (typeof(table) === "undefined") return
+        if (table.cellGrid !== undefined) return
+        if (table.cellContents !== undefined) return
 
         const tableWithCellGrid = withCellGrid(table)
         const newTables = [...tables.slice(0, selectedTable), tableWithCellGrid, ...tables.slice(selectedTable+1)]
@@ -560,15 +565,15 @@ function App() {
         ZERO: () => setRotationDegrees(0),
         ESC: cancelActions,
         BACKSPACE_OR_DELETE: deleteFunc,
-        X: segmentTable,
-        H: () => setDataMode(!dataMode),
-        F: predictTableContents,
+        ANNOTATE_ROWS_AUTOMATICALLY: segmentTable,
+        TABLE_VIEW: () => setDataMode(!dataMode),
+        START_OCR: predictTableContents,
         UP: () => adjustRow(-2),
         DOWN: () => adjustRow(2),
         LEFT: () => adjustColumn(-5),
         RIGHT: () => adjustColumn(5),
-        C: addCellGrid,
-        T: () => {
+        REFINE_COLUMNS: addCellGrid,
+        EXPORT: () => {
             if(typeof(images) === "undefined") return
             const image = images[imageIdx]
             if(typeof(image) === "undefined") return
@@ -593,7 +598,8 @@ function App() {
                                                       tableRotation={t.rotationDegrees}
                                                       columns={t.columns}
                                                       rows={t.rows}
-                                                      cellGrid={t.cellGrid}/>
+                                                      cellGrid={t.cellGrid}
+                                                      cellContents={t.cellContents}/>
                                     )
                                 })
                             }
@@ -717,9 +723,10 @@ function StartedTable(props: { firstPoint: Point, imageCenter: Point } ) {
     }
 }
 
+
 function TableElement(props: {tableTopLeft: Point, tableBottomRight: Point, tableRotation: number,
                               tableIdx: number, imageCenter: Point, columns: number[], rows: number[],
-                              cellGrid?: Rectangle[][]}) {
+                              cellGrid?: Rectangle[][], cellContents?: CellContent[][]}) {
     const rotationDegrees = useStore(state => state.rotationDegrees)
     const selectTable = useStore(state => state.selectTable)
     const selectedTable = useStore(state => state.selectedTable)
@@ -732,7 +739,7 @@ function TableElement(props: {tableTopLeft: Point, tableBottomRight: Point, tabl
         selectTable(props.tableIdx)
     }
 
-    const body = typeof(props.cellGrid) === "undefined" ? (
+    const body = props.cellGrid === undefined ? (
         <div>
             {props.columns.map((c, i) => {
                 return (
@@ -755,7 +762,7 @@ function TableElement(props: {tableTopLeft: Point, tableBottomRight: Point, tabl
                 return row.slice(0, -1).map((rect, column_i) => {
                     return <CellColumnLine row={row_i} column={column_i} parentTableSelected={isSelected}
                                            height={rect.bottomRight.y - rect.topLeft.y} left={rect.bottomRight.x}
-                                           top={rect.topLeft.y}/>
+                                           top={rect.topLeft.y} hasContentAlready={props.cellContents !== undefined}/>
                 })
             }))}
             {flatten(props.cellGrid.map((row, row_i) => {
@@ -783,7 +790,7 @@ function TableElement(props: {tableTopLeft: Point, tableBottomRight: Point, tabl
 }
 
 function CellColumnLine(props: {row: number, column: number, left: number, top: number, height: number,
-                                parentTableSelected: boolean}) {
+                                parentTableSelected: boolean, hasContentAlready: boolean}) {
     const selectCellColumnLine = useStore(state => state.selectCellColumnLine)
     const selectedCellColumnLine = useStore(state => state.selectedCellColumnLine)
 
@@ -797,11 +804,12 @@ function CellColumnLine(props: {row: number, column: number, left: number, top: 
     const isSelected = props.parentTableSelected && typeof(selectedCellColumnLine) !== "undefined" && 
         props.row === selectedCellColumnLine.row && props.column === selectedCellColumnLine.column
 
-    return (<div className="cellColumnLine" onClick={handleMouseClick}
+    return (<div className="cellColumnLine"
+                 onClick={(e) => !props.hasContentAlready && handleMouseClick(e)}
                  style={{left: `${props.left}px`,
                      top: `${props.top}px`,
                      height: `${props.height}px`,
-                     cursor: isSelected ? "default" : "pointer",
+                     cursor: isSelected || props.hasContentAlready ? "default" : "pointer",
                      background: isSelected ? "blue" : ""}}/>)
 }
 
