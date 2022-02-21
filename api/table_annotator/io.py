@@ -54,4 +54,4 @@ def list_images(path: Text) -> List[Text]:
     """Lists all jpg files in a folder."""
     files = os.listdir(path)
     allowed_extensions = {".jpeg", ".jpg"}
-    return [f for f in files if os.path.splitext(f)[1] in allowed_extensions]
+    return sorted([f for f in files if os.path.splitext(f)[1] in allowed_extensions])
