@@ -2,31 +2,23 @@ version: "3.9"
 services:
   segmenting-server:
     build: segmenting-server/
-    ports:
-      - "127.0.0.1:5002:5002"
+    network_mode: "service:frontend"
     volumes:
       - ./segmenting-server/:/app
   ocr-server:
     build: ocr-server/
-    ports:
-      - "127.0.0.1:5001:5001"
+    network_mode: "service:frontend"
     volumes:
       - ./ocr-server/:/app
   api:
     build: api/
-    ports:
-      - "127.0.0.1:5000:5000"
+    network_mode: "service:frontend"
     volumes:
       - ./api/:/app
       - ./api/data:/app/data
-    depends_on:
-      - "ocr-server"
-      - "segmenting-server"
   frontend:
     build: .
     ports:
       - "127.0.0.1:3000:3000"
-    depends_on:
-      - "api"
     volumes:
       - ./src/:/app/src
