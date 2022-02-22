@@ -100,3 +100,12 @@ body {
 .sc-bdVaJa button {
     width: 100%;
 }
+
+.helpScreen {
+    width: 50%;
+    position: absolute;
+    left: 25%;
+    top: 100px;
+    background: papayawhip;
+    padding: 20px;
+}
