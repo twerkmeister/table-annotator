@@ -23,7 +23,7 @@ const CellColumnLine = ({row, column, left, top, height,
         }
     }
 
-    const isSelected = parentTableSelected && typeof(selectedCellColumnLine) !== "undefined" &&
+    const isSelected = parentTableSelected && selectedCellColumnLine !== undefined &&
         row === selectedCellColumnLine.row && column === selectedCellColumnLine.column
 
     return (<div className="cellColumnLine"

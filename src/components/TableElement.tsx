@@ -23,7 +23,7 @@ const TableElement = ({table, imageCenter, tableIdx}: TableProps) => {
     const selectTable = useStore(state => state.selectTable)
     const selectedTable = useStore(state => state.selectedTable)
     const tableDeletionMarkCount = useStore(state => state.tableDeletionMarkCount)
-    const isSelected = typeof(selectedTable) !== "undefined" && selectedTable === tableIdx
+    const isSelected = selectedTable !== undefined && selectedTable === tableIdx
     const deletionMarkColors = ["green", "yellow", "red"]
     const borderColor = !isSelected ? "black" : deletionMarkColors[tableDeletionMarkCount] || "red"
 

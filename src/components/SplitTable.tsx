@@ -15,13 +15,13 @@ const SplitTable = ({imageName}: SplitTableProps) => {
     const selectedTable = useStore(state => state.selectedTable)
     const updateCellText = useStore(state => state.updateCellText)
     const setColumnTypes = useStore(state => state.setColumnTypes)
-    if(typeof(selectedTable) === "undefined") return null
+    if(selectedTable === undefined) return null
     const table = tables[selectedTable]
-    if(typeof(table) === "undefined" ) return null
-    if(typeof(table.cellGrid) === "undefined") return null
-    if(typeof(table.cellContents) === "undefined") return null
+    if(table === undefined ) return null
+    if(table.cellGrid === undefined) return null
+    if(table.cellContents === undefined) return null
     const columnTypes = table.columnTypes
-    if(typeof(columnTypes) === "undefined") return null
+    if(columnTypes === undefined) return null
 
     const handleInputOnBlur = (i: number, j: number ) => (e: React.FocusEvent<HTMLTextAreaElement>) => {
         updateCellText(i, j, e.target.value)

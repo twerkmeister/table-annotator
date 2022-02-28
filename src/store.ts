@@ -104,9 +104,9 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const dataMode = get().ocrView
         if (dataMode) return
         const images = get().images
-        if(typeof(images) === "undefined") return
+        if(images === undefined) return
         const image = images[idx]
-        if(typeof(image) === "undefined") return
+        if(image === undefined) return
 
         const dataDir = getDataDir()
         const table_response = await fetch(`/${dataDir}/tables/${image.name}`)
@@ -119,7 +119,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
     outlineTable: (p: Point, rotationDegrees: number) => {
         const currentTables = get().tables
         const unfinishedTable = get().unfinishedTable
-        if (typeof(unfinishedTable) !== "undefined") {
+        if (unfinishedTable !== undefined) {
             const newTable = makeTable(unfinishedTable.firstPoint, p, rotationDegrees)
             set({unfinishedTable: undefined, tables: [...currentTables, newTable], selectedTable: currentTables.length})
         } else {
@@ -154,7 +154,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         set({selectedRow: idx, selectedColumn: undefined, tableDeletionMarkCount: 0})
     },
     setNewColumnPosition: (pagePoint?: Point) => {
-        if(typeof(pagePoint) === "undefined"){
+        if(pagePoint === undefined){
             set({newColumnPosition: undefined})
             return
         }
@@ -165,10 +165,10 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const images = get().images
         const currentImageIndex = get().currentImageIndex
         const rotationDegrees = get().rotationDegrees
-        if (typeof (selectedTableIdx) !== "undefined" &&
-            typeof (documentPosition) !== "undefined" && typeof(images) !== "undefined") {
+        if (selectedTableIdx !== undefined &&
+            documentPosition !== undefined && images !== undefined) {
             const table = tables[selectedTableIdx]
-            if (typeof (table) !== "undefined") {
+            if (table !== undefined) {
                 const rotatedPagePoint = rotatePoint(pagePoint, table.rotationDegrees - rotationDegrees, addPoints(images[currentImageIndex].center, documentPosition))
                 const columnPositionInsideTable = rotatedPagePoint.x - documentPosition.x - table.outline.topLeft.x
                 set({newColumnPosition: Math.round(columnPositionInsideTable - 7)})
@@ -176,7 +176,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         }
     },
     setNewRowPosition: (pagePoint?: Point) => {
-        if(typeof(pagePoint) === "undefined"){
+        if(pagePoint === undefined){
             set({newRowPosition: undefined})
             return
         }
@@ -187,10 +187,10 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const images = get().images
         const currentImageIndex = get().currentImageIndex
         const rotationDegrees = get().rotationDegrees
-        if (typeof (selectedTableIdx) !== "undefined" &&
-            typeof (documentPosition) !== "undefined" && typeof(images) !== "undefined") {
+        if (selectedTableIdx !== undefined &&
+            documentPosition !== undefined && images !== undefined) {
             const table = tables[selectedTableIdx]
-            if (typeof (table) !== "undefined") {
+            if (table !== undefined) {
                 const rotatedPagePoint = rotatePoint(pagePoint, table.rotationDegrees - rotationDegrees, addPoints(images[currentImageIndex].center, documentPosition))
                 const rowPositionInsideTable = rotatedPagePoint.y - documentPosition.y - table.outline.topLeft.y
                 set({newRowPosition: Math.round(rowPositionInsideTable - 7)})
@@ -201,9 +201,9 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const tables = get().tables
         const selectedTableIdx = get().selectedTable
         const newColumnPosition = get().newColumnPosition
-        if (typeof (selectedTableIdx) !== "undefined" && typeof(newColumnPosition) !== "undefined") {
+        if (selectedTableIdx !== undefined && newColumnPosition !== undefined) {
             const table = tables[selectedTableIdx]
-            if (typeof (table) !== "undefined") {
+            if (table !== undefined) {
                 const newColumns = [...table.columns, newColumnPosition].sort((a, b) => a - b)
                 const newTable = {...table, columns: newColumns}
                 const newTables = [...tables.slice(0, selectedTableIdx), newTable, ...tables.slice(selectedTableIdx+1)]
@@ -215,9 +215,9 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const tables = get().tables
         const selectedTable = get().selectedTable
         const newRowPosition = get().newRowPosition
-        if (typeof (selectedTable) !== "undefined" && typeof(newRowPosition) !== "undefined") {
+        if (selectedTable !== undefined && newRowPosition !== undefined) {
             const table = tables[selectedTable]
-            if (typeof (table) !== "undefined") {
+            if (table !== undefined) {
                 const newRows = [...table.rows, newRowPosition].sort((a, b) => a - b)
                 const newTable = {...table, rows: newRows}
                 const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable+1)]
@@ -229,7 +229,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const tables = get().tables
         const selectedTable = get().selectedTable
         const tableDeletionMarkCount = get().tableDeletionMarkCount
-        if (typeof (selectedTable) !== "undefined") {
+        if (selectedTable !== undefined) {
             if (tableDeletionMarkCount >= 2) {
                 const newTables = [...tables.slice(0, selectedTable), ...tables.slice(selectedTable + 1)]
                 set({selectedTable: undefined, tableDeletionMarkCount: 0, tables: newTables})
@@ -242,9 +242,9 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const tables = get().tables
         const selectedTable = get().selectedTable
         const selectedColumn = get().selectedColumn
-        if (typeof (selectedTable) !== "undefined" && typeof(selectedColumn) !== "undefined") {
+        if (selectedTable !== undefined && selectedColumn !== undefined) {
             const table = tables[selectedTable]
-            if (typeof (table) !== "undefined") {
+            if (table !== undefined) {
                 const newColumns = [...table.columns.slice(0, selectedColumn), ...table.columns.slice(selectedColumn+1)]
                 const newTable = {...table, columns: newColumns}
                 const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable+1)]
@@ -256,9 +256,9 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const tables = get().tables
         const selectedTable = get().selectedTable
         const selectedRow = get().selectedRow
-        if (typeof (selectedTable) !== "undefined" && typeof(selectedRow) !== "undefined") {
+        if (selectedTable !== undefined && selectedRow !== undefined) {
             const table = tables[selectedTable]
-            if (typeof (table) !== "undefined") {
+            if (table !== undefined) {
                 const newRows = [...table.rows.slice(0, selectedRow), ...table.rows.slice(selectedRow+1)]
                 const newTable = {...table, rows: newRows}
                 const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable+1)]
@@ -271,12 +271,12 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const selectedTable = get().selectedTable
         const images = get().images
         const currentImageIndex = get().currentImageIndex
-        if (typeof (selectedTable) === "undefined" ||
-            typeof (images) === "undefined") return
+        if (selectedTable === undefined ||
+            images === undefined) return
         const image = images[currentImageIndex]
         const table = tables[selectedTable]
-        if (typeof(image) === "undefined" ||
-            typeof(table) === "undefined") return
+        if (image === undefined ||
+            table === undefined) return
 
         if (table.rows.length > 0) return
         const dataDir = getDataDir()
@@ -292,15 +292,15 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const selectedTable = get().selectedTable
         const images = get().images
         const currentImageIndex = get().currentImageIndex
-        if (typeof (selectedTable) === "undefined" ||
-            typeof (images) === "undefined") return
+        if (selectedTable === undefined ||
+            images === undefined) return
         const image = images[currentImageIndex]
         const table = tables[selectedTable]
-        if (typeof(image) === "undefined" ||
-            typeof(table) === "undefined") return
+        if (image === undefined ||
+            table === undefined) return
 
-        if (typeof(table.cellGrid) === "undefined" ||
-            typeof(table.cellContents) !== "undefined") return
+        if (table.cellGrid === undefined ||
+            table.cellContents !== undefined) return
 
         const dataDir = getDataDir()
 
@@ -318,13 +318,13 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const tables = get().tables
 
 
-        if (typeof(selectedTable) === "undefined") return
+        if (selectedTable === undefined) return
 
-        if (typeof(selectedRow) !== "undefined") {
+        if (selectedRow !== undefined) {
             const table = tables[selectedTable]
-            if (typeof (table) !== "undefined") {
+            if (table !== undefined) {
                 const row = table.rows[selectedRow]
-                if (typeof (row) !== "undefined") {
+                if (row !== undefined) {
                     const newRows = [...table.rows.slice(0, selectedRow), row + change, ...table.rows.slice(selectedRow + 1)]
                     const newTable = {...table, rows: newRows}
                     const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
@@ -336,10 +336,10 @@ export const useStore = create<AnnotatorState>((set, get) => ({
     addCellGrid: () => {
         const tables = get().tables
         const selectedTable = get().selectedTable
-        if (typeof (selectedTable) === "undefined" ) return
+        if (selectedTable === undefined ) return
 
         const table = tables[selectedTable]
-        if (typeof(table) === "undefined") return
+        if (table === undefined) return
         if (table.cellGrid !== undefined) return
         if (table.cellContents !== undefined) return
 
@@ -356,25 +356,25 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const tables = get().tables
         const selectedColumnLine = get().selectedCellColumnLine
 
-        if (typeof (selectedTable) === "undefined" ) return
+        if (selectedTable === undefined ) return
         const table = tables[selectedTable]
-        if (typeof (table) === "undefined") return
+        if (table === undefined) return
 
-        if (typeof(selectedColumn) !== "undefined") {
+        if (selectedColumn !== undefined) {
             const column = table.columns[selectedColumn]
-            if (typeof (column) !== "undefined") {
+            if (column !== undefined) {
                 const newColumns = [...table.columns.slice(0, selectedColumn), column + change,
                     ...table.columns.slice(selectedColumn + 1)]
                 const newTable = {...table, columns: newColumns}
                 const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
                 set({tables: newTables})
             }
-        } else if (typeof(selectedColumnLine) !== "undefined" && typeof(table.cellGrid) !== "undefined") {
+        } else if (selectedColumnLine !== undefined && table.cellGrid !== undefined) {
             const relevantRow = table.cellGrid[selectedColumnLine.row]
-            if (typeof(relevantRow) === "undefined") return
+            if (relevantRow === undefined) return
             const leftCell = relevantRow[selectedColumnLine.column]
             const rightCell = relevantRow[selectedColumnLine.column + 1]
-            if (typeof(leftCell) === "undefined" || typeof(rightCell) === "undefined") return
+            if (leftCell === undefined || rightCell === undefined) return
             const leftCellWidth = leftCell.bottomRight.x - leftCell.topLeft.x
             const rightCellWidth = rightCell.bottomRight.x - rightCell.topLeft.x
             if (leftCellWidth + change < 10 || rightCellWidth - change < 10) return
@@ -393,9 +393,9 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         await get().predictTableContent()
         const selectedTable = get().selectedTable
         const tables = get().tables
-        if(typeof(selectedTable) === "undefined") return
+        if(selectedTable === undefined) return
         const table = tables[selectedTable]
-        if(typeof(table) === "undefined" || typeof(table.cellContents) === "undefined") return
+        if(table === undefined || table.cellContents === undefined) return
         set({ocrView})
     },
     setHelpView: (helpView: boolean) => {
@@ -404,9 +404,9 @@ export const useStore = create<AnnotatorState>((set, get) => ({
     updateCellText: (i: number, j: number, text: string) => {
         const selectedTable = get().selectedTable
         const tables = get().tables
-        if(typeof(selectedTable) === "undefined") return
+        if(selectedTable === undefined) return
         const table = tables[selectedTable]
-        if(typeof(table) === "undefined" || typeof(table.cellContents) === "undefined") return
+        if(table === undefined || table.cellContents === undefined) return
         const newCell = {...table.cellContents[i][j], human_text: text}
         const relevantRow = table.cellContents[i]
         const newCellRow = [...relevantRow.slice(0, j), newCell, ...relevantRow.slice(j + 1)]
@@ -418,9 +418,9 @@ export const useStore = create<AnnotatorState>((set, get) => ({
     setColumnTypes: (column: number, types: string[]) => {
         const selectedTable = get().selectedTable
         const tables = get().tables
-        if(typeof(selectedTable) === "undefined") return
+        if(selectedTable === undefined) return
         const table = tables[selectedTable]
-        if(typeof(table) === "undefined" || typeof(table.columnTypes) === "undefined") return
+        if(table === undefined || table.columnTypes === undefined) return
 
         const newColumnTypes = [...table.columnTypes.slice(0, column), types, ...table.columnTypes.slice(column+1)]
         const newTable = {...table, columnTypes: newColumnTypes}

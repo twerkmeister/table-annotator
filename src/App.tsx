@@ -32,8 +32,8 @@ const keyMap = {
 };
 
 function downloadCSV(dataDir?: string, imageName?: string, tableId?: number): void {
-    if (typeof(dataDir) === "undefined" || typeof(imageName) === "undefined" ||
-        typeof(tableId) === "undefined") return
+    if (dataDir === undefined || imageName === undefined ||
+        tableId === undefined) return
     fetch(`/${dataDir}/${imageName}/export_data/${tableId}`, {
         method: 'GET',
         headers: {
@@ -72,9 +72,9 @@ const pushTablesToApi = async(state: AnnotatorState, previousState: AnnotatorSta
     const dataDir = getDataDir()
 
     const {currentImageIndex, images, tables} = state
-    if(typeof(currentImageIndex) === "undefined" || typeof(images) === "undefined") return
+    if(currentImageIndex === undefined || images === undefined) return
     const image = images[currentImageIndex]
-    if(typeof(image) === "undefined") return
+    if(image === undefined) return
     await axios.post(`/${dataDir}/tables/${image.name}`, tables)
 }
 
@@ -108,7 +108,7 @@ function App() {
     const dataDir = getDataDir()
 
     useEffect(() => {
-        if(typeof(images) === "undefined") {
+        if(images === undefined) {
             fetchImages()
         }
     })
@@ -118,10 +118,10 @@ function App() {
     }
 
     const deleteFunc = () => {
-        if(typeof(selectedTable) !== "undefined") {
-            if(typeof(selectedColumn) !== "undefined") {
+        if(selectedTable !== undefined) {
+            if(selectedColumn !== undefined) {
                 deleteColumn()
-            } else if (typeof(selectedRow) !== "undefined") {
+            } else if (selectedRow !== undefined) {
                 deleteRow()
             } else {
                 deleteTable()
@@ -146,13 +146,13 @@ function App() {
         REFINE_COLUMNS: addCellGrid,
         HELP: () => setHelpView(!helpView),
         EXPORT: () => {
-            if(typeof(images) === "undefined") return
+            if(images === undefined) return
             const image = images[imageIdx]
-            if(typeof(image) === "undefined") return
+            if(image === undefined) return
             downloadCSV(dataDir, image.name, selectedTable)}
     }
 
-    if(typeof(images) != "undefined" && images.length > 0) {
+    if(images !== undefined && images.length > 0) {
         const image = images[imageIdx]
         return (
             <div className="App" onMouseMove={e => handleMouseMove(e)}>
@@ -177,7 +177,7 @@ function App() {
                 </GlobalHotKeys>
             </div>
         );
-    } else if(typeof(images) != "undefined" && images.length === 0) {
+    } else if(images !== undefined && images.length === 0) {
         return (
             <div>There are no images to annotate...</div>
         )

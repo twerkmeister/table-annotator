@@ -8,7 +8,7 @@ import reportWebVitals from './reportWebVitals';
 ReactDOM.render(
   <React.StrictMode>
   {
-      typeof(getDataDir()) === "undefined" ?
+      getDataDir() === undefined ?
           <div>Missing data path</div> : <App />
   }
   </React.StrictMode>,
