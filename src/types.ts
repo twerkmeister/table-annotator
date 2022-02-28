@@ -1,6 +1,4 @@
 
-import {DataTypes} from "./dataModel";
-
 export type Point = {
     x: number,
     y: number

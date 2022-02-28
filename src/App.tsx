@@ -78,7 +78,7 @@ const pushTablesToApi = async(state: AnnotatorState, previousState: AnnotatorSta
     await axios.post(`/${dataDir}/tables/${image.name}`, tables)
 }
 
-const unsubTables = useStore.subscribe(pushTablesToApi)
+useStore.subscribe(pushTablesToApi)
 
 function App() {
     const fetchImages = useStore(state => state.fetchImages)

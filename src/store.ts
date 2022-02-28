@@ -33,7 +33,6 @@ export type AnnotatorState = {
     unfinishedTable?: UnfinishedTable,
     newColumnPosition?: number,
     newRowPosition?: number,
-    newRowGuesses?: Array<number | undefined>,
     mousePosition: Point,
     documentPosition?: Point,
     rotationDegrees: number,
@@ -114,7 +113,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const tables = (await table_response.json())["tables"]
         set({ currentImageIndex: idx, rotationDegrees: 0, documentPosition: undefined,
             tables, unfinishedTable: undefined, selectedTable: undefined, selectedRow: undefined,
-            selectedColumn: undefined, newRowGuesses: undefined, selectedCellColumnLine: undefined})
+            selectedColumn: undefined, selectedCellColumnLine: undefined})
 
     },
     outlineTable: (p: Point, rotationDegrees: number) => {
@@ -314,7 +313,6 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             ...tables.slice(selectedTable + 1)]
         set({tables: newTables})},
     adjustRow: (change: number) => {
-        const newRowGuesses = get().newRowGuesses
         const selectedTable = get().selectedTable
         const selectedRow = get().selectedRow
         const tables = get().tables
