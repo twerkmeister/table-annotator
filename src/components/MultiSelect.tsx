@@ -103,7 +103,7 @@ const MultiSelect = ({title, items, selectedItems, onChange}: MultiSelectProps) 
 
 
     return(
-        <Wrapper>
+        <Wrapper onMouseLeave={(e) => setOpened(false)}>
             <Button  onClick={() => setOpened(!opened)}>
                 {title}
                 <DropIcon>&#9662;</DropIcon>
