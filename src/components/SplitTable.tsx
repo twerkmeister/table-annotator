@@ -4,6 +4,22 @@ import React from "react";
 import MultiSelect from "./MultiSelect";
 import {DataTypesOptions} from "../dataModel";
 import {height, width} from "../geometry";
+import styled from "styled-components";
+
+const DataRow = styled.div`
+    display: flex;
+`
+
+const SplitTableDiv = styled.div`
+    margin: 0 auto;
+    width: min-content;
+`
+
+const DataInput = styled.textarea`
+    resize: none;
+    background: lightgray;
+    font-size: 18px;
+`
 
 type SplitTableProps = {
     imageName: string
@@ -32,10 +48,10 @@ const SplitTable = ({imageName}: SplitTableProps) => {
     }
 
     return (
-        <div className="splitTable">
+        <SplitTableDiv>
             {table.cellGrid.map((row, i) => {
                 return (
-                    <div key={i} className="dataRow">
+                    <DataRow key={i}>
                         {
                             row.map((cell, j) => {
                                 return (
@@ -49,7 +65,7 @@ const SplitTable = ({imageName}: SplitTableProps) => {
                                                     onChange={onChangeType(j)}
                                                 />}
                                         </div>
-                                        <div key={j} className="dataCell">
+                                        <div key={j}>
                                             <div>
                                                 <img src={`/${dataDir}/${imageName}/cell_image/${selectedTable}/${i}/${j}`}
                                                      width={width(cell)}
@@ -57,7 +73,7 @@ const SplitTable = ({imageName}: SplitTableProps) => {
                                                      alt={`cell at ${i} ${j}`} />
                                             </div>
                                             <div>
-                                                <textarea className="dataInput"
+                                                <DataInput
                                                           defaultValue={table.cellContents ?
                                                               table.cellContents[i][j].human_text ?
                                                                   table.cellContents[i][j].human_text :
@@ -73,11 +89,11 @@ const SplitTable = ({imageName}: SplitTableProps) => {
                                 )
                             })
                         }
-                    </div>
+                    </DataRow>
                 )
             })
             }
-        </div>
+        </SplitTableDiv>
     )
 }
 

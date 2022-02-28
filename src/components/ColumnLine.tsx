@@ -1,5 +1,14 @@
 import {useStore} from "../store";
 import React from "react";
+import styled from "styled-components";
+
+const ColumnLineDiv = styled.div `
+    border-left: 1px dashed rgba(0, 0, 0, 8);
+    width: 4px;
+    background: rgba(138, 43, 226, 0.3);
+    height: 100%;
+    position: absolute;
+`
 
 type ColumnLineProps = {
     position: number
@@ -20,7 +29,7 @@ const ColumnLine = ({position, idx, parentTableSelected} : ColumnLineProps) =>{
 
     const isSelected = parentTableSelected && idx === selectedColumn
 
-    return (<div className="columnLine" onClick={handleMouseClick}
+    return (<ColumnLineDiv onClick={handleMouseClick}
                  style={{left: `${position}px`,
                      cursor: isSelected ? "default" : "pointer",
                      background: isSelected ? "blue" : ""}}/>)

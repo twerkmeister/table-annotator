@@ -1,6 +1,7 @@
 import {Point, Table} from "../types";
 import {useStore} from "../store";
 import React from "react";
+import styled from 'styled-components'
 import {flatten} from "../util";
 import ColumnLine from "./ColumnLine";
 import CellColumnLine from "./CellColumnLine";
@@ -10,6 +11,12 @@ import RowSetterSpace from "./RowSetterSpace";
 import NewColumnLine from "./NewColumnLine";
 import NewRowLine from "./NewRowLine";
 import CellRowLine from "./CellRowLine";
+
+export const TableDiv = styled.div`
+  position: absolute;
+  border-style: solid;
+  border-width: 5px;
+`
 
 
 type TableProps = {
@@ -69,7 +76,7 @@ const TableElement = ({table, imageCenter, tableIdx}: TableProps) => {
 
 
     return (
-        <div className="table"
+        <TableDiv
              style={{transform: `rotate(${rotationDegrees - table.rotationDegrees}deg) ` +
                                 `translate(${table.outline.topLeft.x}px, ${table.outline.topLeft.y}px)`,
                  width: `${table.outline.bottomRight.x - table.outline.topLeft.x}px`,
@@ -79,7 +86,7 @@ const TableElement = ({table, imageCenter, tableIdx}: TableProps) => {
                  cursor: isSelected ? "default" : "pointer"}}
              onClick={e => handleClick(e)}>
             {body}
-        </div>
+        </TableDiv>
     )
 }
 

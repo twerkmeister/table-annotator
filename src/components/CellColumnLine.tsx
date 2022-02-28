@@ -1,5 +1,13 @@
 import {useStore} from "../store";
 import React from "react";
+import styled from "styled-components";
+
+const CellColumnLineDiv = styled.div `
+    border-left: 1px dashed rgba(0, 0, 0, 8);
+    width: 4px;
+    background: rgba(138, 43, 226, 0.3);
+    position: absolute;
+`
 
 type CellColumnLineProps = {
     row: number
@@ -26,7 +34,7 @@ const CellColumnLine = ({row, column, left, top, height,
     const isSelected = parentTableSelected && selectedCellColumnLine !== undefined &&
         row === selectedCellColumnLine.row && column === selectedCellColumnLine.column
 
-    return (<div className="cellColumnLine"
+    return (<CellColumnLineDiv
                  onClick={(e) => !hasContentAlready && handleMouseClick(e)}
                  style={{left: `${left}px`,
                      top: `${top}px`,

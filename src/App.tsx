@@ -1,8 +1,8 @@
 import React, {useEffect} from 'react';
-import { GlobalHotKeys } from "react-hotkeys";
 import axios from 'axios';
+import { GlobalHotKeys } from "react-hotkeys";
+import styled from 'styled-components'
 import {getDataDir} from './path';
-import './App.css';
 import HelpScreen from "./components/HelpScreen";
 import DocumentImage from "./components/DocumentImage";
 import {useStore} from "./store";
@@ -10,6 +10,12 @@ import {AnnotatorState} from "./store";
 import SplitTable from "./components/SplitTable";
 import StartedTable from "./components/StartedTable";
 import TableElement from './components/TableElement';
+
+const AppContainer = styled.div`
+  margin: 100px auto 100px auto;
+  width: 75%;
+`
+
 
 const keyMap = {
     PREVIOUS_IMAGE: "b",
@@ -155,7 +161,7 @@ function App() {
     if(images !== undefined && images.length > 0) {
         const image = images[imageIdx]
         return (
-            <div className="App" onMouseMove={e => handleMouseMove(e)}>
+            <AppContainer onMouseMove={e => handleMouseMove(e)}>
                 <GlobalHotKeys keyMap={keyMap} handlers={hotkeyHandlers} allowChanges={true}>
                     {!ocrView ?
                         <div>
@@ -175,7 +181,7 @@ function App() {
                     }
                     {helpView && <HelpScreen/>}
                 </GlobalHotKeys>
-            </div>
+            </AppContainer>
         );
     } else if(images !== undefined && images.length === 0) {
         return (

@@ -1,5 +1,14 @@
 import {useStore} from "../store";
 import React from "react";
+import styled from "styled-components";
+
+const RowLineDiv = styled.div`
+  border-top: 1px dashed rgba(0, 0, 0, 8);
+  height: 3px;
+  background: rgba(255, 69, 0, 0.3);
+  width: 100%;
+  position: absolute;
+`
 
 type RowLineProps = {
     position: number
@@ -20,7 +29,7 @@ const RowLine = ({position, idx, parentTableSelected}: RowLineProps) => {
 
     const isSelected = parentTableSelected && idx === selectedRow
 
-    return (<div className="rowLine"  onClick={handleMouseClick}
+    return (<RowLineDiv  onClick={handleMouseClick}
                  style={{top: `${position}px`,
                      cursor: isSelected ? "default": "pointer",
                      background: isSelected ? "brown" : ""}}/>)

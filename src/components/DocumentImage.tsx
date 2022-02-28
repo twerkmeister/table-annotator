@@ -35,8 +35,8 @@ const DocumentImage = ({image}: DocumentImageProps) => {
     }
 
     return (
-        <img ref={ref} className="documentImage" src={`/${image.src}`} width={image.width} height={image.height}
-             style={{transform: `rotate(${rotationDegrees}deg)`}} alt="The document"
+        <img ref={ref} src={`/${image.src}`} width={image.width} height={image.height}
+             style={{transform: `rotate(${rotationDegrees}deg)`, position: "absolute"}} alt="The document"
              onClick={e => handleClick(e)}/>
     )
 

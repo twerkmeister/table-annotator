@@ -1,6 +1,16 @@
 import {useStore} from "../store";
 import React from "react";
+import styled from "styled-components";
 
+const ColumnSetterSpaceDiv = styled.div`
+  position: absolute;
+  width: 100%;
+  height: 30px;
+  background: blueviolet;
+  opacity: 0.3;
+  top: -30px;
+  left: 0;
+`
 
 const ColumnSetterSpace = () => {
     const setNewColumnPosition = useStore(state => state.setNewColumnPosition)
@@ -19,7 +29,7 @@ const ColumnSetterSpace = () => {
     }
 
     return (
-        <div className="columnSetterSpace" onMouseMove={handleMouseMove} onClick={handleMouseClick}
+        <ColumnSetterSpaceDiv onMouseMove={handleMouseMove} onClick={handleMouseClick}
              onMouseLeave={handleMouseLeave}/>
     )
 }

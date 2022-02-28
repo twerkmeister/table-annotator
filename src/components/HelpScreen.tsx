@@ -1,8 +1,18 @@
 import React from "react";
+import styled from "styled-components";
+
+const HelpScreenDiv = styled.div`
+    width: 50%;
+    position: absolute;
+    left: 25%;
+    top: 100px;
+    background: papayawhip;
+    padding: 20px;
+`
 
 const HelpScreen = () => {
     return (
-        <div className="helpScreen">
+        <HelpScreenDiv>
             <h2>Hilfe</h2>
             <div>
                 <h3>Dokument auswählen</h3>
@@ -65,7 +75,7 @@ const HelpScreen = () => {
                 <h3>Export</h3>
                 <li>Bei ausgewählter Tabelle oder in der OCR-Ansicht durch die Taste "x"</li>
             </div>
-        </div>
+        </HelpScreenDiv>
     )
 }
 
