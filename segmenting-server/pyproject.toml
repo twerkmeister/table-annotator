@@ -6,10 +6,10 @@ authors = ["Thomas Werkmeister <thomas@werkmeister.me>"]
 
 [tool.poetry.dependencies]
 python = ">=3.7,<3.10"
-table-segmenter = {git = "git@github.com:twerkmeister/table-segmenter.git"}
 Flask = "^2.0.2"
 Flask-Cors = "^3.0.10"
 python-dotenv = "^0.19.2"
+table-segmenter = {git = "https://github.com/twerkmeister/table-segmenter.git", rev = "master"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
