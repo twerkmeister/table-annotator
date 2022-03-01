@@ -2,7 +2,7 @@ import {useStore} from "../store";
 import React from "react";
 import styled from "styled-components";
 
-const ColumnLineDiv = styled.div `
+export const ColumnLineDiv = styled.div `
     border-left: 1px dashed rgba(0, 0, 0, 8);
     width: 4px;
     background: rgba(138, 43, 226, 0.3);

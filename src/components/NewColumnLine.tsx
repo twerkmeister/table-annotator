@@ -1,10 +1,12 @@
 import {useStore} from "../store";
 import React from "react";
+import {ColumnLineDiv} from "./ColumnLine";
+
 
 const NewColumnLine = () => {
     const newColumnPosition = useStore(state => state.newColumnPosition)
     if (newColumnPosition !== undefined) {
-        return (<div className="columnLine" style={{left: `${newColumnPosition}px`}}/>)
+        return (<ColumnLineDiv style={{left: `${newColumnPosition}px`}}/>)
     } else {
         return null
     }
