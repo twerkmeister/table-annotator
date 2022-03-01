@@ -9,9 +9,7 @@ WORKDIR app
 
 COPY pyproject.toml poetry.lock /app/
 
-RUN mkdir /root/.ssh
-RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
-RUN --mount=type=ssh poetry install --no-interaction
+RUN poetry install --no-interaction
 
 COPY .flaskenv server.py /app/
 COPY segmenting_server /app/segmenting_server/
