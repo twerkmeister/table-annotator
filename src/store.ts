@@ -1,5 +1,5 @@
 import create from "zustand";
-import {getDataDir} from "./path";
+import {getDataDir, getDocId} from "./path";
 import {CellIndex, Image, Point, Table, UnfinishedTable} from "./types";
 import {addPoints, makeRectangle, rotatePoint} from "./geometry";
 
@@ -88,17 +88,20 @@ export const useStore = create<AnnotatorState>((set, get) => ({
     ocrView: false,
     helpView: false,
     fetchImages: async() => {
-        const dataDir = getDataDir()
-        const response = await fetch(`/${dataDir}/images`)
-        const images = (await response.json())["images"]
-        if (images.length > 0) {
-            const table_response = await fetch(`/${dataDir}/tables/${images[0].name}`)
-            const tables = (await table_response.json())["tables"]
-            set({images, tables, currentImageIndex: 0})
-        } else {
-            set({images, currentImageIndex: 0})
-        }
 
+        const dataDir = getDataDir()
+        const docId = getDocId()
+        const response = await fetch(`/${dataDir}/images`)
+        const images: Image[] = (await response.json())["images"]
+        set({images})
+        if(docId && images.length > 0){
+            const idx = images.findIndex((i: Image) => i.docId === docId)
+            if(idx !== -1){
+                get().setImageIndex(idx)
+                return
+            }
+        }
+        get().setImageIndex(0)
     },
     setImageIndex: async(idx: number) => {
         const dataMode = get().ocrView
@@ -113,7 +116,12 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const tables = (await table_response.json())["tables"]
         set({ currentImageIndex: idx, rotationDegrees: 0, documentPosition: undefined,
             tables, unfinishedTable: undefined, selectedTable: undefined, selectedRow: undefined,
-            selectedColumn: undefined, selectedCellColumnLine: undefined})
+            selectedColumn: undefined, selectedCellColumnLine: undefined })
+
+        const new_location = getDocId() ?
+            window.location.href.replace(/\/[0-9_]*$/, `/${image.docId}`)
+            : window.location.href.replace(/\/$/, "") + `/${image.docId}`
+        window.history.pushState({pageTitle: `${dataDir} ${image.docId}`}, "", new_location)
 
     },
     outlineTable: (p: Point, rotationDegrees: number) => {

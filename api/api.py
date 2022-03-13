@@ -45,7 +45,7 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
             images_with_metadata.append(
                 {"src": f"{subdir}/image/{image_name}", "width": width,
                  "height": height, "center": center,
-                 "name": image_name})
+                 "name": image_name, "docId": os.path.splitext(image_name)[0]})
         return {"images": images_with_metadata}
 
     @app.route('/<subdir>/image/<image_name>')

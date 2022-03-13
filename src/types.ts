@@ -15,6 +15,7 @@ export type Image = {
     height: number,
     center: Point,
     name: string
+    docId: string
 }
 
 export type CellContent = {

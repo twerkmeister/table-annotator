@@ -8,4 +8,13 @@ function getDataDir(): string | undefined {
     }
 }
 
-export {getDataDir}
+function getDocId(): string | undefined {
+    const splitPath = window.location.pathname.split("/").filter(p => p.length > 0)
+    if(splitPath.length >= 2) {
+        return splitPath[1]
+    } else {
+        return undefined
+    }
+}
+
+export {getDataDir, getDocId}
