@@ -33,44 +33,8 @@ const keyMap = {
     REFINE_COLUMNS: "v",
     OCR_START_AND_VIEW: "o",
     HELP_VIEW: "h",
-    EXPORT: "x",
     HELP: "h",
 };
-
-function downloadCSV(dataDir?: string, imageName?: string, tableId?: number): void {
-    if (dataDir === undefined || imageName === undefined ||
-        tableId === undefined) return
-    fetch(`/${dataDir}/${imageName}/export_data/${tableId}`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'text/csv',
-        },
-    })
-        .then((response) => response.blob())
-        .then((blob) => {
-            // Create blob link to download
-            const url = window.URL.createObjectURL(
-                new Blob([blob]),
-            );
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute(
-                'download',
-                `${imageName}_${tableId}.csv`,
-            );
-
-            // Append to html link element page
-            document.body.appendChild(link);
-
-            // Start download
-            link.click();
-
-            // Clean up and remove the link
-            if (link.parentNode) {
-                link.parentNode.removeChild(link);
-            }
-        });
-}
 
 
 const pushTablesToApi = async(state: AnnotatorState, previousState: AnnotatorState) => {
@@ -150,12 +114,7 @@ function App() {
         LEFT: () => adjustColumn(-5),
         RIGHT: () => adjustColumn(5),
         REFINE_COLUMNS: addCellGrid,
-        HELP: () => setHelpView(!helpView),
-        EXPORT: () => {
-            if(images === undefined) return
-            const image = images[imageIdx]
-            if(image === undefined) return
-            downloadCSV(dataDir, image.name, selectedTable)}
+        HELP: () => setHelpView(!helpView)
     }
 
     if(images !== undefined && images.length > 0) {
