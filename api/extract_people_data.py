@@ -1,0 +1,65 @@
+import argparse
+import csv
+import os
+from typing import Text
+import table_annotator.io
+import table_annotator.cellgrid
+import table_annotator.lines
+from table_annotator.types import CellContent
+
+
+csv.register_dialect('unix+', dialect="unix", doublequote=False, escapechar='\\')
+
+
+def replace_newlines(text: Text) -> Text:
+    return text.replace("\n", " ").replace(" ␢", "").replace("␢", "")
+
+
+def replace_at_symbol(text: Text) -> Text:
+    return text.replace("@", "")
+
+
+def extract_people_data(data_path: Text, target_path: Text) -> None:
+    """Extracts ocr data points to a simpler file format."""
+    image_paths = [os.path.join(data_path, image_path)
+                   for image_path in table_annotator.io.list_images(data_path)]
+    tables_for_images = [table_annotator.io.read_tables_for_image(image_path)
+                         for image_path in image_paths]
+
+    os.makedirs(target_path, exist_ok=True)
+
+    for image_path, tables in zip(image_paths, tables_for_images):
+
+        image_name = os.path.splitext(os.path.basename(image_path))[0]
+
+        for t_i, t in enumerate(tables):
+            if t.cellContents is None:
+                continue
+
+            target_csv_path = os.path.join(target_path, f"{image_name}_{t_i}.csv")
+            with open(target_csv_path, "w") as out:
+                writer = csv.writer(out, dialect="unix+")
+                writer.writerow([";".join(types) for types in t.columnTypes])
+                text_rows = \
+                    table_annotator.cellgrid.apply_to_cells(CellContent.extract_text,
+                                                            t.cellContents)
+                text_rows = table_annotator.cellgrid.apply_to_cells(replace_newlines,
+                                                                    text_rows)
+                text_rows = table_annotator.cellgrid.apply_to_cells(replace_at_symbol,
+                                                                    text_rows)
+                writer.writerows(text_rows)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Extracts the people's data as csv")
+    parser.add_argument("data_path",
+                        help='Path to the folder which you want to extract. '
+                             'Needs to be a workdir of the server, '
+                             'i.e. a folder containing images.')
+
+    parser.add_argument("target_path",
+                        help='Path to the folder where you want to store the extracted '
+                             'data')
+
+    args = parser.parse_args()
+    extract_people_data(args.data_path, args.target_path)

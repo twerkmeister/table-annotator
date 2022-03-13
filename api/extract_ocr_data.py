@@ -21,8 +21,6 @@ def extract_ocr_data(data_path: Text, target_path: Text) -> None:
     os.makedirs(target_path, exist_ok=True)
 
     for image_path, tables in zip(image_paths, tables_for_images):
-        if len(tables) == 0 or all([t.cellContents is None for t in tables]):
-            continue
 
         image = table_annotator.io.read_image(image_path)
         image_name = os.path.splitext(os.path.basename(image_path))[0]
