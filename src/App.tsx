@@ -10,6 +10,7 @@ import {AnnotatorState} from "./store";
 import SplitTable from "./components/SplitTable";
 import StartedTable from "./components/StartedTable";
 import TableElement from './components/TableElement';
+import HelperGrid from "./components/HelperGrid";
 
 const AppContainer = styled.div`
   margin: 100px auto 100px auto;
@@ -33,7 +34,7 @@ const keyMap = {
     REFINE_COLUMNS: "v",
     OCR_START_AND_VIEW: "o",
     HELP_VIEW: "h",
-    HELP: "h",
+    HELPER_GRID: "r",
 };
 
 
@@ -73,8 +74,10 @@ function App() {
     const adjustColumn = useStore(state => state.adjustColumn)
     const setOCRView = useStore(state => state.setOCRView)
     const setHelpView = useStore(state => state.setHelpView)
+    const setHelpGridView = useStore(state => state.setHelpGridView)
     const ocrView = useStore(state => state.ocrView)
     const helpView = useStore(state => state.helpView)
+    const helpGridView = useStore(state => state.helpGridView)
     const dataDir = getDataDir()
 
     useEffect(() => {
@@ -114,7 +117,8 @@ function App() {
         LEFT: () => adjustColumn(-5),
         RIGHT: () => adjustColumn(5),
         REFINE_COLUMNS: addCellGrid,
-        HELP: () => setHelpView(!helpView)
+        HELP: () => setHelpView(!helpView),
+        HELPER_GRID: () => setHelpGridView(!helpGridView)
     }
 
     if(images !== undefined && images.length > 0) {
@@ -124,6 +128,7 @@ function App() {
                 <GlobalHotKeys keyMap={keyMap} handlers={hotkeyHandlers} allowChanges={true}>
                     {!ocrView ?
                         <div>
+                            {helpGridView && <HelperGrid/>}
                             <DocumentImage image={image} />
                             {
                                 tables.map((t, i) => {

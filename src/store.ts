@@ -40,6 +40,7 @@ export type AnnotatorState = {
     tables: Table[],
     ocrView: boolean,
     helpView: boolean,
+    helpGridView: boolean,
     fetchImages: () => void
     setImageIndex: (idx: number) => void
     outlineTable: (p: Point, rotationDegrees: number) => void,
@@ -66,6 +67,7 @@ export type AnnotatorState = {
     adjustColumn: (change: number) => void
     setOCRView: (ocrView: boolean) => void
     setHelpView: (helpView: boolean) => void
+    setHelpGridView: (helpGridView: boolean) => void
     updateCellText: (i: number, j: number, text: string) => void
     setColumnTypes: (column: number, types: string[]) => void
 }
@@ -87,6 +89,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
     tables: [],
     ocrView: false,
     helpView: false,
+    helpGridView: false,
     fetchImages: async() => {
 
         const dataDir = getDataDir()
@@ -408,6 +411,9 @@ export const useStore = create<AnnotatorState>((set, get) => ({
     },
     setHelpView: (helpView: boolean) => {
         set({helpView})
+    },
+    setHelpGridView: (helpGridView: boolean) => {
+        set({helpGridView})
     },
     updateCellText: (i: number, j: number, text: string) => {
         const selectedTable = get().selectedTable
