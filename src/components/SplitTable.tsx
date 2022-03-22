@@ -5,6 +5,7 @@ import MultiSelect from "./MultiSelect";
 import {DataTypesOptions} from "../dataModel";
 import {height, width} from "../geometry";
 import styled from "styled-components";
+import {cyrb53} from "../util";
 
 const DataRow = styled.div`
     display: flex;
@@ -38,6 +39,7 @@ const SplitTable = ({imageName}: SplitTableProps) => {
     if(table.cellContents === undefined) return null
     const columnTypes = table.columnTypes
     if(columnTypes === undefined) return null
+    const tableHash = cyrb53(JSON.stringify(table))
 
     const handleInputOnBlur = (i: number, j: number ) => (e: React.FocusEvent<HTMLTextAreaElement>) => {
         updateCellText(i, j, e.target.value)
@@ -67,7 +69,7 @@ const SplitTable = ({imageName}: SplitTableProps) => {
                                         </div>
                                         <div key={j}>
                                             <div>
-                                                <img src={`/${dataDir}/${imageName}/cell_image/${selectedTable}/${i}/${j}`}
+                                                <img src={`/${dataDir}/${imageName}/cell_image/${selectedTable}/${i}/${j}?cache_key=${tableHash}`}
                                                      width={width(cell)}
                                                      height={height(cell)}
                                                      alt={`cell at ${i} ${j}`} />
