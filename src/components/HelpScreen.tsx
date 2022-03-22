@@ -71,10 +71,6 @@ const HelpScreen = () => {
                         Textfeld verlassen wird. Mittels der Tabulatortaste kann man zum nächsten Textfeld springen</li>
                 </ol>
             </div>
-            <div>
-                <h3>Export</h3>
-                <li>Bei ausgewählter Tabelle oder in der OCR-Ansicht durch die Taste "x"</li>
-            </div>
         </HelpScreenDiv>
     )
 }
