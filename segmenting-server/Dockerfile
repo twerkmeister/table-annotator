@@ -14,5 +14,6 @@ RUN poetry install --no-interaction
 COPY .flaskenv server.py /app/
 COPY segmenting_server /app/segmenting_server/
 COPY tests /app/tests/
+COPY models /app/models
 
 CMD poetry run flask run --no-debugger --host=0.0.0.0 --port 5002
