@@ -14,7 +14,7 @@ import table_annotator.img
 import table_annotator.io
 import table_annotator.ocr
 import table_annotator.cellgrid
-from table_annotator.types import Table, CellGrid
+from table_annotator.types import CellGrid
 
 DATA_PATH = "data_path"
 
@@ -25,7 +25,7 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
     app.config[DATA_PATH] = data_path
     app.logger.info(f'Starting server serving documents from directory {data_path}')
 
-    cell_image_cache: Dict[Tuple[Text, Table], CellGrid[np.ndarray]] = {}
+    cell_image_cache: Dict[Tuple[Text, int], CellGrid[PIL.Image]] = {}
 
     def get_workdir(subdir: Text) -> Text:
         return os.path.join(app.config[DATA_PATH], subdir)
@@ -129,23 +129,23 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
             lambda cc: {k: v for k, v in cc.dict().items() if v is not None},
             table_contents)}
 
-    @app.route('/<subdir>/<image_name>/cell_image/<int:table_id>/<int:row>/<int:col>',
+    @app.route('/<subdir>/<image_name>/cell_image/<int:table_id>/<int:row>/'
+               '<int:col>/<int:table_hash>',
                methods=["GET"])
     def get_cell_image(subdir: Text, image_name: Text,
-                       table_id: int, row: int, col: int):
+                       table_id: int, row: int, col: int, table_hash: int):
         workdir = get_workdir(subdir)
         image_path = os.path.join(workdir, image_name)
+        if (image_path, table_hash) not in cell_image_cache:
+            if not os.path.isfile(image_path):
+                return make_response({"msg": "The image does not exist."}, 404)
 
-        if not os.path.isfile(image_path):
-            return make_response({"msg": "The image does not exist."}, 404)
+            tables = table_annotator.io.read_tables_for_image(image_path)
 
-        tables = table_annotator.io.read_tables_for_image(image_path)
+            if table_id not in set(range(len(tables))):
+                return make_response({"msg": "The table does not exist."}, 404)
 
-        if table_id not in set(range(len(tables))):
-            return make_response({"msg": "The table does not exist."}, 404)
-
-        table = tables[table_id]
-        if (image_path, table) not in cell_image_cache:
+            table = tables[table_id]
             app.logger.info("creating cache")
             image = table_annotator.io.read_image(image_path)
             cell_image_grid = table_annotator.cellgrid.get_cell_image_grid(image, table)
@@ -153,10 +153,14 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
             cell_image_grid = table_annotator.cellgrid.apply_to_cells(convert_image,
                                                                       cell_image_grid)
 
-            cell_image_cache[(image_path, table)] = cell_image_grid
+            def to_pil_img(cell_img: np.ndarray):
+                return PIL.Image.fromarray(cell_img.astype('uint8'))
+            cell_image_grid = table_annotator.cellgrid.apply_to_cells(to_pil_img,
+                                                                      cell_image_grid)
 
-        cell_img = cell_image_cache[(image_path, table)][row][col]
-        img = PIL.Image.fromarray(cell_img.astype('uint8'))
+            cell_image_cache[(image_path, table_hash)] = cell_image_grid
+
+        img = cell_image_cache[(image_path, table_hash)][row][col]
 
         file_object = io.BytesIO()
         img.save(file_object, 'JPEG')

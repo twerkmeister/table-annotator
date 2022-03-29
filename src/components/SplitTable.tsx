@@ -69,7 +69,7 @@ const SplitTable = ({imageName}: SplitTableProps) => {
                                         </div>
                                         <div key={j}>
                                             <div>
-                                                <img src={`/${dataDir}/${imageName}/cell_image/${selectedTable}/${i}/${j}?cache_key=${tableHash}`}
+                                                <img src={`/${dataDir}/${imageName}/cell_image/${selectedTable}/${i}/${j}/${tableHash}`}
                                                      width={width(cell)}
                                                      height={height(cell)}
                                                      alt={`cell at ${i} ${j}`} />
