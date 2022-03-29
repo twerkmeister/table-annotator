@@ -146,7 +146,7 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
 
         table = tables[table_id]
         if (image_path, table) not in cell_image_cache:
-            print("creating cache")
+            app.logger.info("creating cache")
             image = table_annotator.io.read_image(image_path)
             cell_image_grid = table_annotator.cellgrid.get_cell_image_grid(image, table)
             convert_image = partial(cv2.cvtColor, code=cv2.COLOR_BGR2RGB)
