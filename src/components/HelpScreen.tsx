@@ -8,6 +8,7 @@ const HelpScreenDiv = styled.div`
     top: 100px;
     background: papayawhip;
     padding: 20px;
+    z-index: 99;
 `
 
 const HelpScreen = () => {
@@ -23,7 +24,8 @@ const HelpScreen = () => {
             <div>
                 <h3>Tabellen Zeichnen</h3>
                 <ol>
-                    <li>Dokumente mittels Tasten "q" und "e" drehen, sodass der Tabellenkörper gerade steht</li>
+                    <li>Dokumente mittels Tasten "q" und "e" drehen, sodass der Tabellenkörper gerade steht.
+                        Bei der Ausrichtung kann das Raster, das über "r" aktiviert und deaktiviert werden kann, helfen</li>
                     <li>Oberen, linken Eckpunkt des Tabellenkörpers mit der linken Maustaste setzen</li>
                     <li>Unteren, rechten Eckpunkt des Tabellenkörpers mit der linken Maustaste setzen</li>
                 </ol>

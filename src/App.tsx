@@ -117,7 +117,7 @@ function App() {
         LEFT: () => adjustColumn(-5),
         RIGHT: () => adjustColumn(5),
         REFINE_COLUMNS: addCellGrid,
-        HELP: () => setHelpView(!helpView),
+        HELP_VIEW: () => setHelpView(!helpView),
         HELPER_GRID: () => setHelpGridView(!helpGridView)
     }
 
