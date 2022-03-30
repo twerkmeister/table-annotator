@@ -32,12 +32,21 @@ export type CellIndex = {
     column: number
 }
 
+export type Cell = {
+    top?: number,
+    right?: number,
+    bottom?: number,
+    left?: number
+    ocr_text?: string
+    human_text?: string
+}
+
 export type Table = {
     outline: Rectangle,
     rotationDegrees: number,
     columns: number[],
     rows: number[],
-    cellGrid?: Rectangle[][],
-    cellContents?: CellContent[][],
+    needsOCR: boolean,
+    cells: Cell[][],
     columnTypes?: string[][],
 }

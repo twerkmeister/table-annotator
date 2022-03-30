@@ -44,17 +44,26 @@ class CellContent(BaseModel):
             else cell_content.ocr_text
 
 
+class Cell(BaseModel):
+    top: Optional[int]
+    right: Optional[int]
+    bottom: Optional[int]
+    left: Optional[int]
+    ocr_text: Optional[Text]
+    human_text: Optional[Text]
+
+
 class Table(BaseModel):
     outline: Rectangle
     rotationDegrees: float
     columns: List[int]
     rows: List[int]
-    cellGrid: Optional[CellGrid[Rectangle]]
-    cellContents: Optional[CellGrid[CellContent]]
+    cells: CellGrid[Cell]
+    needsOCR: bool
     columnTypes: Optional[List[List[Text]]]
 
     def __hash__(self) -> int:
-        cell_outlines = tuple([cell for row in self.cellGrid for cell in row])
+        cells = tuple([cell for row in self.cells for cell in row])
         return hash((self.outline, self.rotationDegrees,
                      tuple(self.rows), tuple(self.columns),
-                     tuple(cell_outlines)))
+                     tuple(cells)))

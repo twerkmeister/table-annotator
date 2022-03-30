@@ -6,6 +6,7 @@ import {DataTypesOptions} from "../dataModel";
 import {height, width} from "../geometry";
 import styled from "styled-components";
 import {cyrb53} from "../util";
+import {calculateCellRectangle} from "../geometry";
 
 const DataRow = styled.div`
     display: flex;
@@ -35,8 +36,8 @@ const SplitTable = ({imageName}: SplitTableProps) => {
     if(selectedTable === undefined) return null
     const table = tables[selectedTable]
     if(table === undefined ) return null
-    if(table.cellGrid === undefined) return null
-    if(table.cellContents === undefined) return null
+    if(table.cells === undefined) return null
+    if(table.needsOCR) return null
     const columnTypes = table.columnTypes
     if(columnTypes === undefined) return null
     const tableHash = cyrb53(JSON.stringify(table))
@@ -51,11 +52,12 @@ const SplitTable = ({imageName}: SplitTableProps) => {
 
     return (
         <SplitTableDiv>
-            {table.cellGrid.map((row, i) => {
+            {table.cells.map((row, i) => {
                 return (
                     <DataRow key={i}>
                         {
                             row.map((cell, j) => {
+                                const cellRectangle = calculateCellRectangle(cell, {row: i, column: j}, table)
                                 return (
                                     <div>
                                         <div>
@@ -70,19 +72,15 @@ const SplitTable = ({imageName}: SplitTableProps) => {
                                         <div key={j}>
                                             <div>
                                                 <img src={`/${dataDir}/${imageName}/cell_image/${selectedTable}/${i}/${j}/${tableHash}`}
-                                                     width={width(cell)}
-                                                     height={height(cell)}
+                                                     width={width(cellRectangle)}
+                                                     height={height(cellRectangle)}
                                                      alt={`cell at ${i} ${j}`} />
                                             </div>
                                             <div>
                                                 <DataInput
-                                                          defaultValue={table.cellContents ?
-                                                              table.cellContents[i][j].human_text ?
-                                                                  table.cellContents[i][j].human_text :
-                                                                  table.cellContents[i][j].ocr_text
-                                                              : ""}
-                                                          style={{width: `${width(cell)-6}px`,
-                                                              height: `${Math.round(height(cell)*1.3-6)}px`}}
+                                                          defaultValue={cell.human_text || cell.ocr_text}
+                                                          style={{width: `${width(cellRectangle)-6}px`,
+                                                              height: `${Math.round(height(cellRectangle)*1.3-6)}px`}}
                                                           onBlur={handleInputOnBlur(i, j)}
                                                 />
                                             </div>

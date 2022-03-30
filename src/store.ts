@@ -1,25 +1,13 @@
 import create from "zustand";
 import {getDataDir, getDocId} from "./path";
 import {CellIndex, Image, Point, Table, UnfinishedTable} from "./types";
-import {addPoints, makeRectangle, rotatePoint} from "./geometry";
+import {addPoints, makeRectangle, rotatePoint, calculateCellRectangle, width} from "./geometry";
 
-const withCellGrid = (table: Table): Table => {
-    const rows = [0,  ...table.rows, table.outline.bottomRight.y - table.outline.topLeft.y]
-    const columns = [0, ...table.columns, table.outline.bottomRight.x - table.outline.topLeft.x]
-    const cellGrid = rows.slice(0, -1).map((_, r_i) => {
-        return columns.slice(0, -1).map((_, c_i) => {
-            const topLeft = {x: columns[c_i], y: rows[r_i]}
-            const bottomRight = {x: columns[c_i+1], y:rows[r_i+1]}
-            return {topLeft, bottomRight}
-        })
-    })
-    return {...table, cellGrid}
-}
 
 const makeTable = (p1: Point, p2: Point, rotationDegrees: number): Table => {
     const outline = makeRectangle(p1, p2)
     return {
-        outline, rotationDegrees, columns: [], rows: [],
+        outline, rotationDegrees, columns: [], rows: [], cells: [[Object()]], needsOCR: true
     }
 }
 
@@ -62,7 +50,6 @@ export type AnnotatorState = {
     segmentTable: () => void
     predictTableContent: () => void
     adjustRow: (change: number) => void
-    addCellGrid: () => void
     selectCellColumnLine: (row: number, column: number) => void
     adjustColumn: (change: number) => void
     setOCRView: (ocrView: boolean) => void
@@ -169,22 +156,23 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             set({newColumnPosition: undefined})
             return
         }
-
         const tables = get().tables
         const selectedTableIdx = get().selectedTable
         const documentPosition = get().documentPosition
         const images = get().images
+        if (selectedTableIdx === undefined || documentPosition === undefined || images === undefined) return
+
+        const table = tables[selectedTableIdx]
+        if (table === undefined) return
         const currentImageIndex = get().currentImageIndex
         const rotationDegrees = get().rotationDegrees
-        if (selectedTableIdx !== undefined &&
-            documentPosition !== undefined && images !== undefined) {
-            const table = tables[selectedTableIdx]
-            if (table !== undefined) {
-                const rotatedPagePoint = rotatePoint(pagePoint, table.rotationDegrees - rotationDegrees, addPoints(images[currentImageIndex].center, documentPosition))
-                const columnPositionInsideTable = rotatedPagePoint.x - documentPosition.x - table.outline.topLeft.x
-                set({newColumnPosition: Math.round(columnPositionInsideTable - 7)})
-            }
-        }
+
+        const rotatedPagePoint = rotatePoint(pagePoint,
+            table.rotationDegrees - rotationDegrees,
+            addPoints(images[currentImageIndex].center, documentPosition))
+        const columnPositionInsideTable = rotatedPagePoint.x - documentPosition.x - table.outline.topLeft.x
+        set({newColumnPosition: Math.round(columnPositionInsideTable - 7)})
+
     },
     setNewRowPosition: (pagePoint?: Point) => {
         if(pagePoint === undefined){
@@ -196,45 +184,92 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const selectedTableIdx = get().selectedTable
         const documentPosition = get().documentPosition
         const images = get().images
+        if (selectedTableIdx === undefined || documentPosition === undefined || images === undefined) return
+
+        const table = tables[selectedTableIdx]
+        if (table === undefined) return
+
         const currentImageIndex = get().currentImageIndex
         const rotationDegrees = get().rotationDegrees
-        if (selectedTableIdx !== undefined &&
-            documentPosition !== undefined && images !== undefined) {
-            const table = tables[selectedTableIdx]
-            if (table !== undefined) {
-                const rotatedPagePoint = rotatePoint(pagePoint, table.rotationDegrees - rotationDegrees, addPoints(images[currentImageIndex].center, documentPosition))
-                const rowPositionInsideTable = rotatedPagePoint.y - documentPosition.y - table.outline.topLeft.y
-                set({newRowPosition: Math.round(rowPositionInsideTable - 7)})
-            }
-        }
+        const rotatedPagePoint = rotatePoint(pagePoint,
+            table.rotationDegrees - rotationDegrees,
+            addPoints(images[currentImageIndex].center, documentPosition))
+        const rowPositionInsideTable = rotatedPagePoint.y - documentPosition.y - table.outline.topLeft.y
+        set({newRowPosition: Math.round(rowPositionInsideTable - 7)})
+
     },
     addColumn: () => {
         const tables = get().tables
         const selectedTableIdx = get().selectedTable
         const newColumnPosition = get().newColumnPosition
-        if (selectedTableIdx !== undefined && newColumnPosition !== undefined) {
-            const table = tables[selectedTableIdx]
-            if (table !== undefined) {
-                const newColumns = [...table.columns, newColumnPosition].sort((a, b) => a - b)
-                const newTable = {...table, columns: newColumns}
-                const newTables = [...tables.slice(0, selectedTableIdx), newTable, ...tables.slice(selectedTableIdx+1)]
-                set({tables: newTables, tableDeletionMarkCount: 0})
-            }
-        }
+        if (selectedTableIdx === undefined || newColumnPosition === undefined) return
+
+        const table = tables[selectedTableIdx]
+        if (table === undefined) return
+
+        const newColumns = [...table.columns, newColumnPosition].sort((a, b) => a - b)
+
+        const separatedColumn = newColumns.indexOf(newColumnPosition)
+
+        const newCells =
+            table.cells.map((row, i) => {
+                return row.flatMap((cell, j) => {
+                    if (j !== separatedColumn){
+                        return [cell]
+                    } else {
+                        const leftCell = {...cell}
+                        delete(leftCell.right)
+                        delete(leftCell.ocr_text)
+                        delete(leftCell.human_text)
+                        const rightCell = {...cell}
+                        delete(rightCell.left)
+                        delete(rightCell.ocr_text)
+                        delete(rightCell.human_text)
+                        return [leftCell, rightCell]
+                    }
+                })
+            })
+        const newTable = {...table, columns: newColumns, cells: newCells}
+        const newTables = [...tables.slice(0, selectedTableIdx), newTable, ...tables.slice(selectedTableIdx+1)]
+        set({tables: newTables, tableDeletionMarkCount: 0})
     },
     addRow: () => {
         const tables = get().tables
         const selectedTable = get().selectedTable
         const newRowPosition = get().newRowPosition
-        if (selectedTable !== undefined && newRowPosition !== undefined) {
-            const table = tables[selectedTable]
-            if (table !== undefined) {
-                const newRows = [...table.rows, newRowPosition].sort((a, b) => a - b)
-                const newTable = {...table, rows: newRows}
-                const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable+1)]
-                set({tables: newTables, tableDeletionMarkCount: 0})
-            }
-        }
+        if (selectedTable === undefined || newRowPosition === undefined) return
+
+        const table = tables[selectedTable]
+        if (table === undefined) return
+        const newRows = [...table.rows, newRowPosition].sort((a, b) => a - b)
+        const separatedRow = newRows.indexOf(newRowPosition)
+
+        const newCells =
+            table.cells.flatMap((row, i) => {
+                if (i !== separatedRow) {
+                    return [row]
+                } else {
+                    const upperRow = row.map((cell, j) => {
+                        const newCell = {...cell}
+                        delete(newCell.bottom)
+                        delete(newCell.ocr_text)
+                        delete(newCell.human_text)
+                        return newCell
+                    })
+                    const lowerRow = row.map((cell, j) => {
+                        const newCell = {...cell}
+                        delete(newCell.top)
+                        delete(newCell.ocr_text)
+                        delete(newCell.human_text)
+                        return newCell
+                    })
+                    return [upperRow, lowerRow]
+                }
+            })
+
+        const newTable = {...table, rows: newRows, cells: newCells}
+        const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable+1)]
+        set({tables: newTables, tableDeletionMarkCount: 0})
     },
     deleteTable: () => {
         const tables = get().tables
@@ -310,15 +345,12 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         if (image === undefined ||
             table === undefined) return
 
-        if (table.cellGrid === undefined ||
-            table.cellContents !== undefined) return
-
         const dataDir = getDataDir()
 
         const response =
             await fetch(`/${dataDir}/${image.name}/predict_table_contents/${selectedTable}`)
         const cellContents = (await response.json())["contents"]
-        const columnTypes = table.cellGrid[0].map((cell, i) => [])
+        const columnTypes = table.cells[0].map((cell, i) => [])
 
         const newTables = [...tables.slice(0, selectedTable), {...table, cellContents, columnTypes},
             ...tables.slice(selectedTable + 1)]
@@ -344,20 +376,6 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             }
         }
     },
-    addCellGrid: () => {
-        const tables = get().tables
-        const selectedTable = get().selectedTable
-        if (selectedTable === undefined ) return
-
-        const table = tables[selectedTable]
-        if (table === undefined) return
-        if (table.cellGrid !== undefined) return
-        if (table.cellContents !== undefined) return
-
-        const tableWithCellGrid = withCellGrid(table)
-        const newTables = [...tables.slice(0, selectedTable), tableWithCellGrid, ...tables.slice(selectedTable+1)]
-        set({tables: newTables, tableDeletionMarkCount: 0, selectedRow: undefined, selectedColumn: undefined})
-    },
     selectCellColumnLine: (row: number, column: number) => {
         set({selectedCellColumnLine: {row, column}})
     },
@@ -380,22 +398,22 @@ export const useStore = create<AnnotatorState>((set, get) => ({
                 const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
                 set({tables: newTables})
             }
-        } else if (selectedColumnLine !== undefined && table.cellGrid !== undefined) {
-            const relevantRow = table.cellGrid[selectedColumnLine.row]
+        } else if (selectedColumnLine !== undefined) {
+            const relevantRow = table.cells[selectedColumnLine.row]
             if (relevantRow === undefined) return
             const leftCell = relevantRow[selectedColumnLine.column]
             const rightCell = relevantRow[selectedColumnLine.column + 1]
             if (leftCell === undefined || rightCell === undefined) return
-            const leftCellWidth = leftCell.bottomRight.x - leftCell.topLeft.x
-            const rightCellWidth = rightCell.bottomRight.x - rightCell.topLeft.x
-            if (leftCellWidth + change < 10 || rightCellWidth - change < 10) return
-            const newLeftCell = {...leftCell, bottomRight: {x: leftCell.bottomRight.x + change, y: leftCell.bottomRight.y }}
-            const newRightCell = {...rightCell, topLeft: {x: rightCell.topLeft.x + change, y: rightCell.topLeft.y}}
+            const leftCellRectangle = calculateCellRectangle(leftCell, selectedColumnLine, table)
+            const rightCellRectangle = calculateCellRectangle(rightCell, selectedColumnLine, table)
+            if (width(leftCellRectangle) + change < 10 || width(rightCellRectangle) - change < 10) return
+            const newLeftCell = {...leftCell, right: (leftCell.right || 0) + change}
+            const newRightCell = {...rightCell, left: (rightCell.left || 0) + change}
             const newCellRow = [...relevantRow.slice(0, selectedColumnLine.column), newLeftCell, newRightCell,
                 ...relevantRow.slice(selectedColumnLine.column + 2)]
-            const newCellGrid = [...table.cellGrid.slice(0, selectedColumnLine.row), newCellRow,
-                ...table.cellGrid.slice(selectedColumnLine.row + 1)]
-            const newTable = {...table, cellGrid: newCellGrid}
+            const newCells = [...table.cells.slice(0, selectedColumnLine.row), newCellRow,
+                ...table.cells.slice(selectedColumnLine.row + 1)]
+            const newTable = {...table, cells: newCells}
             const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
             set({tables: newTables})
         }
@@ -406,7 +424,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const tables = get().tables
         if(selectedTable === undefined) return
         const table = tables[selectedTable]
-        if(table === undefined || table.cellContents === undefined) return
+        if(table === undefined || table.needsOCR) return
         set({ocrView})
     },
     setHelpView: (helpView: boolean) => {
@@ -420,12 +438,15 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const tables = get().tables
         if(selectedTable === undefined) return
         const table = tables[selectedTable]
-        if(table === undefined || table.cellContents === undefined) return
-        const newCell = {...table.cellContents[i][j], human_text: text}
-        const relevantRow = table.cellContents[i]
+        if(table === undefined) return
+        const relevantRow = table.cells[i]
+        if(relevantRow === undefined) return
+        const relevantCell = relevantRow[j]
+        if(relevantCell === undefined) return
+        const newCell = {...relevantCell, human_text: text}
         const newCellRow = [...relevantRow.slice(0, j), newCell, ...relevantRow.slice(j + 1)]
-        const newCellContents = [...table.cellContents.slice(0, i), newCellRow, ...table.cellContents.slice(i + 1)]
-        const newTable = {...table, cellContents: newCellContents}
+        const newCells = [...table.cells.slice(0, i), newCellRow, ...table.cells.slice(i + 1)]
+        const newTable = {...table, cells: newCells}
         const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
         set({tables: newTables})
     },

@@ -2,15 +2,14 @@ import {Point, Table} from "../types";
 import {useStore} from "../store";
 import React from "react";
 import styled from 'styled-components'
-import {flatten} from "../util";
-import ColumnLine from "./ColumnLine";
 import CellColumnLine from "./CellColumnLine";
-import RowLine from "./RowLine";
 import ColumnSetterSpace from "./ColumnSetterSpace";
 import RowSetterSpace from "./RowSetterSpace";
 import NewColumnLine from "./NewColumnLine";
 import NewRowLine from "./NewRowLine";
 import CellRowLine from "./CellRowLine";
+import {calculateCellRectangle} from "../geometry"
+
 
 export const TableDiv = styled.div`
   position: absolute;
@@ -39,38 +38,24 @@ const TableElement = ({table, imageCenter, tableIdx}: TableProps) => {
         selectTable(tableIdx)
     }
 
-    const body = table.cellGrid === undefined ? (
+
+    const body = (
         <div>
-            {table.columns.map((c, i) => {
-                return (
-                    <ColumnLine key={i} idx={i} position={c} parentTableSelected={isSelected}/>
-                )
-            })}
-            {table.rows.map((r, i) => {
-                return (
-                    <RowLine key={i} idx={i} position={r} parentTableSelected={isSelected}/>
-                )
-            })}
-            {isSelected ? <ColumnSetterSpace/> : null}
-            {isSelected ? <RowSetterSpace/> : null}
-            {isSelected ? <NewColumnLine/> : null}
-            {isSelected ? <NewRowLine/> : null}
-        </div>
-    ) : (
-        <div>
-            {flatten(table.cellGrid.map((row, row_i) => {
-                return row.slice(0, -1).map((rect, column_i) => {
+            {table.cells.flatMap((row, row_i) => {
+                return row.slice(0, -1).map((cell, column_i) => {
+                    const rect = calculateCellRectangle(cell, {row: row_i, column: column_i}, table)
                     return <CellColumnLine row={row_i} column={column_i} parentTableSelected={isSelected}
                                            height={rect.bottomRight.y - rect.topLeft.y} left={rect.bottomRight.x}
-                                           top={rect.topLeft.y} hasContentAlready={table.cellContents !== undefined}/>
+                                           top={rect.topLeft.y} hasContentAlready={false}/>
                 })
-            }))}
-            {flatten(table.cellGrid.map((row, row_i) => {
-                return row.map((rect, column_i) => {
+            })}
+            {table.cells.slice(0, -1).flatMap((row, row_i) => {
+                return row.map((cell, column_i) => {
+                    const rect = calculateCellRectangle(cell, {row: row_i, column: column_i}, table)
                     return <CellRowLine width={rect.bottomRight.x - rect.topLeft.x} left={rect.topLeft.x}
                                         top={rect.bottomRight.y}/>
                 })
-            }))}
+            })}
         </div>
     )
 
@@ -86,6 +71,10 @@ const TableElement = ({table, imageCenter, tableIdx}: TableProps) => {
                  cursor: isSelected ? "default" : "pointer"}}
              onClick={e => handleClick(e)}>
             {body}
+            {isSelected ? <ColumnSetterSpace/> : null}
+            {isSelected ? <RowSetterSpace/> : null}
+            {isSelected ? <NewColumnLine/> : null}
+            {isSelected ? <NewRowLine/> : null}
         </TableDiv>
     )
 }

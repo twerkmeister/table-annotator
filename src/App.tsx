@@ -31,7 +31,6 @@ const keyMap = {
     DOWN: "s",
     RIGHT: "d",
     ANNOTATE_ROWS_AUTOMATICALLY: "z",
-    REFINE_COLUMNS: "v",
     OCR_START_AND_VIEW: "o",
     HELP_VIEW: "h",
     HELPER_GRID: "r",
@@ -70,7 +69,6 @@ function App() {
     const cancelActions = useStore(state => state.cancelActions)
     const adjustRow = useStore(state => state.adjustRow)
     const segmentTable = useStore(state => state.segmentTable)
-    const addCellGrid = useStore(state => state.addCellGrid)
     const adjustColumn = useStore(state => state.adjustColumn)
     const setOCRView = useStore(state => state.setOCRView)
     const setHelpView = useStore(state => state.setHelpView)
@@ -78,7 +76,6 @@ function App() {
     const ocrView = useStore(state => state.ocrView)
     const helpView = useStore(state => state.helpView)
     const helpGridView = useStore(state => state.helpGridView)
-    const dataDir = getDataDir()
 
     useEffect(() => {
         if(images === undefined) {
@@ -116,7 +113,6 @@ function App() {
         DOWN: () => adjustRow(2),
         LEFT: () => adjustColumn(-5),
         RIGHT: () => adjustColumn(5),
-        REFINE_COLUMNS: addCellGrid,
         HELP_VIEW: () => setHelpView(!helpView),
         HELPER_GRID: () => setHelpGridView(!helpGridView)
     }

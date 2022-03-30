@@ -1,4 +1,4 @@
-import {Point, Rectangle} from "./types";
+import {Cell, CellIndex, Point, Rectangle, Table} from "./types";
 
 export function subtractPoints(p: Point, p2: Point): Point {
     return {x: p.x - p2.x, y: p.y - p2.y}
@@ -44,4 +44,18 @@ export function width(rect: Rectangle): number {
 
 export function height(rect: Rectangle): number {
     return rect.bottomRight.y - rect.topLeft.y
+}
+
+export const calculateCellRectangle = (cell: Cell, cellIndex: CellIndex, table: Table): Rectangle => {
+    const top_base = table.rows[cellIndex.row - 1] || 0
+    const bottom_base = table.rows[cellIndex.row] || height(table.outline)
+    const left_base = table.columns[cellIndex.column - 1] || 0
+    const right_base = table.columns[cellIndex.column] || width(table.outline)
+
+    const top = top_base + (cell.top || 0)
+    const bottom = bottom_base + (cell.bottom || 0)
+    const left = left_base + (cell.left || 0)
+    const right = right_base + (cell.right || 0)
+
+    return makeRectangle({y: top, x: left}, {y: bottom, x: right})
 }
