@@ -65,7 +65,9 @@ function App() {
     const deleteColumn = useStore(state => state.deleteColumn)
     const selectedTable = useStore(state => state.selectedTable)
     const selectedColumn = useStore(state => state.selectedColumn)
+    const selectedCellColumnLine = useStore(state => state.selectedCellColumnLine)
     const selectedRow = useStore(state => state.selectedRow)
+    const selectedCellRowLine = useStore(state => state.selectedCellRowLine)
     const cancelActions = useStore(state => state.cancelActions)
     const adjustRow = useStore(state => state.adjustRow)
     const segmentTable = useStore(state => state.segmentTable)
@@ -93,6 +95,10 @@ function App() {
                 deleteColumn()
             } else if (selectedRow !== undefined) {
                 deleteRow()
+            } else if (selectedCellColumnLine !== undefined) {
+                // do nothing
+            } else if (selectedCellRowLine !== undefined) {
+                // do nothing
             } else {
                 deleteTable()
             }
