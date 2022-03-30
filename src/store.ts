@@ -18,6 +18,7 @@ export type AnnotatorState = {
     selectedColumn?: number,
     selectedRow?: number,
     selectedCellColumnLine?: CellIndex,
+    selectedCellRowLine?: CellIndex,
     unfinishedTable?: UnfinishedTable,
     newColumnPosition?: number,
     newRowPosition?: number,
@@ -51,6 +52,7 @@ export type AnnotatorState = {
     predictTableContent: () => void
     adjustRow: (change: number) => void
     selectCellColumnLine: (row: number, column: number) => void
+    selectCellRowLine: (row: number, column: number) => void
     adjustColumn: (change: number) => void
     setOCRView: (ocrView: boolean) => void
     setHelpView: (helpView: boolean) => void
@@ -69,6 +71,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
     newColumnPosition: undefined,
     newRowPosition: undefined,
     selectedCellColumnLine: undefined,
+    selectedCellRowLine: undefined,
     mousePosition: {x: 0, y: 0},
     documentPosition: undefined,
     rotationDegrees: 0,
@@ -106,7 +109,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const tables = (await table_response.json())["tables"]
         set({ currentImageIndex: idx, rotationDegrees: 0, documentPosition: undefined,
             tables, unfinishedTable: undefined, selectedTable: undefined, selectedRow: undefined,
-            selectedColumn: undefined, selectedCellColumnLine: undefined })
+            selectedColumn: undefined, selectedCellColumnLine: undefined, selectedCellRowLine: undefined })
 
         const new_location = getDocId() ?
             window.location.href.replace(/\/[0-9_]*$/, `/${image.docId}`)
@@ -143,13 +146,18 @@ export const useStore = create<AnnotatorState>((set, get) => ({
     selectTable: (idx?: number) => {
         set({selectedTable: idx, newColumnPosition: undefined,
             newRowPosition: undefined, tableDeletionMarkCount: 0,
-            selectedColumn: undefined, selectedRow: undefined, selectedCellColumnLine: undefined})
+            selectedColumn: undefined, selectedRow: undefined, selectedCellColumnLine: undefined,
+            selectedCellRowLine: undefined})
     },
     selectColumn: (idx?: number) => {
-        set({selectedColumn: idx, selectedRow: undefined, tableDeletionMarkCount: 0})
+        set({selectedColumn: idx, selectedRow: undefined,
+            selectedCellColumnLine: undefined, selectedCellRowLine: undefined,
+            tableDeletionMarkCount: 0})
     },
     selectRow: (idx?: number) => {
-        set({selectedRow: idx, selectedColumn: undefined, tableDeletionMarkCount: 0})
+        set({selectedRow: idx, selectedColumn: undefined,
+            selectedCellColumnLine: undefined, selectedCellRowLine: undefined,
+            tableDeletionMarkCount: 0})
     },
     setNewColumnPosition: (pagePoint?: Point) => {
         if(pagePoint === undefined){
@@ -377,7 +385,12 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         }
     },
     selectCellColumnLine: (row: number, column: number) => {
-        set({selectedCellColumnLine: {row, column}})
+        set({selectedCellColumnLine: {row, column}, selectedColumn: undefined, selectedRow: undefined,
+        selectedCellRowLine: undefined})
+    },
+    selectCellRowLine: (row: number, column: number) => {
+        set({selectedCellRowLine: {row, column}, selectedColumn: undefined, selectedRow: undefined,
+            selectedCellColumnLine: undefined})
     },
     adjustColumn: (change: number) => {
         const selectedTable = get().selectedTable

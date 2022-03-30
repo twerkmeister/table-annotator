@@ -12,6 +12,7 @@ const ColumnSetterSpaceDiv = styled.div`
   left: 0;
 `
 
+
 const ColumnSetterSpace = () => {
     const setNewColumnPosition = useStore(state => state.setNewColumnPosition)
     const addColumn = useStore(state => state.addColumn)

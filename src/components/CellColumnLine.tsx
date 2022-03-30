@@ -16,13 +16,13 @@ type CellColumnLineProps = {
     top: number
     height: number
     parentTableSelected: boolean
-    hasContentAlready: boolean
 }
 
 const CellColumnLine = ({row, column, left, top, height,
-                            parentTableSelected, hasContentAlready}: CellColumnLineProps) => {
+                            parentTableSelected}: CellColumnLineProps) => {
     const selectCellColumnLine = useStore(state => state.selectCellColumnLine)
     const selectedCellColumnLine = useStore(state => state.selectedCellColumnLine)
+    const selectedColumn = useStore(state => state.selectedColumn)
 
     const handleMouseClick = (e: React.MouseEvent<Element, MouseEvent>) => {
         if(parentTableSelected) {
@@ -31,15 +31,17 @@ const CellColumnLine = ({row, column, left, top, height,
         }
     }
 
-    const isSelected = parentTableSelected && selectedCellColumnLine !== undefined &&
+    const isDirectlySelected = parentTableSelected && selectedCellColumnLine !== undefined &&
         row === selectedCellColumnLine.row && column === selectedCellColumnLine.column
+    const isIndirectlySelected = parentTableSelected && selectedColumn === column
+    const isSelected = isDirectlySelected || isIndirectlySelected
 
     return (<CellColumnLineDiv
-                 onClick={(e) => !hasContentAlready && handleMouseClick(e)}
+                 onClick={handleMouseClick}
                  style={{left: `${left}px`,
                      top: `${top}px`,
                      height: `${height}px`,
-                     cursor: isSelected || hasContentAlready ? "default" : "pointer",
+                     cursor: isDirectlySelected ? "default" : "pointer",
                      background: isSelected ? "blue" : ""}}/>)
 }
 

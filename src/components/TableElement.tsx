@@ -8,7 +8,9 @@ import RowSetterSpace from "./RowSetterSpace";
 import NewColumnLine from "./NewColumnLine";
 import NewRowLine from "./NewRowLine";
 import CellRowLine from "./CellRowLine";
-import {calculateCellRectangle} from "../geometry"
+import ColumnKnob from "./ColumnKnob";
+import {calculateCellRectangle, height, width} from "../geometry"
+import RowKnob from "./RowKnob";
 
 
 export const TableDiv = styled.div`
@@ -41,19 +43,20 @@ const TableElement = ({table, imageCenter, tableIdx}: TableProps) => {
 
     const body = (
         <div>
-            {table.cells.flatMap((row, row_i) => {
-                return row.slice(0, -1).map((cell, column_i) => {
-                    const rect = calculateCellRectangle(cell, {row: row_i, column: column_i}, table)
-                    return <CellColumnLine row={row_i} column={column_i} parentTableSelected={isSelected}
-                                           height={rect.bottomRight.y - rect.topLeft.y} left={rect.bottomRight.x}
-                                           top={rect.topLeft.y} hasContentAlready={false}/>
-                })
-            })}
-            {table.cells.slice(0, -1).flatMap((row, row_i) => {
-                return row.map((cell, column_i) => {
-                    const rect = calculateCellRectangle(cell, {row: row_i, column: column_i}, table)
-                    return <CellRowLine width={rect.bottomRight.x - rect.topLeft.x} left={rect.topLeft.x}
-                                        top={rect.bottomRight.y}/>
+            {table.cells.flatMap((row, i) => {
+                return row.flatMap((cell, j) => {
+                    const rect = calculateCellRectangle(cell, {row: i, column: j}, table)
+                    const cellLines = [
+                        <CellRowLine row={i} column={j} parentTableSelected={isSelected}
+                                     width={width(rect)} left={rect.topLeft.x}
+                                     top={rect.bottomRight.y}/>,
+                        <CellColumnLine row={i} column={j} parentTableSelected={isSelected}
+                                        height={height(rect)} left={rect.bottomRight.x}
+                                        top={rect.topLeft.y} key={`col_${i}_${j}`}/>
+                    ]
+                    if (j === row.length - 1) cellLines.pop()
+                    if (i === table.cells.length - 1) cellLines.shift()
+                    return cellLines
                 })
             })}
         </div>
@@ -62,17 +65,25 @@ const TableElement = ({table, imageCenter, tableIdx}: TableProps) => {
 
     return (
         <TableDiv
-             style={{transform: `rotate(${rotationDegrees - table.rotationDegrees}deg) ` +
-                                `translate(${table.outline.topLeft.x}px, ${table.outline.topLeft.y}px)`,
-                 width: `${table.outline.bottomRight.x - table.outline.topLeft.x}px`,
-                 height: `${table.outline.bottomRight.y - table.outline.topLeft.y}px`,
-                 transformOrigin: `${imageCenter.x}px ${imageCenter.y}px`,
-                 borderColor: borderColor,
-                 cursor: isSelected ? "default" : "pointer"}}
-             onClick={e => handleClick(e)}>
+            style={{
+                transform: `rotate(${rotationDegrees - table.rotationDegrees}deg) ` +
+                    `translate(${table.outline.topLeft.x}px, ${table.outline.topLeft.y}px)`,
+                width: `${table.outline.bottomRight.x - table.outline.topLeft.x}px`,
+                height: `${table.outline.bottomRight.y - table.outline.topLeft.y}px`,
+                transformOrigin: `${imageCenter.x}px ${imageCenter.y}px`,
+                borderColor: borderColor,
+                cursor: isSelected ? "default" : "pointer"
+            }}
+            onClick={e => handleClick(e)}>
             {body}
             {isSelected ? <ColumnSetterSpace/> : null}
+            {isSelected && table.columns.map((pos, idx) =>
+                <ColumnKnob position={pos} idx={idx} key={idx}/>
+            )}
             {isSelected ? <RowSetterSpace/> : null}
+            {isSelected && table.rows.map((pos, idx) =>
+                <RowKnob position={pos} idx={idx} key={idx}/>
+            )}
             {isSelected ? <NewColumnLine/> : null}
             {isSelected ? <NewRowLine/> : null}
         </TableDiv>
