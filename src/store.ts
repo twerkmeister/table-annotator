@@ -1,7 +1,7 @@
 import create from "zustand";
 import {getDataDir, getDocId} from "./path";
 import {CellIndex, Image, Point, Table, UnfinishedTable} from "./types";
-import {addPoints, makeRectangle, rotatePoint, calculateCellRectangle, width} from "./geometry";
+import {addPoints, makeRectangle, rotatePoint, calculateCellRectangle, width, height} from "./geometry";
 
 
 const makeTable = (p1: Point, p2: Point, rotationDegrees: number): Table => {
@@ -410,21 +410,42 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const selectedTable = get().selectedTable
         const selectedRow = get().selectedRow
         const tables = get().tables
+        const selectedCellRowLine = get().selectedCellRowLine
 
 
         if (selectedTable === undefined) return
+        const table = tables[selectedTable]
+        if (table === undefined) return
 
         if (selectedRow !== undefined) {
-            const table = tables[selectedTable]
-            if (table !== undefined) {
-                const row = table.rows[selectedRow]
-                if (row !== undefined) {
-                    const newRows = [...table.rows.slice(0, selectedRow), row + change, ...table.rows.slice(selectedRow + 1)]
-                    const newTable = {...table, rows: newRows}
-                    const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
-                    set({tables: newTables})
-                }
+            const row = table.rows[selectedRow]
+            if (row !== undefined) {
+                const newRows = [...table.rows.slice(0, selectedRow), row + change, ...table.rows.slice(selectedRow + 1)]
+                const newTable = {...table, rows: newRows}
+                const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
+                set({tables: newTables})
             }
+        } else if (selectedCellRowLine !== undefined) {
+            const upperRow = table.cells[selectedCellRowLine.row]
+            const lowerRow = table.cells[selectedCellRowLine.row + 1]
+            if (upperRow === undefined || lowerRow ===undefined) return
+            const upperCell = upperRow[selectedCellRowLine.column]
+            const lowerCell = lowerRow[selectedCellRowLine.column]
+            if (upperCell === undefined || lowerCell === undefined) return
+            const upperCellRectangle = calculateCellRectangle(upperCell, selectedCellRowLine, table)
+            const lowerCellRectangle = calculateCellRectangle(lowerCell, selectedCellRowLine, table)
+            if (height(upperCellRectangle) + change < 10 || height(lowerCellRectangle) - change < 10) return
+            const newUpperCell = {...upperCell, bottom: (upperCell.bottom || 0) + change}
+            const newLowerCell = {...lowerCell, top: (lowerCell.top || 0) + change}
+            const newUpperRow = [...upperRow.slice(0, selectedCellRowLine.column), newUpperCell,
+                ...upperRow.slice(selectedCellRowLine.column + 1)]
+            const newLowerRow = [...lowerRow.slice(0, selectedCellRowLine.column), newLowerCell,
+                ...lowerRow.slice(selectedCellRowLine.column + 1)]
+            const newCells = [...table.cells.slice(0, selectedCellRowLine.row), newUpperRow, newLowerRow,
+                ...table.cells.slice(selectedCellRowLine.row + 2)]
+            const newTable = {...table, cells: newCells}
+            const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
+            set({tables: newTables})
         }
     },
     selectCellColumnLine: (row: number, column: number) => {
@@ -439,7 +460,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const selectedTable = get().selectedTable
         const selectedColumn = get().selectedColumn
         const tables = get().tables
-        const selectedColumnLine = get().selectedCellColumnLine
+        const selectedCellColumnLine = get().selectedCellColumnLine
 
         if (selectedTable === undefined ) return
         const table = tables[selectedTable]
@@ -454,21 +475,21 @@ export const useStore = create<AnnotatorState>((set, get) => ({
                 const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
                 set({tables: newTables})
             }
-        } else if (selectedColumnLine !== undefined) {
-            const relevantRow = table.cells[selectedColumnLine.row]
+        } else if (selectedCellColumnLine !== undefined) {
+            const relevantRow = table.cells[selectedCellColumnLine.row]
             if (relevantRow === undefined) return
-            const leftCell = relevantRow[selectedColumnLine.column]
-            const rightCell = relevantRow[selectedColumnLine.column + 1]
+            const leftCell = relevantRow[selectedCellColumnLine.column]
+            const rightCell = relevantRow[selectedCellColumnLine.column + 1]
             if (leftCell === undefined || rightCell === undefined) return
-            const leftCellRectangle = calculateCellRectangle(leftCell, selectedColumnLine, table)
-            const rightCellRectangle = calculateCellRectangle(rightCell, selectedColumnLine, table)
+            const leftCellRectangle = calculateCellRectangle(leftCell, selectedCellColumnLine, table)
+            const rightCellRectangle = calculateCellRectangle(rightCell, selectedCellColumnLine, table)
             if (width(leftCellRectangle) + change < 10 || width(rightCellRectangle) - change < 10) return
             const newLeftCell = {...leftCell, right: (leftCell.right || 0) + change}
             const newRightCell = {...rightCell, left: (rightCell.left || 0) + change}
-            const newCellRow = [...relevantRow.slice(0, selectedColumnLine.column), newLeftCell, newRightCell,
-                ...relevantRow.slice(selectedColumnLine.column + 2)]
-            const newCells = [...table.cells.slice(0, selectedColumnLine.row), newCellRow,
-                ...table.cells.slice(selectedColumnLine.row + 1)]
+            const newCellRow = [...relevantRow.slice(0, selectedCellColumnLine.column), newLeftCell, newRightCell,
+                ...relevantRow.slice(selectedCellColumnLine.column + 2)]
+            const newCells = [...table.cells.slice(0, selectedCellColumnLine.row), newCellRow,
+                ...table.cells.slice(selectedCellColumnLine.row + 1)]
             const newTable = {...table, cells: newCells}
             const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
             set({tables: newTables})
