@@ -222,9 +222,8 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const newCells =
             table.cells.map((row, i) => {
                 return row.flatMap((cell, j) => {
-                    if (j !== separatedColumn){
-                        return [cell]
-                    } else {
+                    if (j === separatedColumn){
+                        // split into left and right cell
                         const leftCell = {...cell}
                         delete(leftCell.right)
                         delete(leftCell.ocr_text)
@@ -234,6 +233,8 @@ export const useStore = create<AnnotatorState>((set, get) => ({
                         delete(rightCell.ocr_text)
                         delete(rightCell.human_text)
                         return [leftCell, rightCell]
+                    } else {
+                        return [cell]
                     }
                 })
             })
@@ -254,9 +255,8 @@ export const useStore = create<AnnotatorState>((set, get) => ({
 
         const newCells =
             table.cells.flatMap((row, i) => {
-                if (i !== separatedRow) {
-                    return [row]
-                } else {
+                if (i === separatedRow) {
+                    // split into upper and lower row
                     const upperRow = row.map((cell, j) => {
                         const newCell = {...cell}
                         delete(newCell.bottom)
@@ -272,6 +272,8 @@ export const useStore = create<AnnotatorState>((set, get) => ({
                         return newCell
                     })
                     return [upperRow, lowerRow]
+                } else {
+                    return [row]
                 }
             })
 
@@ -296,29 +298,70 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const tables = get().tables
         const selectedTable = get().selectedTable
         const selectedColumn = get().selectedColumn
-        if (selectedTable !== undefined && selectedColumn !== undefined) {
-            const table = tables[selectedTable]
-            if (table !== undefined) {
-                const newColumns = [...table.columns.slice(0, selectedColumn), ...table.columns.slice(selectedColumn+1)]
-                const newTable = {...table, columns: newColumns}
-                const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable+1)]
-                set({tables: newTables, tableDeletionMarkCount: 0, selectedColumn: undefined})
-            }
-        }
+        if (selectedTable === undefined || selectedColumn === undefined) return
+
+        const table = tables[selectedTable]
+        if (table === undefined) return
+
+        const newCells =
+            table.cells.map((row, i) => {
+                return row.flatMap((cell, j) => {
+                    if (j === selectedColumn) {
+                        //join left and right cell
+                        const leftCell = row[j]
+                        const rightCell = row[j+1]
+                        const fusedCell = {
+                            left: leftCell.left,
+                            right: rightCell.right
+                        }
+                        return[fusedCell]
+                    } else if (j === selectedColumn + 1){
+                        // remove right cell
+                        return []
+                    } else {
+                        return [cell]
+                    }
+                })
+            })
+
+        const newColumns = [...table.columns.slice(0, selectedColumn), ...table.columns.slice(selectedColumn+1)]
+        const newTable = {...table, columns: newColumns, cells: newCells}
+        const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable+1)]
+        set({tables: newTables, tableDeletionMarkCount: 0, selectedColumn: undefined})
     },
     deleteRow: () => {
         const tables = get().tables
         const selectedTable = get().selectedTable
         const selectedRow = get().selectedRow
-        if (selectedTable !== undefined && selectedRow !== undefined) {
-            const table = tables[selectedTable]
-            if (table !== undefined) {
-                const newRows = [...table.rows.slice(0, selectedRow), ...table.rows.slice(selectedRow+1)]
-                const newTable = {...table, rows: newRows}
-                const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable+1)]
-                set({tables: newTables, tableDeletionMarkCount: 0, selectedRow: undefined})
-            }
-        }
+        if (selectedTable === undefined || selectedRow === undefined) return
+        const table = tables[selectedTable]
+        if (table === undefined) return
+
+        const newCells =
+            table.cells.flatMap((row, i) => {
+                if (i === selectedRow) {
+                    //join top and bottom row
+                    const topRow = table.cells[i]
+                    const bottomRow = table.cells[i+1]
+                    const fusedRow = row.map((cell, j) => {
+                        return {
+                            top: topRow[j].top,
+                            bottom: bottomRow[j].bottom
+                        }
+                    })
+                    return [fusedRow]
+                } else if (i === selectedRow + 1){
+                    // remove lower row
+                    return []
+                } else {
+                    return [row]
+                }
+            })
+
+        const newRows = [...table.rows.slice(0, selectedRow), ...table.rows.slice(selectedRow+1)]
+        const newTable = {...table, rows: newRows, cells: newCells}
+        const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable+1)]
+        set({tables: newTables, tableDeletionMarkCount: 0, selectedRow: undefined})
     },
     segmentTable: async () => {
         const tables = get().tables
