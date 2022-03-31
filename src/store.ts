@@ -432,6 +432,8 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             const upperCell = upperRow[selectedCellRowLine.column]
             const lowerCell = lowerRow[selectedCellRowLine.column]
             if (upperCell === undefined || lowerCell === undefined) return
+            //also stop if cell has already been changed in the other direction
+            if (upperCell.right || upperCell.left || lowerCell.right || lowerCell.left) return
             const upperCellRectangle = calculateCellRectangle(upperCell, selectedCellRowLine, table)
             const lowerCellRectangle = calculateCellRectangle(lowerCell, selectedCellRowLine, table)
             if (height(upperCellRectangle) + change < 10 || height(lowerCellRectangle) - change < 10) return
@@ -481,6 +483,8 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             const leftCell = relevantRow[selectedCellColumnLine.column]
             const rightCell = relevantRow[selectedCellColumnLine.column + 1]
             if (leftCell === undefined || rightCell === undefined) return
+            //also stop if cell has already been changed in the other direction
+            if (leftCell.top || leftCell.bottom || rightCell.top || rightCell.bottom) return
             const leftCellRectangle = calculateCellRectangle(leftCell, selectedCellColumnLine, table)
             const rightCellRectangle = calculateCellRectangle(rightCell, selectedCellColumnLine, table)
             if (width(leftCellRectangle) + change < 10 || width(rightCellRectangle) - change < 10) return
