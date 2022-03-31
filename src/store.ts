@@ -32,6 +32,7 @@ export type AnnotatorState = {
     newRowPosition?: number,
     mousePosition: Point,
     documentPosition?: Point,
+    isDragging: boolean,
     rotationDegrees: number,
     tableDeletionMarkCount: number,
     tables: Table[],
@@ -67,6 +68,8 @@ export type AnnotatorState = {
     setHelpGridView: (helpGridView: boolean) => void
     updateCellText: (i: number, j: number, text: string) => void
     setColumnTypes: (column: number, types: string[]) => void
+    setDragging: (isDragging: boolean) => void
+    handleDrag: () => void
 }
 
 export const useStore = create<AnnotatorState>((set, get) => ({
@@ -82,6 +85,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
     selectedCellRowLine: undefined,
     mousePosition: {x: 0, y: 0},
     documentPosition: undefined,
+    isDragging: false,
     rotationDegrees: 0,
     tableDeletionMarkCount: 0,
     tables: [],
@@ -501,7 +505,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
                 .map((cell, row_i) => calculateCellRectangle(cell,
                     {row: row_i, column: columnNumToCheck}, table))
                 .map(width)
-                .filter((w) => w - change < 10)
+                .filter((w) => w - Math.abs(change) < 10)
             if (cellsThatWouldBecomeTooSmall.length > 0) return
 
             // make sure you cannot cross row positions
@@ -582,5 +586,43 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const newTable = {...table, columnTypes: newColumnTypes}
         const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
         set({tables: newTables})
+    },
+    setDragging: (isDragging: boolean) => {
+        console.log("isDragging", isDragging)
+        set({isDragging})
+    },
+    handleDrag: () => {
+        const selectedTable = get().selectedTable
+        const tables = get().tables
+        const adjustColumn = get().adjustColumn
+        const adjustRow = get().adjustRow
+        if(selectedTable === undefined) return
+
+        const table = tables[selectedTable]
+        if (table === undefined) return
+
+        const selectedColumn = get().selectedColumn
+
+        const selectedRow = get().selectedRow
+        const selectedCellColumnLine = get().selectedCellColumnLine
+        const selectedCellRowLine = get().selectedCellRowLine
+
+        const mousePosition = get().mousePosition
+        const documentPosition = get().documentPosition
+        if(documentPosition === undefined) return
+
+        if (selectedColumn !== undefined) {
+            const columnPosition = table.columns[selectedColumn]
+            if (columnPosition === undefined) return
+
+            const currentXPositionDiff = mousePosition.x - documentPosition.x - table.outline.topLeft.x - columnPosition - 7
+            adjustColumn(currentXPositionDiff)
+        } else if (selectedRow !== undefined) {
+            const rowPosition = table.rows[selectedRow]
+            if (rowPosition === undefined) return
+            const currentYPositionDiff = mousePosition.y - documentPosition.y - table.outline.topLeft.y - rowPosition - 7
+            adjustRow(currentYPositionDiff)
+        }
+
     }
 }))

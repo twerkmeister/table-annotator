@@ -16,6 +16,7 @@ const ColumnSetterSpaceDiv = styled.div`
 const ColumnSetterSpace = () => {
     const setNewColumnPosition = useStore(state => state.setNewColumnPosition)
     const addColumn = useStore(state => state.addColumn)
+    const isDragging = useStore(state => state.isDragging)
 
     const handleMouseLeave = (e: React.MouseEvent<Element, MouseEvent>) => {
         setNewColumnPosition(undefined)
@@ -26,7 +27,9 @@ const ColumnSetterSpace = () => {
     }
 
     const handleMouseMove = (e: React.MouseEvent<Element, MouseEvent>) => {
-        setNewColumnPosition({x: e.pageX, y: e.pageY})
+        if(!isDragging) {
+            setNewColumnPosition({x: e.pageX, y: e.pageY})
+        }
     }
 
     return (

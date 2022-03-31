@@ -18,16 +18,23 @@ type ColumnKnobProps = {
 const ColumnKnob = ({position, idx} : ColumnKnobProps) =>{
     const selectColumn = useStore(state => state.selectColumn)
     const selectedColumn = useStore(state => state.selectedColumn)
+    const setDragging = useStore(state => state.setDragging)
 
     const handleMouseClick = (e: React.MouseEvent<Element, MouseEvent>) => {
         selectColumn(idx)
         e.stopPropagation()
     }
 
+    const handleMouseDown = (e: React.MouseEvent<Element, MouseEvent>) => {
+        selectColumn(idx)
+        setDragging(true)
+        e.stopPropagation()
+    }
+
 
     const isSelected = idx === selectedColumn
 
-    return (<ColumnKnobDiv onClick={handleMouseClick}
+    return (<ColumnKnobDiv onClick={handleMouseClick} onMouseDown={handleMouseDown}
                            style={{left: `${position - 12}px`, top: "-30px",
                                cursor: isSelected ? "default" : "pointer"}}/>)
 }

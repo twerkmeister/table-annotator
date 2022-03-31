@@ -2,6 +2,16 @@ import {Image} from "../types";
 import React, {useEffect} from "react";
 import {getPageOffset} from "../geometry";
 import {useStore} from "../store";
+import styled from "styled-components";
+
+const DocumentImageImg = styled.img `
+  position: absolute;
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+`
+
 
 type DocumentImageProps = {
     image: Image
@@ -35,8 +45,8 @@ const DocumentImage = ({image}: DocumentImageProps) => {
     }
 
     return (
-        <img ref={ref} src={`/${image.src}`} width={image.width} height={image.height}
-             style={{transform: `rotate(${rotationDegrees}deg)`, position: "absolute"}} alt="The document"
+        <DocumentImageImg ref={ref} src={`/${image.src}`} width={image.width} height={image.height}
+             style={{transform: `rotate(${rotationDegrees}deg)`}} alt="The document"
              onClick={e => handleClick(e)}/>
     )
 

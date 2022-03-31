@@ -45,7 +45,7 @@ const pushTablesToApi = async(state: AnnotatorState, previousState: AnnotatorSta
     if(currentImageIndex === undefined || images === undefined) return
     const image = images[currentImageIndex]
     if(image === undefined) return
-    await axios.post(`/${dataDir}/tables/${image.name}`, tables)
+    // await axios.post(`/${dataDir}/tables/${image.name}`, tables)
 }
 
 useStore.subscribe(pushTablesToApi)
@@ -78,6 +78,9 @@ function App() {
     const ocrView = useStore(state => state.ocrView)
     const helpView = useStore(state => state.helpView)
     const helpGridView = useStore(state => state.helpGridView)
+    const setDragging = useStore(state => state.setDragging)
+    const isDragging = useStore(state => state.isDragging)
+    const handleDrag = useStore(state => state.handleDrag)
 
     useEffect(() => {
         if(images === undefined) {
@@ -87,7 +90,15 @@ function App() {
 
     const handleMouseMove = (e: React.MouseEvent<Element, MouseEvent>) => {
         setMousePosition({x: e.pageX, y: e.pageY})
+        if (isDragging) {
+            handleDrag()
+        }
     }
+
+    const handleMouseUp = (e: React.MouseEvent<HTMLImageElement, MouseEvent>) => {
+        setDragging(false)
+    }
+
 
     const deleteFunc = () => {
         if(selectedTable !== undefined) {
@@ -126,7 +137,7 @@ function App() {
     if(images !== undefined && images.length > 0) {
         const image = images[imageIdx]
         return (
-            <AppContainer onMouseMove={e => handleMouseMove(e)}>
+            <AppContainer onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}>
                 <GlobalHotKeys keyMap={keyMap} handlers={hotkeyHandlers} allowChanges={true}>
                     {!ocrView ?
                         <div>
