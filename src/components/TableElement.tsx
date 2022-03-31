@@ -45,7 +45,7 @@ const TableElement = ({table, imageCenter, tableIdx}: TableProps) => {
     const cellLines =
         table.cells.flatMap((row, i) => {
                 return row.flatMap((cell, j) => {
-                    const rect = calculateCellRectangle(cell, {row: i, column: j}, table)
+                    const rect = calculateCellRectangle( {row: i, column: j}, table)
                     const cellLines = [
                         <CellRowLine row={i} column={j} parentTableSelected={isSelected}
                                      width={width(rect)} left={rect.topLeft.x}

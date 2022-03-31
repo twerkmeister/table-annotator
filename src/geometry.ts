@@ -46,7 +46,9 @@ export function height(rect: Rectangle): number {
     return rect.bottomRight.y - rect.topLeft.y
 }
 
-export const calculateCellRectangle = (cell: Cell, cellIndex: CellIndex, table: Table): Rectangle => {
+export const calculateCellRectangle = (cellIndex: CellIndex, table: Table): Rectangle => {
+    const cell = table.cells[cellIndex.row]?.[cellIndex.column]
+    if (cell === undefined) throw new Error(`Invalid cell index ${JSON.stringify(cellIndex)}`)
     const top_base = table.rows[cellIndex.row - 1] || 0
     const bottom_base = table.rows[cellIndex.row] || height(table.outline)
     const left_base = table.columns[cellIndex.column - 1] || 0

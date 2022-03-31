@@ -23,10 +23,20 @@ const CellRowLine = ({row, column, left, top, width,
     const selectCellRowLine = useStore(state => state.selectCellRowLine)
     const selectedCellRowLine = useStore(state => state.selectedCellRowLine)
     const selectedRow = useStore(state => state.selectedRow)
+    const setDragging = useStore(state => state.setDragging)
 
     const handleMouseClick = (e: React.MouseEvent<Element, MouseEvent>) => {
         if(parentTableSelected) {
             selectCellRowLine(row, column)
+            e.stopPropagation()
+        }
+    }
+
+
+    const handleMouseDown = (e: React.MouseEvent<Element, MouseEvent>) => {
+        if(parentTableSelected) {
+            selectCellRowLine(row, column)
+            setDragging(true)
             e.stopPropagation()
         }
     }
@@ -38,6 +48,7 @@ const CellRowLine = ({row, column, left, top, width,
 
     return (<CellRowLineDiv
         onClick={handleMouseClick}
+        onMouseDown={handleMouseDown}
         style={{left: `${left}px`,
             top: `${top}px`,
             width: `${width}px`,

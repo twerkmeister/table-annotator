@@ -436,7 +436,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             const rowNumToCheck = change >= 0 ? selectedRow+1 : selectedRow
             const rowToCheck = table.cells[rowNumToCheck]
             const cellsThatWouldBecomeTooSmall = rowToCheck
-                .map((cell, column_i) => calculateCellRectangle(cell,
+                .map((cell, column_i) => calculateCellRectangle(
                     {row: rowNumToCheck, column: column_i}, table))
                 .map(height)
                 .filter((h) => h - change < 10)
@@ -460,8 +460,8 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             if (upperCell === undefined || lowerCell === undefined) return
             //also stop if cell has already been changed in the other direction
             if (upperCell.right || upperCell.left || lowerCell.right || lowerCell.left) return
-            const upperCellRectangle = calculateCellRectangle(upperCell, selectedCellRowLine, table)
-            const lowerCellRectangle = calculateCellRectangle(lowerCell,
+            const upperCellRectangle = calculateCellRectangle(selectedCellRowLine, table)
+            const lowerCellRectangle = calculateCellRectangle(
                 {...selectedCellRowLine, row: selectedCellRowLine.row + 1}, table)
             if (height(upperCellRectangle) + change < 10 || height(lowerCellRectangle) - change < 10) return
             const newUpperCell = {...upperCell, bottom: (upperCell.bottom || 0) + change}
@@ -502,7 +502,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             const columnNumToCheck = change >= 0 ? selectedColumn+1 : selectedColumn
             const columnToCheck = transposeCells(table.cells)[columnNumToCheck]
             const cellsThatWouldBecomeTooSmall = columnToCheck
-                .map((cell, row_i) => calculateCellRectangle(cell,
+                .map((cell, row_i) => calculateCellRectangle(
                     {row: row_i, column: columnNumToCheck}, table))
                 .map(width)
                 .filter((w) => w - Math.abs(change) < 10)
@@ -527,8 +527,8 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             if (leftCell === undefined || rightCell === undefined) return
             //also stop if cell has already been changed in the other direction
             if (leftCell.top || leftCell.bottom || rightCell.top || rightCell.bottom) return
-            const leftCellRectangle = calculateCellRectangle(leftCell, selectedCellColumnLine, table)
-            const rightCellRectangle = calculateCellRectangle(rightCell,
+            const leftCellRectangle = calculateCellRectangle(selectedCellColumnLine, table)
+            const rightCellRectangle = calculateCellRectangle(
                 {...selectedCellColumnLine, column: selectedCellColumnLine.column + 1}, table)
 
             if ((width(leftCellRectangle) + change < 10) || (width(rightCellRectangle) - change < 10)) return
@@ -621,6 +621,14 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             const rowPosition = table.rows[selectedRow]
             if (rowPosition === undefined) return
             const currentYPositionDiff = mousePosition.y - documentPosition.y - table.outline.topLeft.y - rowPosition - 7
+            adjustRow(currentYPositionDiff)
+        } else if (selectedCellColumnLine !== undefined) {
+            const cellColumnLinePosition = calculateCellRectangle(selectedCellColumnLine, table).bottomRight.x
+            const currentXPositionDiff = mousePosition.x - documentPosition.x - table.outline.topLeft.x - cellColumnLinePosition - 7
+            adjustColumn(currentXPositionDiff)
+        } else if (selectedCellRowLine !== undefined) {
+            const cellRowLinePosition = calculateCellRectangle(selectedCellRowLine, table).bottomRight.y
+            const currentYPositionDiff = mousePosition.y - documentPosition.y - table.outline.topLeft.y - cellRowLinePosition - 7
             adjustRow(currentYPositionDiff)
         }
 

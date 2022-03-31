@@ -57,7 +57,7 @@ const SplitTable = ({imageName}: SplitTableProps) => {
                     <DataRow key={i}>
                         {
                             row.map((cell, j) => {
-                                const cellRectangle = calculateCellRectangle(cell, {row: i, column: j}, table)
+                                const cellRectangle = calculateCellRectangle({row: i, column: j}, table)
                                 return (
                                     <div>
                                         <div>
