@@ -20,7 +20,7 @@ type RowSetterBlockerProps = {
 
 const RowSetterBlocker = ({position, height} : RowSetterBlockerProps) =>{
     return (<RowSetterBlockerDiv
-                           style={{top: `${position}px`, left: "-30px", height: `${height}px`}}/>)
+                           style={{top: `${position-11}px`, left: "-30px", height: `${height+22}px`}}/>)
 }
 
 export default RowSetterBlocker

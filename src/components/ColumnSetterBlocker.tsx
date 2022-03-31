@@ -20,7 +20,7 @@ type ColumnSetterBlockerProps = {
 
 const ColumnSetterBlocker = ({position, width} : ColumnSetterBlockerProps) =>{
     return (<ColumnSetterBlockerDiv
-                           style={{left: `${position}px`, top: "-30px", width: `${width}px`}}/>)
+                           style={{left: `${position-11}px`, top: "-30px", width: `${width+22}px`}}/>)
 }
 
 export default ColumnSetterBlocker

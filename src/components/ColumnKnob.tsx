@@ -4,7 +4,7 @@ import styled from "styled-components";
 
 const ColumnKnobDiv = styled.div `
     border: 1px solid rgba(0, 0, 0, 8);
-    width: 20px;
+    width: 22px;
     height: 23px;
     background: silver;
     position: absolute;
@@ -28,7 +28,7 @@ const ColumnKnob = ({position, idx} : ColumnKnobProps) =>{
     const isSelected = idx === selectedColumn
 
     return (<ColumnKnobDiv onClick={handleMouseClick}
-                           style={{left: `${position - 10}px`, top: "-30px",
+                           style={{left: `${position - 12}px`, top: "-30px",
                                cursor: isSelected ? "default" : "pointer"}}/>)
 }
 
