@@ -33,6 +33,7 @@ export type AnnotatorState = {
     mousePosition: Point,
     documentPosition?: Point,
     isDragging: boolean,
+    dragStartTime: number,
     rotationDegrees: number,
     tableDeletionMarkCount: number,
     tables: Table[],
@@ -86,6 +87,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
     mousePosition: {x: 0, y: 0},
     documentPosition: undefined,
     isDragging: false,
+    dragStartTime: -1,
     rotationDegrees: 0,
     tableDeletionMarkCount: 0,
     tables: [],
@@ -439,7 +441,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
                 .map((cell, column_i) => calculateCellRectangle(
                     {row: rowNumToCheck, column: column_i}, table))
                 .map(height)
-                .filter((h) => h - change < 10)
+                .filter((h) => h - Math.abs(change) < 10)
             if (cellsThatWouldBecomeTooSmall.length > 0) return
 
             // make sure you cannot cross row positions
@@ -589,7 +591,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
     },
     setDragging: (isDragging: boolean) => {
         console.log("isDragging", isDragging)
-        set({isDragging})
+        set({isDragging, dragStartTime: isDragging ? new Date().getTime() : -1})
     },
     handleDrag: () => {
         const selectedTable = get().selectedTable

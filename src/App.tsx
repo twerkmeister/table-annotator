@@ -1,5 +1,6 @@
 import React, {useEffect} from 'react';
 import axios from 'axios';
+import {v4 as uuidv4} from "uuid";
 import { GlobalHotKeys } from "react-hotkeys";
 import styled from 'styled-components'
 import {getDataDir} from './path';
@@ -36,6 +37,7 @@ const keyMap = {
     HELPER_GRID: "r",
 };
 
+let rateToken = ""
 
 const pushTablesToApi = async(state: AnnotatorState, previousState: AnnotatorState) => {
     if(state.tables === previousState.tables) return
@@ -45,7 +47,12 @@ const pushTablesToApi = async(state: AnnotatorState, previousState: AnnotatorSta
     if(currentImageIndex === undefined || images === undefined) return
     const image = images[currentImageIndex]
     if(image === undefined) return
-    // await axios.post(`/${dataDir}/tables/${image.name}`, tables)
+    rateToken = uuidv4()
+    const rateTokenCopy = rateToken
+    await new Promise(r => setTimeout(r, 150));
+    if (rateToken === rateTokenCopy) {
+        await axios.post(`/${dataDir}/tables/${image.name}`, tables)
+    }
 }
 
 useStore.subscribe(pushTablesToApi)
@@ -80,6 +87,7 @@ function App() {
     const helpGridView = useStore(state => state.helpGridView)
     const setDragging = useStore(state => state.setDragging)
     const isDragging = useStore(state => state.isDragging)
+    const dragStartTime = useStore(state => state.dragStartTime)
     const handleDrag = useStore(state => state.handleDrag)
 
     useEffect(() => {
@@ -90,7 +98,7 @@ function App() {
 
     const handleMouseMove = (e: React.MouseEvent<Element, MouseEvent>) => {
         setMousePosition({x: e.pageX, y: e.pageY})
-        if (isDragging) {
+        if (isDragging && new Date().getTime() - dragStartTime > 200) {
             handleDrag()
         }
     }
