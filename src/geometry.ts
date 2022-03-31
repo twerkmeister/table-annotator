@@ -60,6 +60,8 @@ export const calculateCellRectangle = (cell: Cell, cellIndex: CellIndex, table: 
     return makeRectangle({y: top, x: left}, {y: bottom, x: right})
 }
 
+export const transposeCells = (cells: Cell[][]) => cells[0].map((x,i) => cells.map(x => x[i]))
+
 export const getMaximalRevisions = (cells: Cell[][]): [number[][], number[][]] => {
     const maxRowRevisions = cells.slice(0, -1).map((row, i) => {
         return row.reduce((previousValue, currentValue) => {
@@ -67,8 +69,7 @@ export const getMaximalRevisions = (cells: Cell[][]): [number[][], number[][]] =
                 Math.max(previousValue[1] || 0, currentValue.bottom || 0)]
         }, [0, 0])
     })
-    const transpose = (cells: Cell[][]) => cells[0].map((x,i) => cells.map(x => x[i]))
-    const maxColumnRevisions = transpose(cells).slice(0, -1).map((column, i) => {
+    const maxColumnRevisions = transposeCells(cells).slice(0, -1).map((column, i) => {
         return column.reduce((previousValue, currentValue) => {
             return [Math.max(previousValue[0] || 0, -(currentValue.right || 0)),
                 Math.max(previousValue[1] || 0, currentValue.right || 0)]

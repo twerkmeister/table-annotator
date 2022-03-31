@@ -1,7 +1,15 @@
 import create from "zustand";
 import {getDataDir, getDocId} from "./path";
 import {CellIndex, Image, Point, Table, UnfinishedTable} from "./types";
-import {addPoints, makeRectangle, rotatePoint, calculateCellRectangle, width, height} from "./geometry";
+import {
+    addPoints,
+    makeRectangle,
+    rotatePoint,
+    calculateCellRectangle,
+    width,
+    height,
+    getMaximalRevisions, transposeCells
+} from "./geometry";
 
 
 const makeTable = (p1: Point, p2: Point, rotationDegrees: number): Table => {
@@ -418,13 +426,27 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         if (table === undefined) return
 
         if (selectedRow !== undefined) {
-            const row = table.rows[selectedRow]
-            if (row !== undefined) {
-                const newRows = [...table.rows.slice(0, selectedRow), row + change, ...table.rows.slice(selectedRow + 1)]
-                const newTable = {...table, rows: newRows}
-                const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
-                set({tables: newTables})
-            }
+            const rowPos = table.rows[selectedRow]
+            if (rowPos === undefined) return
+
+            const rowNumToCheck = change >= 0 ? selectedRow+1 : selectedRow
+            const rowToCheck = table.cells[rowNumToCheck]
+            const cellsThatWouldBecomeTooSmall = rowToCheck
+                .map((cell, column_i) => calculateCellRectangle(cell,
+                    {row: rowNumToCheck, column: column_i}, table))
+                .map(height)
+                .filter((h) => h - change < 10)
+            if (cellsThatWouldBecomeTooSmall.length > 0) return
+
+            // make sure you cannot cross row positions
+            const previousRowPosition = table.rows[selectedRow - 1] || 0
+            const nextRowPosition = table.rows[selectedRow + 1] || height(table.outline)
+            if ((((rowPos + change) - previousRowPosition) < 10) || ((nextRowPosition - (rowPos + change)) < 10)) return
+
+            const newRows = [...table.rows.slice(0, selectedRow), rowPos + change, ...table.rows.slice(selectedRow + 1)]
+            const newTable = {...table, rows: newRows}
+            const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
+            set({tables: newTables})
         } else if (selectedCellRowLine !== undefined) {
             const upperRow = table.cells[selectedCellRowLine.row]
             const lowerRow = table.cells[selectedCellRowLine.row + 1]
@@ -435,7 +457,8 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             //also stop if cell has already been changed in the other direction
             if (upperCell.right || upperCell.left || lowerCell.right || lowerCell.left) return
             const upperCellRectangle = calculateCellRectangle(upperCell, selectedCellRowLine, table)
-            const lowerCellRectangle = calculateCellRectangle(lowerCell, selectedCellRowLine, table)
+            const lowerCellRectangle = calculateCellRectangle(lowerCell,
+                {...selectedCellRowLine, row: selectedCellRowLine.row + 1}, table)
             if (height(upperCellRectangle) + change < 10 || height(lowerCellRectangle) - change < 10) return
             const newUpperCell = {...upperCell, bottom: (upperCell.bottom || 0) + change}
             const newLowerCell = {...lowerCell, top: (lowerCell.top || 0) + change}
@@ -469,14 +492,29 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         if (table === undefined) return
 
         if (selectedColumn !== undefined) {
-            const column = table.columns[selectedColumn]
-            if (column !== undefined) {
-                const newColumns = [...table.columns.slice(0, selectedColumn), column + change,
-                    ...table.columns.slice(selectedColumn + 1)]
-                const newTable = {...table, columns: newColumns}
-                const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
-                set({tables: newTables})
-            }
+            const columnPos = table.columns[selectedColumn]
+            if (columnPos === undefined) return
+
+            const columnNumToCheck = change >= 0 ? selectedColumn+1 : selectedColumn
+            const columnToCheck = transposeCells(table.cells)[columnNumToCheck]
+            const cellsThatWouldBecomeTooSmall = columnToCheck
+                .map((cell, row_i) => calculateCellRectangle(cell,
+                    {row: row_i, column: columnNumToCheck}, table))
+                .map(width)
+                .filter((w) => w - change < 10)
+            if (cellsThatWouldBecomeTooSmall.length > 0) return
+
+            // make sure you cannot cross row positions
+            const previousColumnPosition = table.columns[selectedColumn - 1] || 0
+            const nextColumnPosition = table.columns[selectedColumn + 1] || width(table.outline)
+            if ((((columnPos + change) - previousColumnPosition) < 10) ||
+                ((nextColumnPosition - (columnPos + change)) < 10)) return
+
+            const newColumns = [...table.columns.slice(0, selectedColumn), columnPos + change,
+                ...table.columns.slice(selectedColumn + 1)]
+            const newTable = {...table, columns: newColumns}
+            const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
+            set({tables: newTables})
         } else if (selectedCellColumnLine !== undefined) {
             const relevantRow = table.cells[selectedCellColumnLine.row]
             if (relevantRow === undefined) return
@@ -486,8 +524,10 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             //also stop if cell has already been changed in the other direction
             if (leftCell.top || leftCell.bottom || rightCell.top || rightCell.bottom) return
             const leftCellRectangle = calculateCellRectangle(leftCell, selectedCellColumnLine, table)
-            const rightCellRectangle = calculateCellRectangle(rightCell, selectedCellColumnLine, table)
-            if (width(leftCellRectangle) + change < 10 || width(rightCellRectangle) - change < 10) return
+            const rightCellRectangle = calculateCellRectangle(rightCell,
+                {...selectedCellColumnLine, column: selectedCellColumnLine.column + 1}, table)
+
+            if ((width(leftCellRectangle) + change < 10) || (width(rightCellRectangle) - change < 10)) return
             const newLeftCell = {...leftCell, right: (leftCell.right || 0) + change}
             const newRightCell = {...rightCell, left: (rightCell.left || 0) + change}
             const newCellRow = [...relevantRow.slice(0, selectedCellColumnLine.column), newLeftCell, newRightCell,
