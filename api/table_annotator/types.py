@@ -30,20 +30,6 @@ class Rectangle(BaseModel):
                      self.bottomRight.x, self.bottomRight.y))
 
 
-# class CellContent(BaseModel):
-#     ocr_text: Text
-#     human_text: Optional[Text]
-#
-#     @classmethod
-#     def new_from_ocr_result(cls, ocr_result: Text):
-#         return cls(ocr_text=ocr_result, human_text=None)
-#
-#     @staticmethod
-#     def extract_text(cell_content: "CellContent") -> Text:
-#         return cell_content.human_text if cell_content.human_text is not None \
-#             else cell_content.ocr_text
-
-
 class Cell(BaseModel):
     top: Optional[int]
     right: Optional[int]
@@ -51,6 +37,10 @@ class Cell(BaseModel):
     left: Optional[int]
     ocr_text: Optional[Text]
     human_text: Optional[Text]
+
+    def extract_text(self) -> Optional[Text]:
+        return self.human_text if self.human_text is not None \
+            else self.ocr_text
 
 
 class Table(BaseModel):

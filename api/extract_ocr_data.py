@@ -5,7 +5,6 @@ import cv2
 import table_annotator.io
 import table_annotator.cellgrid
 import table_annotator.lines
-from table_annotator.types import CellContent
 
 
 def extract_ocr_data(data_path: Text, target_path: Text) -> None:
@@ -26,13 +25,17 @@ def extract_ocr_data(data_path: Text, target_path: Text) -> None:
         image_name = os.path.splitext(os.path.basename(image_path))[0]
 
         for t_i, t in enumerate(tables):
-            if t.cellContents is None:
+            # todo: need better mechanism to distinguish which docs are ready
+            cell_list, _ = table_annotator.cellgrid.cell_grid_to_list(t.cells)
+            needs_ocr = [i for i, c in enumerate(cell_list) if c.ocr_text is None]
+            if len(needs_ocr) > 0:
                 continue
+
             cell_image_grid = table_annotator.cellgrid.get_cell_image_grid(image, t)
-            for row_i in range(len(t.cellContents)):
-                for col_i in range(len(t.cellContents[row_i])):
-                    cell_text = CellContent.extract_text(t.cellContents[row_i][col_i])
-                    if "@" in cell_text:
+            for row_i in range(len(t.cells)):
+                for col_i in range(len(t.cells[row_i])):
+                    cell_text = t.cells[row_i][col_i].extract_text()
+                    if "@" in cell_text or cell_text is None:
                         continue
                     cell_image = cell_image_grid[row_i][col_i]
                     text_lines = cell_text.split("\n")
