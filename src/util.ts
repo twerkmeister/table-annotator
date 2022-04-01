@@ -1,3 +1,4 @@
+import {Table} from "./types";
 
 export function flatten<T>(arr: T[][]): T[] {
     return ([] as T[]).concat(...arr);
@@ -16,4 +17,13 @@ export function cyrb53(str: string, seed: number = 0): number {
     h1 = Math.imul(h1 ^ (h1>>>16), 2246822507) ^ Math.imul(h2 ^ (h2>>>13), 3266489909);
     h2 = Math.imul(h2 ^ (h2>>>16), 2246822507) ^ Math.imul(h1 ^ (h1>>>13), 3266489909);
     return 4294967296 * (2097151 & h2) + (h1>>>0);
+}
+
+export function doesTableNeedOcr(table: Table): boolean {
+    for(let i = 0; i < table.cells.length; i++) {
+        for (let j =0; j < table.cells[i].length; j++) {
+            if (table.cells[i][j].ocr_text === undefined) return true
+        }
+    }
+    return false
 }

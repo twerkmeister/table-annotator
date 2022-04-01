@@ -449,8 +449,16 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             const nextRowPosition = table.rows[selectedRow + 1] || height(table.outline)
             if ((((rowPos + change) - previousRowPosition) < 10) || ((nextRowPosition - (rowPos + change)) < 10)) return
 
+            // invalidate existing ocr results for the given cells...
+            const newCells = table.cells.map((row, i) => {
+                if (i === selectedRow || i === selectedRow + 1) {
+                    return row.map((cell, j) => {
+                        return {...cell, ocr_text: undefined, human_text: undefined}
+                    })
+                } else return row
+            })
             const newRows = [...table.rows.slice(0, selectedRow), rowPos + change, ...table.rows.slice(selectedRow + 1)]
-            const newTable = {...table, rows: newRows}
+            const newTable = {...table, rows: newRows, cells: newCells}
             const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
             set({tables: newTables})
         } else if (selectedCellRowLine !== undefined) {
@@ -466,8 +474,8 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             const lowerCellRectangle = calculateCellRectangle(
                 {...selectedCellRowLine, row: selectedCellRowLine.row + 1}, table)
             if (height(upperCellRectangle) + change < 10 || height(lowerCellRectangle) - change < 10) return
-            const newUpperCell = {...upperCell, bottom: (upperCell.bottom || 0) + change}
-            const newLowerCell = {...lowerCell, top: (lowerCell.top || 0) + change}
+            const newUpperCell = {...upperCell, bottom: (upperCell.bottom || 0) + change, ocr_text: undefined, human_text: undefined}
+            const newLowerCell = {...lowerCell, top: (lowerCell.top || 0) + change, ocr_text: undefined, human_text: undefined}
             const newUpperRow = [...upperRow.slice(0, selectedCellRowLine.column), newUpperCell,
                 ...upperRow.slice(selectedCellRowLine.column + 1)]
             const newLowerRow = [...lowerRow.slice(0, selectedCellRowLine.column), newLowerCell,
@@ -516,9 +524,18 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             if ((((columnPos + change) - previousColumnPosition) < 10) ||
                 ((nextColumnPosition - (columnPos + change)) < 10)) return
 
+            // invalidate existing ocr results for the given cells...
+            const newCells = table.cells.map((row, i) => {
+                return row.map((cell, j) => {
+                    if (j === selectedColumn || j === selectedColumn + 1) {
+                        return {...cell, ocr_text: undefined, human_text: undefined}
+                    } else return cell
+                })
+            })
+
             const newColumns = [...table.columns.slice(0, selectedColumn), columnPos + change,
                 ...table.columns.slice(selectedColumn + 1)]
-            const newTable = {...table, columns: newColumns}
+            const newTable = {...table, columns: newColumns, cells: newCells}
             const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
             set({tables: newTables})
         } else if (selectedCellColumnLine !== undefined) {
@@ -534,8 +551,8 @@ export const useStore = create<AnnotatorState>((set, get) => ({
                 {...selectedCellColumnLine, column: selectedCellColumnLine.column + 1}, table)
 
             if ((width(leftCellRectangle) + change < 10) || (width(rightCellRectangle) - change < 10)) return
-            const newLeftCell = {...leftCell, right: (leftCell.right || 0) + change}
-            const newRightCell = {...rightCell, left: (rightCell.left || 0) + change}
+            const newLeftCell = {...leftCell, right: (leftCell.right || 0) + change, ocr_text: undefined, human_text: undefined}
+            const newRightCell = {...rightCell, left: (rightCell.left || 0) + change, ocr_text: undefined, human_text: undefined}
             const newCellRow = [...relevantRow.slice(0, selectedCellColumnLine.column), newLeftCell, newRightCell,
                 ...relevantRow.slice(selectedCellColumnLine.column + 2)]
             const newCells = [...table.cells.slice(0, selectedCellColumnLine.row), newCellRow,
