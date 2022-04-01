@@ -53,7 +53,7 @@ export type AnnotatorState = {
     setNewColumnPosition: (pagePoint?: Point) => void,
     setNewRowPosition: (pagePoint?: Point) => void,
     addColumn: () => void,
-    addRow: () => void,
+    addRow: (givenRowPosition?: number) => void,
     selectColumn: (idx?: number) => void,
     selectRow: (idx?: number) => void,
     deleteTable: () => void
@@ -255,10 +255,10 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const newTables = [...tables.slice(0, selectedTableIdx), newTable, ...tables.slice(selectedTableIdx+1)]
         set({tables: newTables, tableDeletionMarkCount: 0})
     },
-    addRow: () => {
+    addRow: (givenRowPosition?: number) => {
         const tables = get().tables
         const selectedTable = get().selectedTable
-        const newRowPosition = get().newRowPosition
+        const newRowPosition = givenRowPosition || get().newRowPosition
         if (selectedTable === undefined || newRowPosition === undefined) return
 
         const table = tables[selectedTable]
@@ -384,6 +384,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const selectedTable = get().selectedTable
         const images = get().images
         const currentImageIndex = get().currentImageIndex
+        const addRow = get().addRow
         if (selectedTable === undefined ||
             images === undefined) return
         const image = images[currentImageIndex]
@@ -396,10 +397,13 @@ export const useStore = create<AnnotatorState>((set, get) => ({
 
         const response =
             await fetch(`/${dataDir}/${image.name}/predict_table_structure/${selectedTable}`)
-        const rows = (await response.json())["rows"]
+        const rows: number[] = (await response.json())["rows"]
 
-        const newTables = [...tables.slice(0, selectedTable), {...table, rows}, ...tables.slice(selectedTable + 1)]
-        set({tables: newTables})},
+        rows.forEach((row) => {
+            addRow(row)
+        })
+
+    },
     predictTableContent: async () => {
         const tables = get().tables
         const selectedTable = get().selectedTable
