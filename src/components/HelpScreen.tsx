@@ -37,32 +37,15 @@ const HelpScreen = () => {
                 Die Tabelle muss ausgewählt sein (sichtbar am grünen Rand)
                 <ol>
                     <li>Zeilen automatisch einfügen lassen mittels Taste <b>z</b></li>
-                    <li>Zeilen können zur Korrektur ausgewählt und über die Tasten "w" und "s"
-                        nach oben oder unten verschoben oder mittels der Rücktaste gelöschen werden</li>
-                    <li>fehlende Zeilen über den orangenen, linken Rand der Tabelle hinzugefügen</li>
                     <li>Spalten über den lilanen, oberen Rand der Tabelle hinzufügen</li>
-                    <li>Spalten bei Bedarf auswählen und über die Tasten "a" und "d" nach links bzw. rechts verschieben,
-                        oder über die Rücktaste löschen und neu setzen</li>
-                </ol>
-                Sollte sich beim Setzen der Zeilen und Spalten herausstellen, dass die Tabelle doch nicht richtig
-                ausgerichtet wurde, kann sie mit der Rücktaste (3x) wieder gelöscht werden. Falls das Ergebnis der
-                automatischen Zeilensetzung zu schlecht ist, kann es Sinn machen, die Tabelle zu löschen und die Zeilen
-                komplett händisch zu setzen.
-            </div>
-            <div>
-                <h3>Spalten verfeinern</h3>
-                Sobald dieser Schritt begonnen wird können keine neuen Spalten und Zeilen gesetzt werden. <br/>
-                Die Tabelle muss ausgewählt sein (sichtbar am grünen Rand)
-                <ol>
-                    <li>Verfeinerung der Spalten über die Taste "v" beginnen. Die farblichen Ränder links, und rechts
-                        zum Setzen von Zeilen und Spalten verschwinden daraufhin.</li>
-                    <li>Einzelne vertikale Zellwände können ausgewählt werden und mittels Tasten "a" und "d" nach
-                        links und rechts verschoben werdern</li>
+                    <li>Spalten und Zeilen können über die Griffe am Tabellenrand ausgewählt werden und durch die Maus
+                        oder die Tasten "w", "a", "s", "d" bewegt werden.</li>
+                    <li>Zellwände können ebenso verschoben werden</li>
+                    <li>Fehlerhaft gesetzte Spalten und Zeilen lassen sich durch die Rücktaste löschen.</li>
                 </ol>
             </div>
             <div>
                 <h3>OCR</h3>
-                Sobald dieser Schritt begonnne wird, können die Spalten nicht weiter verfeinert werden. <br/>
                 Die Tabelle muss ausgewählt sein (sichtbar am grünen Rand)
                 <ol>
                     <li>OCR über die Taste "o" beginnen, nach einer kurzen Wartezeit steht das OCR Ergebnis
