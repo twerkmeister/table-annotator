@@ -47,5 +47,6 @@ export type Table = {
     columns: number[],
     rows: number[],
     cells: Cell[][],
+    structureLocked: boolean,
     columnTypes: string[][],
 }

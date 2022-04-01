@@ -13,6 +13,7 @@ import {calculateCellRectangle, getMaximalRevisions, height, width} from "../geo
 import RowKnob from "./RowKnob";
 import ColumnSetterBlocker from "./ColumnSetterBlocker";
 import RowSetterBlocker from "./RowSetterBlocker";
+import TableLock from "./TableLock";
 
 
 export const TableDiv = styled.div`
@@ -48,9 +49,11 @@ const TableElement = ({table, imageCenter, tableIdx}: TableProps) => {
                     const rect = calculateCellRectangle( {row: i, column: j}, table)
                     const cellLines = [
                         <CellRowLine row={i} column={j} parentTableSelected={isSelected}
+                                     parentTableLocked={table.structureLocked}
                                      width={width(rect)} left={rect.topLeft.x}
                                      top={rect.bottomRight.y} key={`row_${i}_${j}`}/>,
                         <CellColumnLine row={i} column={j} parentTableSelected={isSelected}
+                                        parentTableLocked={table.structureLocked}
                                         height={height(rect)} left={rect.bottomRight.x}
                                         top={rect.topLeft.y} key={`col_${i}_${j}`}/>
                     ]
@@ -84,18 +87,22 @@ const TableElement = ({table, imageCenter, tableIdx}: TableProps) => {
             }}
             onClick={e => handleClick(e)}>
             {cellLines}
-            {isSelected ? <ColumnSetterSpace/> : null}
-            {isSelected ? columnSetterBlocks: null}
-            {isSelected && table.columns.map((pos, idx) =>
-                <ColumnKnob position={pos} idx={idx} key={idx}/>
-            )}
-            {isSelected ? <RowSetterSpace/> : null}
-            {isSelected ? rowSetterBlocks: null}
-            {isSelected && table.rows.map((pos, idx) =>
-                <RowKnob position={pos} idx={idx} key={idx}/>
-            )}
-            {isSelected ? <NewColumnLine/> : null}
-            {isSelected ? <NewRowLine/> : null}
+            {isSelected && <TableLock locked={table.structureLocked}/>}
+            {isSelected && !table.structureLocked && [
+                <ColumnSetterSpace/>,
+                ...columnSetterBlocks,
+                ...table.columns.map((pos, idx) =>
+                    <ColumnKnob position={pos} idx={idx} key={idx}/>
+                ),
+                <RowSetterSpace/>,
+                ...rowSetterBlocks,
+                ...table.rows.map((pos, idx) =>
+                    <RowKnob position={pos} idx={idx} key={idx}/>
+                ),
+                <NewColumnLine/>,
+                <NewRowLine/>
+
+            ]}
         </TableDiv>
     )
 }

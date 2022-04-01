@@ -16,7 +16,7 @@ import {doesTableNeedOcr} from "./util";
 const makeTable = (p1: Point, p2: Point, rotationDegrees: number): Table => {
     const outline = makeRectangle(p1, p2)
     return {
-        outline, rotationDegrees, columns: [], rows: [], cells: [[Object()]], columnTypes: [[]]
+        outline, rotationDegrees, columns: [], rows: [], cells: [[Object()]], columnTypes: [[]], structureLocked: false
     }
 }
 
@@ -72,6 +72,7 @@ export type AnnotatorState = {
     setColumnTypes: (column: number, types: string[]) => void
     setDragging: (isDragging: boolean) => void
     handleDrag: () => void
+    lockTable: (lock: boolean) => void
 }
 
 export const useStore = create<AnnotatorState>((set, get) => ({
@@ -419,7 +420,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             await fetch(`/${dataDir}/${image.name}/predict_table_contents/${selectedTable}`)
         const updatedCells = (await response.json())["cells"]
 
-        const newTables = [...tables.slice(0, selectedTable), {...table, cells: updatedCells},
+        const newTables = [...tables.slice(0, selectedTable), {...table, cells: updatedCells, structureLocked: true},
             ...tables.slice(selectedTable + 1)]
         set({tables: newTables})},
     adjustRow: (change: number) => {
@@ -654,6 +655,18 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             const currentYPositionDiff = mousePosition.y - documentPosition.y - table.outline.topLeft.y - cellRowLinePosition - 7
             adjustRow(currentYPositionDiff)
         }
+    },
+    lockTable: (lock: boolean) => {
+        const selectedTable = get().selectedTable
+        const tables = get().tables
+        if(selectedTable === undefined) return
 
+        const table = tables[selectedTable]
+        if (table === undefined) return
+
+        const newTable = {...table, structureLocked: lock}
+        const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
+        set({tables: newTables, selectedColumn: undefined, selectedRow: undefined,
+            selectedCellRowLine: undefined, selectedCellColumnLine: undefined})
     }
 }))

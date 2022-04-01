@@ -59,6 +59,7 @@ class Table(BaseModel):
     columns: List[int]
     rows: List[int]
     cells: CellGrid[Cell]
+    structureLocked: bool
     columnTypes: Optional[List[List[Text]]]
 
     def __hash__(self) -> int:

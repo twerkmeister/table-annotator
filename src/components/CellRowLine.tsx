@@ -16,17 +16,18 @@ type CellRowLineProps = {
     top: number
     width: number
     parentTableSelected: boolean
+    parentTableLocked: boolean
 }
 
 const CellRowLine = ({row, column, left, top, width,
-                         parentTableSelected}: CellRowLineProps) => {
+                         parentTableSelected, parentTableLocked}: CellRowLineProps) => {
     const selectCellRowLine = useStore(state => state.selectCellRowLine)
     const selectedCellRowLine = useStore(state => state.selectedCellRowLine)
     const selectedRow = useStore(state => state.selectedRow)
     const setDragging = useStore(state => state.setDragging)
 
     const handleMouseClick = (e: React.MouseEvent<Element, MouseEvent>) => {
-        if(parentTableSelected) {
+        if(parentTableSelected && !parentTableLocked) {
             selectCellRowLine(row, column)
             e.stopPropagation()
         }
@@ -34,7 +35,7 @@ const CellRowLine = ({row, column, left, top, width,
 
 
     const handleMouseDown = (e: React.MouseEvent<Element, MouseEvent>) => {
-        if(parentTableSelected) {
+        if(parentTableSelected && !parentTableLocked) {
             selectCellRowLine(row, column)
             setDragging(true)
             e.stopPropagation()
@@ -52,7 +53,7 @@ const CellRowLine = ({row, column, left, top, width,
         style={{left: `${left}px`,
             top: `${top}px`,
             width: `${width}px`,
-            cursor: isDirectlySelected ? "default" : "pointer",
+            cursor: isDirectlySelected || parentTableLocked ? "default" : "pointer",
             background: isSelected ? "brown" : ""}}/>)
 }
 
