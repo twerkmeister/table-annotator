@@ -98,7 +98,7 @@ function App() {
 
     const handleMouseMove = (e: React.MouseEvent<Element, MouseEvent>) => {
         setMousePosition({x: e.pageX, y: e.pageY})
-        if (isDragging && new Date().getTime() - dragStartTime > 200) {
+        if (isDragging && new Date().getTime() - dragStartTime > 100) {
             handleDrag()
         }
     }

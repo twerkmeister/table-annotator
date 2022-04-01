@@ -8,14 +8,15 @@ import {
     calculateCellRectangle,
     width,
     height,
-    getMaximalRevisions, transposeCells
+    transposeCells
 } from "./geometry";
+import {doesTableNeedOcr} from "./util";
 
 
 const makeTable = (p1: Point, p2: Point, rotationDegrees: number): Table => {
     const outline = makeRectangle(p1, p2)
     return {
-        outline, rotationDegrees, columns: [], rows: [], cells: [[Object()]], needsOCR: true
+        outline, rotationDegrees, columns: [], rows: [], cells: [[Object()]], columnTypes: [[]]
     }
 }
 
@@ -233,26 +234,23 @@ export const useStore = create<AnnotatorState>((set, get) => ({
 
         const separatedColumn = newColumns.indexOf(newColumnPosition)
 
+        const newColumnTypes = [...table.columnTypes.slice(0, separatedColumn), [],
+            ...table.columnTypes.slice(separatedColumn)]
+
         const newCells =
             table.cells.map((row, i) => {
                 return row.flatMap((cell, j) => {
                     if (j === separatedColumn){
                         // split into left and right cell
-                        const leftCell = {...cell}
-                        delete(leftCell.right)
-                        delete(leftCell.ocr_text)
-                        delete(leftCell.human_text)
-                        const rightCell = {...cell}
-                        delete(rightCell.left)
-                        delete(rightCell.ocr_text)
-                        delete(rightCell.human_text)
+                        const leftCell = {...cell, right: undefined, ocr_text: undefined, human_text: undefined}
+                        const rightCell = {...cell, left: undefined, ocr_text: undefined, human_text: undefined}
                         return [leftCell, rightCell]
                     } else {
                         return [cell]
                     }
                 })
             })
-        const newTable = {...table, columns: newColumns, cells: newCells}
+        const newTable = {...table, columns: newColumns, cells: newCells, columnTypes: newColumnTypes}
         const newTables = [...tables.slice(0, selectedTableIdx), newTable, ...tables.slice(selectedTableIdx+1)]
         set({tables: newTables, tableDeletionMarkCount: 0})
     },
@@ -326,7 +324,9 @@ export const useStore = create<AnnotatorState>((set, get) => ({
                         const rightCell = row[j+1]
                         const fusedCell = {
                             left: leftCell.left,
-                            right: rightCell.right
+                            right: rightCell.right,
+                            human_text: undefined,
+                            ocr_text: undefined,
                         }
                         return[fusedCell]
                     } else if (j === selectedColumn + 1){
@@ -338,8 +338,9 @@ export const useStore = create<AnnotatorState>((set, get) => ({
                 })
             })
 
+        const newColumnTypes = [...table.columnTypes.slice(0, selectedColumn), ... table.columnTypes.slice(selectedColumn+1)]
         const newColumns = [...table.columns.slice(0, selectedColumn), ...table.columns.slice(selectedColumn+1)]
-        const newTable = {...table, columns: newColumns, cells: newCells}
+        const newTable = {...table, columns: newColumns, cells: newCells, columnTypes: newColumnTypes}
         const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable+1)]
         set({tables: newTables, tableDeletionMarkCount: 0, selectedColumn: undefined})
     },
@@ -415,9 +416,8 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const response =
             await fetch(`/${dataDir}/${image.name}/predict_table_contents/${selectedTable}`)
         const cellContents = (await response.json())["contents"]
-        const columnTypes = table.cells[0].map((cell, i) => [])
 
-        const newTables = [...tables.slice(0, selectedTable), {...table, cellContents, columnTypes},
+        const newTables = [...tables.slice(0, selectedTable), {...table, cellContents},
             ...tables.slice(selectedTable + 1)]
         set({tables: newTables})},
     adjustRow: (change: number) => {
@@ -568,7 +568,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const tables = get().tables
         if(selectedTable === undefined) return
         const table = tables[selectedTable]
-        if(table === undefined || table.needsOCR) return
+        if(table === undefined || doesTableNeedOcr(table)) return
         set({ocrView})
     },
     setHelpView: (helpView: boolean) => {

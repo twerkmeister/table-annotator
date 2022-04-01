@@ -46,7 +46,6 @@ export type Table = {
     rotationDegrees: number,
     columns: number[],
     rows: number[],
-    needsOCR: boolean,
     cells: Cell[][],
-    columnTypes?: string[][],
+    columnTypes: string[][],
 }
