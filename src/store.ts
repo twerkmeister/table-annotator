@@ -180,6 +180,9 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             set({newColumnPosition: undefined})
             return
         }
+
+        if(get().isDragging) return
+
         const tables = get().tables
         const selectedTableIdx = get().selectedTable
         const documentPosition = get().documentPosition
@@ -203,6 +206,8 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             set({newRowPosition: undefined})
             return
         }
+
+        if(get().isDragging) return
 
         const tables = get().tables
         const selectedTableIdx = get().selectedTable
