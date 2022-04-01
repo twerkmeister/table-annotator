@@ -123,11 +123,11 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
         image = table_annotator.io.read_image(image_path)
         table = tables[table_id]
 
-        table_contents = table_annotator.ocr.table_ocr(image, table)
+        updated_cells = table_annotator.ocr.table_ocr(image, table)
 
-        return {"contents": table_annotator.cellgrid.apply_to_cells(
-            lambda cc: {k: v for k, v in cc.dict().items() if v is not None},
-            table_contents)}
+        return {"cells": table_annotator.cellgrid.apply_to_cells(
+            lambda c: {k: v for k, v in c.dict().items() if v is not None},
+            updated_cells)}
 
     @app.route('/<subdir>/<image_name>/cell_image/<int:table_id>/<int:row>/'
                '<int:col>/<int:table_hash>',

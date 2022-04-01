@@ -411,13 +411,15 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         if (image === undefined ||
             table === undefined) return
 
+        if (!doesTableNeedOcr(table)) return
+
         const dataDir = getDataDir()
 
         const response =
             await fetch(`/${dataDir}/${image.name}/predict_table_contents/${selectedTable}`)
-        const cellContents = (await response.json())["contents"]
+        const updatedCells = (await response.json())["cells"]
 
-        const newTables = [...tables.slice(0, selectedTable), {...table, cellContents},
+        const newTables = [...tables.slice(0, selectedTable), {...table, cells: updatedCells},
             ...tables.slice(selectedTable + 1)]
         set({tables: newTables})},
     adjustRow: (change: number) => {
@@ -563,12 +565,14 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         }
     },
     setOCRView: async (ocrView: boolean) => {
-        await get().predictTableContent()
+        if (ocrView) {
+            await get().predictTableContent()
+        }
         const selectedTable = get().selectedTable
         const tables = get().tables
         if(selectedTable === undefined) return
         const table = tables[selectedTable]
-        if(table === undefined || doesTableNeedOcr(table)) return
+        if(table === undefined) return
         set({ocrView})
     },
     setHelpView: (helpView: boolean) => {

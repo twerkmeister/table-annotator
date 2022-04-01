@@ -22,7 +22,7 @@ export function cyrb53(str: string, seed: number = 0): number {
 export function doesTableNeedOcr(table: Table): boolean {
     for(let i = 0; i < table.cells.length; i++) {
         for (let j =0; j < table.cells[i].length; j++) {
-            if (table.cells[i][j].ocr_text === undefined) return true
+            if (table.cells[i][j].ocr_text === undefined || table.cells[i][j].ocr_text === null) return true
         }
     }
     return false

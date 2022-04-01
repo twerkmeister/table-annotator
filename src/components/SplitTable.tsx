@@ -36,7 +36,6 @@ const SplitTable = ({imageName}: SplitTableProps) => {
     if(selectedTable === undefined) return null
     const table = tables[selectedTable]
     if(table === undefined ) return null
-    if(table.cells === undefined) return null
     if(doesTableNeedOcr(table)) return null
     const columnTypes = table.columnTypes
     if(columnTypes === undefined) return null

@@ -1,7 +1,7 @@
 from typing import Tuple, List, Callable, TypeVar, Dict
 import numpy as np
 
-from table_annotator.types import Rectangle, Point, Table, CellGrid
+from table_annotator.types import Rectangle, Point, Table, CellGrid, Cell
 import table_annotator.img
 A = TypeVar('A')
 B = TypeVar('B')
@@ -76,28 +76,29 @@ def take_columns(cell_grid: CellGrid[A], columns: List[int]) -> CellGrid[A]:
             for r in range(len(cell_grid))]
 
 
-def get_cell_grid(table: Table) -> CellGrid[Rectangle]:
+def get_cell_rectangles(table: Table) -> CellGrid[Rectangle]:
     """Turns the columns and rows of a table into cell rectangles."""
-    cell_grid = []
+    cell_rectangles = []
     rows = [0] + table.rows + [table.outline.height()]
     columns = [0] + table.columns + [table.outline.width()]
     for r_i in range(len(rows) - 1):
         row_of_cells: List[Rectangle] = []
         for c_i in range(len(columns) - 1):
-            top_left = Point(x=columns[c_i],
-                             y=rows[r_i])
-            bottom_right = Point(x=columns[c_i + 1],
-                                 y=rows[r_i + 1])
+            cell: Cell = table.cells[r_i][c_i]
+            top_left = Point(x=columns[c_i] + (cell.left or 0),
+                             y=rows[r_i] + (cell.top or 0))
+            bottom_right = Point(x=columns[c_i + 1] + (cell.right or 0),
+                                 y=rows[r_i + 1] + (cell.bottom or 0))
             row_of_cells.append(Rectangle(topLeft=top_left, bottomRight=bottom_right))
-        cell_grid.append(row_of_cells)
-    return cell_grid
+        cell_rectangles.append(row_of_cells)
+    return cell_rectangles
 
 
 def get_cell_image_grid(image: np.ndarray, table: Table) -> CellGrid[np.ndarray]:
     """Extracts cells as separate images."""
     table_image = table_annotator.img.extract_table_image(image, table)
     cell_image_grid = []
-    for row in table.cellGrid or []:
+    for row in get_cell_rectangles(table):
         row_cells = []
         for cell in row:
             row_cells.append(table_annotator.img.crop(table_image, cell))
