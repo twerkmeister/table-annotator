@@ -13,6 +13,10 @@ const TableLockDiv = styled.div `
     background: silver;
     position: absolute;
     cursor: pointer;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
 `
 
 type TableLockProps = {
