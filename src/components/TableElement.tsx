@@ -51,11 +51,11 @@ const TableElement = ({table, imageCenter, tableIdx}: TableProps) => {
                         <CellRowLine row={i} column={j} parentTableSelected={isSelected}
                                      parentTableLocked={table.structureLocked}
                                      width={width(rect)} left={rect.topLeft.x}
-                                     top={rect.bottomRight.y} key={`row_${i}_${j}`}/>,
+                                     top={rect.bottomRight.y} key={`cellRowLine_${i}_${j}`}/>,
                         <CellColumnLine row={i} column={j} parentTableSelected={isSelected}
                                         parentTableLocked={table.structureLocked}
                                         height={height(rect)} left={rect.bottomRight.x}
-                                        top={rect.topLeft.y} key={`col_${i}_${j}`}/>
+                                        top={rect.topLeft.y} key={`cellColumnLine_${i}_${j}`}/>
                     ]
                     if (j === row.length - 1) cellLines.pop()
                     if (i === table.cells.length - 1) cellLines.shift()
@@ -65,13 +65,15 @@ const TableElement = ({table, imageCenter, tableIdx}: TableProps) => {
 
     const [maxRowRevisions, maxColumnRevisions] = getMaximalRevisions(table.cells)
     const columnSetterBlocks = table.columns.flatMap((columnPos, i) => {
-        return [<ColumnSetterBlocker position={columnPos - maxColumnRevisions[i][0]} width={maxColumnRevisions[i][0]}/>,
-        <ColumnSetterBlocker position={columnPos} width={maxColumnRevisions[i][1]}/>]
+        return [<ColumnSetterBlocker position={columnPos - maxColumnRevisions[i][0]}
+                                     width={maxColumnRevisions[i][0]} key={`columnBlockerLeft_${i}`}/>,
+        <ColumnSetterBlocker position={columnPos} width={maxColumnRevisions[i][1]} key={`columnBlockerRight_${i}`}/>]
     })
 
     const rowSetterBlocks = table.rows.flatMap((rowPos, i) => {
-        return [<RowSetterBlocker position={rowPos - maxRowRevisions[i][0]} height={maxRowRevisions[i][0]}/>,
-            <RowSetterBlocker position={rowPos} height={maxRowRevisions[i][1]}/>]
+        return [<RowSetterBlocker position={rowPos - maxRowRevisions[i][0]}
+                                  height={maxRowRevisions[i][0]} key={`rowBlockerUp_${i}`}/>,
+            <RowSetterBlocker position={rowPos} height={maxRowRevisions[i][1]} key={`rowBlockerDown_${i}`}/>]
     })
 
     return (
@@ -92,12 +94,12 @@ const TableElement = ({table, imageCenter, tableIdx}: TableProps) => {
                 <ColumnSetterSpace/>,
                 ...columnSetterBlocks,
                 ...table.columns.map((pos, idx) =>
-                    <ColumnKnob position={pos} idx={idx} key={idx}/>
+                    <ColumnKnob position={pos} idx={idx} key={`columnKnob_${idx}`}/>
                 ),
                 <RowSetterSpace/>,
                 ...rowSetterBlocks,
                 ...table.rows.map((pos, idx) =>
-                    <RowKnob position={pos} idx={idx} key={idx}/>
+                    <RowKnob position={pos} idx={idx} key={`rowKnob_${idx}`}/>
                 ),
                 <NewColumnLine/>,
                 <NewRowLine/>
