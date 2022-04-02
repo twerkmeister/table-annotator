@@ -5,7 +5,7 @@ import MultiSelect from "./MultiSelect";
 import {DataTypesOptions} from "../dataModel";
 import {height, width} from "../geometry";
 import styled from "styled-components";
-import {cyrb53, doesTableNeedOcr} from "../util";
+import {doesTableNeedOcr, hashTable} from "../util";
 import {calculateCellRectangle} from "../geometry";
 
 const DataRow = styled.div`
@@ -39,7 +39,7 @@ const SplitTable = ({imageName}: SplitTableProps) => {
     if(doesTableNeedOcr(table)) return null
     const columnTypes = table.columnTypes
     if(columnTypes === undefined) return null
-    const tableHash = cyrb53(JSON.stringify(table))
+    const tableHash = hashTable(table)
 
     const handleInputOnBlur = (i: number, j: number ) => (e: React.FocusEvent<HTMLTextAreaElement>) => {
         updateCellText(i, j, e.target.value)

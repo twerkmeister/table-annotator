@@ -27,3 +27,13 @@ export function doesTableNeedOcr(table: Table): boolean {
     }
     return false
 }
+
+export function hashTable(table: Table): number {
+    const cleanedCells = table.cells.map((row, i) => {
+        return row.map((cell, j) => {
+            return {...cell, ocr_text: undefined, human_text: undefined}
+        })
+    })
+    const cleanedTable = {...table, cells: cleanedCells, structureLocked: false, columnTypes: []}
+    return cyrb53(JSON.stringify(cleanedTable))
+}
