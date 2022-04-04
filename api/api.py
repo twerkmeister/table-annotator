@@ -14,7 +14,7 @@ import table_annotator.img
 import table_annotator.io
 import table_annotator.ocr
 import table_annotator.cellgrid
-from table_annotator.types import CellGrid
+from table_annotator.types import CellGrid, Table
 
 DATA_PATH = "data_path"
 
@@ -62,8 +62,8 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
             return make_response({"msg": "The image for which you tried to save "
                                          "table data does not exist."}, 404)
 
-        json_path = os.path.splitext(image_path)[0] + ".json"
-        table_annotator.io.write_json(json_path, request.json)
+        table_annotator.io.write_tables_for_image(image_path,
+                                                  [Table(**t) for t in request.json])
 
         return {"msg": "okay!"}
 
@@ -77,8 +77,8 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
 
         tables = table_annotator.io.read_tables_for_image(image_path)
         tables_json = {
-            "tables": [{k: v for k, v in t.dict().items() if v is not None} for t in
-                       tables]}
+            "tables": [table_annotator.io.tableToJson(t) for t in tables]
+        }
 
         return tables_json
 
