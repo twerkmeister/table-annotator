@@ -14,6 +14,7 @@ import RowKnob from "./RowKnob";
 import ColumnSetterBlocker from "./ColumnSetterBlocker";
 import RowSetterBlocker from "./RowSetterBlocker";
 import TableLock from "./TableLock";
+import TableBorder from "./TableBorders";
 
 
 export const TableDiv = styled.div`
@@ -102,8 +103,11 @@ const TableElement = ({table, imageCenter, tableIdx}: TableProps) => {
                     <RowKnob position={pos} idx={idx} key={`rowKnob_${idx}`}/>
                 ),
                 <NewColumnLine/>,
-                <NewRowLine/>
-
+                <NewRowLine/>,
+                <TableBorder borderIdx={0} parentTableSelected={isSelected}/>,
+                <TableBorder borderIdx={1} parentTableSelected={isSelected}/>,
+                <TableBorder borderIdx={2} parentTableSelected={isSelected}/>,
+                <TableBorder borderIdx={3} parentTableSelected={isSelected}/>,
             ]}
         </TableDiv>
     )

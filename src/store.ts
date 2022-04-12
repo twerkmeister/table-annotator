@@ -20,12 +20,33 @@ const makeTable = (p1: Point, p2: Point, rotationDegrees: number): Table => {
     }
 }
 
+const validateCellHeight = (table: Table, rowNum: number, change: number): boolean => {
+    const rowToCheck = table.cells[rowNum]
+    const cellsThatWouldBecomeTooSmall = rowToCheck
+        .map((cell, column_i) => calculateCellRectangle(
+            {row: rowNum, column: column_i}, table))
+        .map(height)
+        .filter((h) => h - Math.abs(change) < 10)
+    return cellsThatWouldBecomeTooSmall.length === 0
+}
+
+const validateCellWidth = (table: Table, columnNum: number, change: number): boolean => {
+    const columnToCheck = transposeCells(table.cells)[columnNum]
+    const cellsThatWouldBecomeTooSmall = columnToCheck
+        .map((cell, row_i) => calculateCellRectangle(
+            {row: row_i, column: columnNum}, table))
+        .map(width)
+        .filter((w) => w - Math.abs(change) < 10)
+    return cellsThatWouldBecomeTooSmall.length === 0
+}
+
 export type AnnotatorState = {
     images?: Image[],
     currentImageIndex: number,
     selectedTable?: number,
     selectedColumn?: number,
     selectedRow?: number,
+    selectedBorder?: number,
     selectedCellColumnLine?: CellIndex,
     selectedCellRowLine?: CellIndex,
     unfinishedTable?: UnfinishedTable,
@@ -56,6 +77,7 @@ export type AnnotatorState = {
     addRow: (givenRowPosition?: number) => void,
     selectColumn: (idx?: number) => void,
     selectRow: (idx?: number) => void,
+    selectBorder: (idx? :number) => void,
     deleteTable: () => void
     deleteColumn: () => void
     deleteRow: () => void
@@ -65,6 +87,7 @@ export type AnnotatorState = {
     selectCellColumnLine: (row: number, column: number) => void
     selectCellRowLine: (row: number, column: number) => void
     adjustColumn: (change: number) => void
+    adjustBorder: (change: number) => void
     setOCRView: (ocrView: boolean) => void
     setHelpView: (helpView: boolean) => void
     setHelpGridView: (helpGridView: boolean) => void
@@ -73,6 +96,7 @@ export type AnnotatorState = {
     setDragging: (isDragging: boolean) => void
     handleDrag: () => void
     lockTable: (lock: boolean) => void
+    resetSelection: () => void
 }
 
 export const useStore = create<AnnotatorState>((set, get) => ({
@@ -82,6 +106,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
     selectedTable: undefined,
     selectedColumn: undefined,
     selectedRow: undefined,
+    selectedBorder: undefined,
     newColumnPosition: undefined,
     newRowPosition: undefined,
     selectedCellColumnLine: undefined,
@@ -123,9 +148,9 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const dataDir = getDataDir()
         const table_response = await fetch(`/${dataDir}/tables/${image.name}`)
         const tables = (await table_response.json())["tables"]
+        get().resetSelection()
         set({ currentImageIndex: idx, rotationDegrees: 0, documentPosition: undefined,
-            tables, unfinishedTable: undefined, selectedTable: undefined, selectedRow: undefined,
-            selectedColumn: undefined, selectedCellColumnLine: undefined, selectedCellRowLine: undefined })
+            tables, unfinishedTable: undefined, selectedTable: undefined})
 
         const new_location = getDocId() ?
             window.location.href.replace(/\/[0-9_]*$/, `/${image.docId}`)
@@ -160,20 +185,21 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         set({unfinishedTable: undefined, tableDeletionMarkCount: 0})
     },
     selectTable: (idx?: number) => {
+        get().resetSelection()
         set({selectedTable: idx, newColumnPosition: undefined,
-            newRowPosition: undefined, tableDeletionMarkCount: 0,
-            selectedColumn: undefined, selectedRow: undefined, selectedCellColumnLine: undefined,
-            selectedCellRowLine: undefined})
+            newRowPosition: undefined})
     },
     selectColumn: (idx?: number) => {
-        set({selectedColumn: idx, selectedRow: undefined,
-            selectedCellColumnLine: undefined, selectedCellRowLine: undefined,
-            tableDeletionMarkCount: 0})
+        get().resetSelection()
+        set({selectedColumn: idx})
     },
     selectRow: (idx?: number) => {
-        set({selectedRow: idx, selectedColumn: undefined,
-            selectedCellColumnLine: undefined, selectedCellRowLine: undefined,
-            tableDeletionMarkCount: 0})
+        get().resetSelection()
+        set({selectedRow: idx})
+    },
+    selectBorder: (idx?: number) => {
+        get().resetSelection()
+        set({selectedBorder: idx})
     },
     setNewColumnPosition: (pagePoint?: Point) => {
         if(pagePoint === undefined){
@@ -448,13 +474,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             if (rowPos === undefined) return
 
             const rowNumToCheck = change >= 0 ? selectedRow+1 : selectedRow
-            const rowToCheck = table.cells[rowNumToCheck]
-            const cellsThatWouldBecomeTooSmall = rowToCheck
-                .map((cell, column_i) => calculateCellRectangle(
-                    {row: rowNumToCheck, column: column_i}, table))
-                .map(height)
-                .filter((h) => h - Math.abs(change) < 10)
-            if (cellsThatWouldBecomeTooSmall.length > 0) return
+            if (! validateCellHeight(table, rowNumToCheck, change)) return
 
             // make sure you cannot cross row positions
             const previousRowPosition = table.rows[selectedRow - 1] || 0
@@ -500,12 +520,12 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         }
     },
     selectCellColumnLine: (row: number, column: number) => {
-        set({selectedCellColumnLine: {row, column}, selectedColumn: undefined, selectedRow: undefined,
-        selectedCellRowLine: undefined})
+        get().resetSelection()
+        set({selectedCellColumnLine: {row, column}})
     },
     selectCellRowLine: (row: number, column: number) => {
-        set({selectedCellRowLine: {row, column}, selectedColumn: undefined, selectedRow: undefined,
-            selectedCellColumnLine: undefined})
+        get().resetSelection()
+        set({selectedCellRowLine: {row, column}})
     },
     adjustColumn: (change: number) => {
         const selectedTable = get().selectedTable
@@ -522,13 +542,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             if (columnPos === undefined) return
 
             const columnNumToCheck = change >= 0 ? selectedColumn+1 : selectedColumn
-            const columnToCheck = transposeCells(table.cells)[columnNumToCheck]
-            const cellsThatWouldBecomeTooSmall = columnToCheck
-                .map((cell, row_i) => calculateCellRectangle(
-                    {row: row_i, column: columnNumToCheck}, table))
-                .map(width)
-                .filter((w) => w - Math.abs(change) < 10)
-            if (cellsThatWouldBecomeTooSmall.length > 0) return
+            if (!validateCellWidth(table, columnNumToCheck, change)) return
 
             // make sure you cannot cross row positions
             const previousColumnPosition = table.columns[selectedColumn - 1] || 0
@@ -573,6 +587,72 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
             set({tables: newTables})
         }
+    },
+    adjustBorder: (change: number) => {
+        const selectedTable = get().selectedTable
+        const selectedBorder = get().selectedBorder
+        const tables = get().tables
+
+        if (selectedTable === undefined || selectedBorder === undefined) return
+        const table = tables[selectedTable]
+        if (table === undefined) return
+
+        const adjustTable = (table: Table) => {
+            if (selectedBorder === 0) {
+                const newOutline = {...table.outline, topLeft: addPoints(table.outline.topLeft, {x:0, y: change})}
+                const newRows = table.rows.map((r) => r - change)
+                // invalidate existing ocr results for the affected cells...
+                const newCells = table.cells.map((row, i) => {
+                    return row.map((cell, j) => {
+                        if (i === 0) {
+                            return {...cell, ocr_text: undefined, human_text: undefined}
+                        } else return cell
+                    })
+                })
+                return {...table, outline: newOutline, rows: newRows, cells: newCells}
+            } else if (selectedBorder === 1) {
+                const newOutline = {...table.outline, bottomRight:
+                        addPoints(table.outline.bottomRight, {y:0, x: change})}
+                const newCells = table.cells.map((row, i) => {
+                    return row.map((cell, j) => {
+                        if (j === table.columns.length) {
+                            return {...cell, ocr_text: undefined, human_text: undefined}
+                        } else return cell
+                    })
+                })
+                return {...table, outline: newOutline, cells: newCells}
+            } else if (selectedBorder === 2) {
+                const newOutline = {...table.outline, bottomRight:
+                        addPoints(table.outline.bottomRight, {x:0, y: change})}
+                const newCells = table.cells.map((row, i) => {
+                    return row.map((cell, j) => {
+                        if (i === table.rows.length) {
+                            return {...cell, ocr_text: undefined, human_text: undefined}
+                        } else return cell
+                    })
+                })
+                return {...table, outline: newOutline, cells: newCells}
+            } else if (selectedBorder === 3) {
+                const newOutline = {...table.outline, topLeft: addPoints(table.outline.topLeft, {y:0, x: change})}
+                const newColumns = table.columns.map((c) => c - change)
+                const newCells = table.cells.map((row, i) => {
+                    return row.map((cell, j) => {
+                        if (j === 0) {
+                            return {...cell, ocr_text: undefined, human_text: undefined}
+                        } else return cell
+                    })
+                })
+                return {...table, outline: newOutline, columns: newColumns, cells: newCells}
+            } else return table
+        }
+        const newTable = adjustTable(table)
+
+        if (newTable.rows.length > 0 && !validateCellHeight(newTable, 0, 0)) return
+        if (newTable.columns.length > 0 && !validateCellWidth(newTable, newTable.columns.length, 0)) return
+        if (newTable.rows.length > 0 && !validateCellHeight(newTable, newTable.rows.length, 0)) return
+        if (newTable.columns.length > 0 && !validateCellWidth(newTable, 0, 0)) return
+        const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
+        set({tables: newTables})
     },
     setOCRView: async (ocrView: boolean) => {
         if (ocrView) {
@@ -675,7 +755,13 @@ export const useStore = create<AnnotatorState>((set, get) => ({
 
         const newTable = {...table, structureLocked: lock}
         const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
-        set({tables: newTables, selectedColumn: undefined, selectedRow: undefined,
-            selectedCellRowLine: undefined, selectedCellColumnLine: undefined})
+        get().resetSelection()
+        set({tables: newTables})
+    },
+    resetSelection: () => {
+        set({tableDeletionMarkCount: 0, selectedRow: undefined,
+            selectedColumn: undefined, selectedBorder: undefined,
+            selectedCellColumnLine: undefined, selectedCellRowLine: undefined})
     }
+
 }))

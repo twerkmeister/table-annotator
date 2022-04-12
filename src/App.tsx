@@ -75,10 +75,12 @@ function App() {
     const selectedCellColumnLine = useStore(state => state.selectedCellColumnLine)
     const selectedRow = useStore(state => state.selectedRow)
     const selectedCellRowLine = useStore(state => state.selectedCellRowLine)
+    const selectedBorder = useStore(state => state.selectedBorder)
     const cancelActions = useStore(state => state.cancelActions)
     const adjustRow = useStore(state => state.adjustRow)
     const segmentTable = useStore(state => state.segmentTable)
     const adjustColumn = useStore(state => state.adjustColumn)
+    const adjustBorder = useStore(state => state.adjustBorder)
     const setOCRView = useStore(state => state.setOCRView)
     const setHelpView = useStore(state => state.setHelpView)
     const setHelpGridView = useStore(state => state.setHelpGridView)
@@ -118,9 +120,43 @@ function App() {
                 // do nothing
             } else if (selectedCellRowLine !== undefined) {
                 // do nothing
+            } else if (selectedBorder !== undefined) {
+                // do nothing
             } else {
                 deleteTable()
             }
+        }
+    }
+
+    const upFunc = () => {
+        if(selectedBorder !== undefined && selectedBorder % 2 === 0) {
+            adjustBorder(-5)
+        } else {
+            adjustRow(-2)
+        }
+    }
+
+    const downFunc = () => {
+        if(selectedBorder !== undefined && selectedBorder % 2 === 0) {
+            adjustBorder(5)
+        } else {
+            adjustRow(2)
+        }
+    }
+
+    const leftFunc = () => {
+        if(selectedBorder !== undefined && selectedBorder % 2 === 1) {
+            adjustBorder(-5)
+        } else {
+            adjustColumn(-5)
+        }
+    }
+
+    const rightFunc = () => {
+        if(selectedBorder !== undefined && selectedBorder % 2 === 1) {
+            adjustBorder(5)
+        } else {
+            adjustColumn(5)
         }
     }
 
@@ -134,10 +170,10 @@ function App() {
         BACKSPACE_OR_DELETE: deleteFunc,
         ANNOTATE_ROWS_AUTOMATICALLY: segmentTable,
         OCR_START_AND_VIEW: () => setOCRView(!ocrView),
-        UP: () => adjustRow(-2),
-        DOWN: () => adjustRow(2),
-        LEFT: () => adjustColumn(-5),
-        RIGHT: () => adjustColumn(5),
+        UP: () => upFunc(),
+        DOWN: () => downFunc(),
+        LEFT: () => leftFunc(),
+        RIGHT: () => rightFunc(),
         HELP_VIEW: () => setHelpView(!helpView),
         HELPER_GRID: () => setHelpGridView(!helpGridView)
     }
