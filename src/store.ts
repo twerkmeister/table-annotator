@@ -592,10 +592,14 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const selectedTable = get().selectedTable
         const selectedBorder = get().selectedBorder
         const tables = get().tables
+        const images = get().images
+        if (images === undefined) return
+        const currentImageIndex = get().currentImageIndex
 
         if (selectedTable === undefined || selectedBorder === undefined) return
+        const image = images[currentImageIndex]
         const table = tables[selectedTable]
-        if (table === undefined) return
+        if (table === undefined || image === undefined) return
 
         const adjustTable = (table: Table) => {
             if (selectedBorder === 0) {
@@ -651,6 +655,15 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         if (newTable.columns.length > 0 && !validateCellWidth(newTable, newTable.columns.length, 0)) return
         if (newTable.rows.length > 0 && !validateCellHeight(newTable, newTable.rows.length, 0)) return
         if (newTable.columns.length > 0 && !validateCellWidth(newTable, 0, 0)) return
+        if (newTable.rows.length > 0 && newTable.rows[0] < 10) return
+        if (newTable.rows.length > 0 && height(newTable.outline) - newTable.rows[newTable.rows.length - 1] < 10) return
+        if (newTable.columns.length > 0 && newTable.columns[0] < 10) return
+        if (newTable.columns.length > 0 && width(newTable.outline) - newTable.columns[newTable.columns.length - 1] < 10)
+            return
+        if (newTable.outline.topLeft.x < 0 || newTable.outline.topLeft.y < 0
+            || newTable.outline.topLeft.x >= image.width || newTable.outline.topLeft.y > image.height) return
+        if (newTable.outline.bottomRight.x < 0 || newTable.outline.bottomRight.y < 0
+            || newTable.outline.bottomRight.x >= image.width || newTable.outline.bottomRight.y > image.height) return
         const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
         set({tables: newTables})
     },
@@ -709,16 +722,17 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const tables = get().tables
         const adjustColumn = get().adjustColumn
         const adjustRow = get().adjustRow
+        const adjustBorder = get().adjustBorder
         if(selectedTable === undefined) return
 
         const table = tables[selectedTable]
         if (table === undefined) return
 
         const selectedColumn = get().selectedColumn
-
         const selectedRow = get().selectedRow
         const selectedCellColumnLine = get().selectedCellColumnLine
         const selectedCellRowLine = get().selectedCellRowLine
+        const selectedBorder = get().selectedBorder
 
         const mousePosition = get().mousePosition
         const documentPosition = get().documentPosition
@@ -743,6 +757,18 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             const cellRowLinePosition = calculateCellRectangle(selectedCellRowLine, table).bottomRight.y
             const currentYPositionDiff = mousePosition.y - documentPosition.y - table.outline.topLeft.y - cellRowLinePosition - 7
             adjustRow(currentYPositionDiff)
+        } else if (selectedBorder !== undefined && selectedBorder === 0) {
+            const currentYPositionDiff = mousePosition.y - documentPosition.y - table.outline.topLeft.y - 7
+            adjustBorder(currentYPositionDiff)
+        } else if (selectedBorder !== undefined && selectedBorder === 1) {
+            const currentXPositionDiff = mousePosition.x - documentPosition.x - table.outline.bottomRight.x - 7
+            adjustBorder(currentXPositionDiff)
+        } else if (selectedBorder !== undefined && selectedBorder === 2) {
+            const currentYPositionDiff = mousePosition.y - documentPosition.y - table.outline.bottomRight.y - 7
+            adjustBorder(currentYPositionDiff)
+        } else if (selectedBorder !== undefined && selectedBorder === 3) {
+            const currentXPositionDiff = mousePosition.x - documentPosition.x - table.outline.topLeft.x - 7
+            adjustBorder(currentXPositionDiff)
         }
     },
     lockTable: (lock: boolean) => {

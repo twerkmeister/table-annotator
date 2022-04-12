@@ -59,7 +59,7 @@ export const calculateCellRectangle = (cellIndex: CellIndex, table: Table): Rect
     const left = left_base + (cell.left || 0)
     const right = right_base + (cell.right || 0)
 
-    return makeRectangle({y: top, x: left}, {y: bottom, x: right})
+    return {topLeft:{y: top, x: left}, bottomRight: {y: bottom, x: right}}
 }
 
 export const transposeCells = (cells: Cell[][]) => cells[0].map((x,i) => cells.map(x => x[i]))
