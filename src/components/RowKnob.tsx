@@ -15,7 +15,7 @@ type RowKnobProps = {
     idx: number
 }
 
-const ColumnKnob = ({position, idx} : RowKnobProps) =>{
+const RowKnob = ({position, idx} : RowKnobProps) =>{
     const selectRow = useStore(state => state.selectRow)
     const selectedRow = useStore(state => state.selectedRow)
     const setDragging = useStore(state => state.setDragging)
@@ -39,4 +39,4 @@ const ColumnKnob = ({position, idx} : RowKnobProps) =>{
                                cursor: isSelected ? "default" : "pointer"}}/>)
 }
 
-export default ColumnKnob
+export default RowKnob
