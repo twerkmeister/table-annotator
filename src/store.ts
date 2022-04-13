@@ -62,7 +62,7 @@ export type AnnotatorState = {
     ocrView: boolean,
     helpView: boolean,
     helpGridView: boolean,
-    isSaving: boolean,
+    showHasSaved: boolean,
     isRunningOCR: boolean,
     isRunningSegmentation: boolean,
     fetchImages: () => void
@@ -100,6 +100,7 @@ export type AnnotatorState = {
     handleDrag: () => void
     lockTable: (lock: boolean) => void
     resetSelection: () => void
+    transitionHasSavedIndicator: () => void
 }
 
 export const useStore = create<AnnotatorState>((set, get) => ({
@@ -124,7 +125,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
     ocrView: false,
     helpView: false,
     helpGridView: false,
-    isSaving: false,
+    showHasSaved: false,
     isRunningOCR: false,
     isRunningSegmentation: false,
     fetchImages: async() => {
@@ -804,6 +805,11 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         set({tableDeletionMarkCount: 0, selectedRow: undefined,
             selectedColumn: undefined, selectedBorder: undefined,
             selectedCellColumnLine: undefined, selectedCellRowLine: undefined})
+    },
+    transitionHasSavedIndicator: async () => {
+        if (get().showHasSaved) return
+        set({showHasSaved: true})
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        set({showHasSaved: false})
     }
-
 }))
