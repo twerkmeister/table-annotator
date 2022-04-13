@@ -12,6 +12,7 @@ import SplitTable from "./components/SplitTable";
 import StartedTable from "./components/StartedTable";
 import TableElement from './components/TableElement';
 import HelperGrid from "./components/HelperGrid";
+import LoadingScreen from "./components/LoadingScreen";
 
 const AppContainer = styled.div`
   margin: 100px auto 100px auto;
@@ -91,6 +92,8 @@ function App() {
     const isDragging = useStore(state => state.isDragging)
     const dragStartTime = useStore(state => state.dragStartTime)
     const handleDrag = useStore(state => state.handleDrag)
+    const isRunningOCR = useStore(state => state.isRunningOCR)
+    const isRunningSegmentation = useStore(state => state.isRunningSegmentation)
 
     useEffect(() => {
         if(images === undefined) {
@@ -201,6 +204,8 @@ function App() {
                         </div> : <SplitTable imageName={image.name}/>
                     }
                     {helpView && <HelpScreen/>}
+                    {isRunningOCR && <LoadingScreen text={"OCR läuft..."}/>}
+                    {isRunningSegmentation && <LoadingScreen text={"Segmentierung läuft..."}/>}
                 </GlobalHotKeys>
             </AppContainer>
         );

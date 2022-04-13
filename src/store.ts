@@ -62,6 +62,9 @@ export type AnnotatorState = {
     ocrView: boolean,
     helpView: boolean,
     helpGridView: boolean,
+    isSaving: boolean,
+    isRunningOCR: boolean,
+    isRunningSegmentation: boolean,
     fetchImages: () => void
     setImageIndex: (idx: number) => void
     outlineTable: (p: Point, rotationDegrees: number) => void,
@@ -121,8 +124,10 @@ export const useStore = create<AnnotatorState>((set, get) => ({
     ocrView: false,
     helpView: false,
     helpGridView: false,
+    isSaving: false,
+    isRunningOCR: false,
+    isRunningSegmentation: false,
     fetchImages: async() => {
-
         const dataDir = getDataDir()
         const docId = getDocId()
         const response = await fetch(`/${dataDir}/images`)
@@ -425,15 +430,17 @@ export const useStore = create<AnnotatorState>((set, get) => ({
 
         if (table.rows.length > 0) return
         const dataDir = getDataDir()
-
+        set({isRunningSegmentation: true})
         const response =
             await fetch(`/${dataDir}/${image.name}/predict_table_structure/${selectedTable}`)
-        const rows: number[] = (await response.json())["rows"]
+        if (response.status === 200) {
+            const rows: number[] = (await response.json())["rows"]
 
-        rows.forEach((row) => {
-            addRow(row)
-        })
-
+            rows.forEach((row) => {
+                addRow(row)
+            })
+        }
+        set({isRunningSegmentation: false})
     },
     predictTableContent: async () => {
         const tables = get().tables
@@ -450,14 +457,21 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         if (!doesTableNeedOcr(table)) return
 
         const dataDir = getDataDir()
-
+        set({isRunningOCR: true})
         const response =
             await fetch(`/${dataDir}/${image.name}/predict_table_contents/${selectedTable}`)
-        const updatedCells = (await response.json())["cells"]
-
-        const newTables = [...tables.slice(0, selectedTable), {...table, cells: updatedCells, structureLocked: true},
-            ...tables.slice(selectedTable + 1)]
-        set({tables: newTables})},
+        if (response.status === 200) {
+            const updatedCells = (await response.json())["cells"]
+            const newTables = [...tables.slice(0, selectedTable), {
+                ...table,
+                cells: updatedCells,
+                structureLocked: true
+            },
+                ...tables.slice(selectedTable + 1)]
+            set({tables: newTables})
+        }
+        set({isRunningOCR: false})
+    },
     adjustRow: (change: number) => {
         const selectedTable = get().selectedTable
         const selectedRow = get().selectedRow
@@ -676,6 +690,8 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         if(selectedTable === undefined) return
         const table = tables[selectedTable]
         if(table === undefined) return
+        // predict table content failed
+        if(ocrView && doesTableNeedOcr(table)) return
         set({ocrView})
     },
     setHelpView: (helpView: boolean) => {
