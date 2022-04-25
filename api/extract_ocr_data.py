@@ -7,7 +7,9 @@ import table_annotator.cellgrid
 import table_annotator.lines
 
 
-def extract_ocr_data(data_path: Text, target_path: Text) -> None:
+def extract_ocr_data(data_path: Text, target_path: Text,
+                     without_corrections: bool = False,
+                     without_non_corrections: bool = False) -> None:
     """Extracts ocr data points to a simpler file format."""
     image_paths = [os.path.join(data_path, image_path)
                    for image_path in table_annotator.io.list_images(data_path)]
@@ -16,6 +18,10 @@ def extract_ocr_data(data_path: Text, target_path: Text) -> None:
 
     line_mismatches = 0
     multi_line_images = 0
+    examples = 0
+    examples_not_for_training = 0
+    examples_with_correction = 0
+    corrections = []
 
     os.makedirs(target_path, exist_ok=True)
 
@@ -34,9 +40,13 @@ def extract_ocr_data(data_path: Text, target_path: Text) -> None:
             cell_image_grid = table_annotator.cellgrid.get_cell_image_grid(image, t)
             for row_i in range(len(t.cells)):
                 for col_i in range(len(t.cells[row_i])):
+                    examples += 1
                     cell_text = t.cells[row_i][col_i].extract_text()
+
                     if "@" in cell_text or cell_text is None:
+                        examples_not_for_training += 1
                         continue
+
                     cell_image = cell_image_grid[row_i][col_i]
                     text_lines = cell_text.split("\n")
                     if len(text_lines) == 1:
@@ -48,6 +58,17 @@ def extract_ocr_data(data_path: Text, target_path: Text) -> None:
 
                     if len(line_images) != len(text_lines):
                         line_mismatches += 1
+                        continue
+
+                    ocr_text = t.cells[row_i][col_i].ocr_text
+                    human_text = t.cells[row_i][col_i].human_text
+
+                    if human_text is not None and human_text != ocr_text:
+                        examples_with_correction += 1
+                        corrections.append((ocr_text, human_text))
+                        if without_corrections:
+                            continue
+                    elif without_non_corrections:
                         continue
 
                     for idx, (text, line_image) in enumerate(zip(text_lines,
@@ -68,8 +89,14 @@ def extract_ocr_data(data_path: Text, target_path: Text) -> None:
                             else:
                                 gtf.write(text)
 
-    print("Multi line images:", multi_line_images)
-    print("Line mismatches:", line_mismatches)
+    print("Total examples: ", examples)
+    print("examples not for training: ", examples_not_for_training)
+    print("Multi line images: ", multi_line_images)
+    print("Line mismatches: ", line_mismatches)
+    print("examples with corrections: ", examples_with_correction)
+    # print("\n".join([str(c) for c in corrections]))
+    print(f"{examples}, {examples_not_for_training}, {multi_line_images}, "
+          f"{line_mismatches}, {examples_with_correction}")
 
 
 if __name__ == "__main__":
@@ -84,5 +111,12 @@ if __name__ == "__main__":
                         help='Path to the folder where you want to store the extracted '
                              'data')
 
+    parser.add_argument("-without_corrections", action="store_true", default=False,
+                        help="Removes those examples that had corrections.")
+
+    parser.add_argument("-without_non_corrections", action="store_true", default=False,
+                        help="Removes those examples that had no corrections")
+
     args = parser.parse_args()
-    extract_ocr_data(args.data_path, args.target_path)
+    extract_ocr_data(args.data_path, args.target_path, args.without_corrections,
+                     args.without_non_corrections)
