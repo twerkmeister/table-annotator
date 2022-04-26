@@ -31,7 +31,6 @@ def extract_people_data(data_path: Text, target_path: Text) -> None:
         image_name = os.path.splitext(os.path.basename(image_path))[0]
 
         for t_i, t in enumerate(tables):
-            # todo: need better mechanism to distinguish which docs are ready
             cell_list, _ = table_annotator.cellgrid.cell_grid_to_list(t.cells)
             needs_ocr = [i for i, c in enumerate(cell_list) if c.ocr_text is None]
             if len(needs_ocr) > 0:
