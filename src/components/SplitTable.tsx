@@ -79,7 +79,7 @@ const SplitTable = ({imageName}: SplitTableProps) => {
                                                 <DataInput
                                                           defaultValue={cell.human_text || cell.ocr_text}
                                                           style={{width: `${width(cellRectangle)-6}px`,
-                                                              height: `${Math.round(height(cellRectangle)*1.3-6)}px`}}
+                                                              height: `${Math.round(Math.max(height(cellRectangle)*1.3-6, 20))}px`}}
                                                           onBlur={handleInputOnBlur(i, j)}
                                                 />
                                             </div>
