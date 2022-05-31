@@ -20,7 +20,7 @@ def find_line(image: np.ndarray, window_size: int = 30) -> np.ndarray:
     return image[start:end]
 
 
-def find_lines(image: np.ndarray) -> List[np.ndarray]:
+def find_lines(image: np.ndarray, min_vertical_offset: int = 6) -> List[np.ndarray]:
     """Split a cell image into multiple text lines."""
     window_size = 30
     image_blurred = cv2.medianBlur(image, 5)
@@ -36,7 +36,8 @@ def find_lines(image: np.ndarray) -> List[np.ndarray]:
     sign_diffs = np.diff(diff_signs)
     local_maxima = [i for i, sign_diff in enumerate(sign_diffs) if sign_diff == -2]
     local_maxima = [local_maximum for local_maximum in local_maxima
-                    if local_maximum > 8 and local_maximum + 8 < image.shape[0]]
+                    if local_maximum > min_vertical_offset
+                    and local_maximum + min_vertical_offset < image.shape[0]]
 
     lines = []
     for local_maximum in local_maxima:
