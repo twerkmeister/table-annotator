@@ -159,7 +159,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             tables, unfinishedTable: undefined, selectedTable: undefined})
 
         const new_location = getDocId() ?
-            window.location.href.replace(/\/[0-9_]*$/, `/${image.docId}`)
+            window.location.href.replace(/\/[^\/]*$/, `/${image.docId}`)
             : window.location.href.replace(/\/$/, "") + `/${image.docId}`
         window.history.pushState({pageTitle: `${dataDir} ${image.docId}`}, "", new_location)
 
