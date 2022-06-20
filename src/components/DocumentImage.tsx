@@ -3,6 +3,7 @@ import React, {useEffect} from "react";
 import {getPageOffset} from "../geometry";
 import {useStore} from "../store";
 import styled from "styled-components";
+import {APIAddress} from "../api";
 
 const DocumentImageImg = styled.img `
   position: absolute;
@@ -45,7 +46,7 @@ const DocumentImage = ({image}: DocumentImageProps) => {
     }
 
     return (
-        <DocumentImageImg ref={ref} src={`/${image.src}`} width={image.width} height={image.height}
+        <DocumentImageImg ref={ref} src={`${APIAddress}/${image.src}`} width={image.width} height={image.height}
              style={{transform: `rotate(${rotationDegrees}deg)`}} alt="The document"
              onClick={e => handleClick(e)}/>
     )

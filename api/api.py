@@ -1,7 +1,8 @@
 from functools import partial
 from typing import Text, Optional, Dict, Tuple
 import os
-from flask import Flask, send_from_directory, make_response, request, send_file
+from flask import Flask, Blueprint, send_from_directory, \
+    make_response, request, send_file
 from flask.cli import ScriptInfo
 from flask_cors import CORS
 import cv2
@@ -21,6 +22,7 @@ DATA_PATH = "data_path"
 
 def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data"):
     app = Flask(__name__)
+    api = Blueprint("api", __name__, url_prefix="/api")
     CORS(app)
     app.config[DATA_PATH] = data_path
     app.logger.info(f'Starting server serving documents from directory {data_path}')
@@ -30,7 +32,7 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
     def get_workdir(subdir: Text) -> Text:
         return os.path.join(app.config[DATA_PATH], subdir)
 
-    @app.route('/<subdir>/images')
+    @api.route('/<subdir>/images')
     def list_images(subdir: Text):
         workdir = get_workdir(subdir)
         if not os.path.isdir(workdir):
@@ -48,12 +50,12 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
                  "name": image_name, "docId": os.path.splitext(image_name)[0]})
         return {"images": images_with_metadata}
 
-    @app.route('/<subdir>/image/<image_name>')
+    @api.route('/<subdir>/image/<image_name>')
     def get_image(subdir: Text, image_name: Text):
         workdir = get_workdir(subdir)
         return send_from_directory(workdir, image_name)
 
-    @app.route('/<subdir>/tables/<image_name>', methods=["POST"])
+    @api.route('/<subdir>/tables/<image_name>', methods=["POST"])
     def store_tables(subdir: Text, image_name: Text):
         """Stores the tables."""
         workdir = get_workdir(subdir)
@@ -67,7 +69,7 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
 
         return {"msg": "okay!"}
 
-    @app.route('/<subdir>/tables/<image_name>', methods=["GET"])
+    @api.route('/<subdir>/tables/<image_name>', methods=["GET"])
     def get_tables(subdir: Text, image_name: Text):
         workdir = get_workdir(subdir)
         image_path = os.path.join(workdir, image_name)
@@ -82,7 +84,7 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
 
         return tables_json
 
-    @app.route('/<subdir>/<image_name>/predict_table_structure/<int:table_id>',
+    @api.route('/<subdir>/<image_name>/predict_table_structure/<int:table_id>',
                methods=["GET"])
     def predict_table_structure(subdir: Text, image_name: Text, table_id: int):
         workdir = get_workdir(subdir)
@@ -106,7 +108,7 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
 
         return {"rows": rows}
 
-    @app.route('/<subdir>/<image_name>/predict_table_contents/<int:table_id>',
+    @api.route('/<subdir>/<image_name>/predict_table_contents/<int:table_id>',
                methods=["GET"])
     def predict_table_contents(subdir: Text, image_name: Text, table_id: int):
         workdir = get_workdir(subdir)
@@ -129,7 +131,7 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
             lambda c: {k: v for k, v in c.dict().items() if v is not None},
             updated_cells)}
 
-    @app.route('/<subdir>/<image_name>/cell_image/<int:table_id>/<int:row>/'
+    @api.route('/<subdir>/<image_name>/cell_image/<int:table_id>/<int:row>/'
                '<int:col>/<int:table_hash>',
                methods=["GET"])
     def get_cell_image(subdir: Text, image_name: Text,
@@ -168,5 +170,5 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
 
         return send_file(file_object, mimetype='image/JPEG')
 
-
+    app.register_blueprint(api)
     return app
