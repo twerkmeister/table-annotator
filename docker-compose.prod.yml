@@ -1,23 +1,20 @@
 version: "3.9"
 services:
   segmenting-server:
+    build: segmenting-server/
     network_mode: "service:api"
-    volumes:
-      -
-    ports:
-      -
   ocr-server:
+    build: ocr-server/
     network_mode: "service:api"
-    volumes:
-      -
-    ports:
-      -
   api:
+    build: api/
+    ports:
+      - "127.0.0.1:5000:5000"
     volumes:
       - ${TABLE_ANNOTATOR_DATA_DIR}:/app/data
   frontend:
-    volumes:
-      -
+    ports:
+      - "127.0.0.1:3000:3000"
     environment:
       - REACT_APP_API_ADDRESS
     command: ["yarn", "build", "&&", "serve", "-s", "build"]
