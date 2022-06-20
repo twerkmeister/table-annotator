@@ -16,7 +16,5 @@ COPY tsconfig.json /app/
 COPY src /app/src/
 COPY public /app/public/
 
-RUN yarn build
-
 # start app
 CMD ["yarn", "start"]
