@@ -7,6 +7,7 @@ WORKDIR app
 ENV PATH /app/node_modules/.bin:$PATH
 
 # install app dependencies
+npm install -g serve
 COPY package.json yarn.lock /app/
 RUN yarn install --silent --non-interactive
 
