@@ -14,6 +14,7 @@ import TableElement from './components/TableElement';
 import HelperGrid from "./components/HelperGrid";
 import LoadingScreen from "./components/LoadingScreen";
 import HasSavedIndicator from "./components/HasSavedIndicator";
+import {APIAddress} from "./api";
 
 const AppContainer = styled.div`
   margin: 100px auto 100px auto;
@@ -53,7 +54,7 @@ const pushTablesToApi = async(state: AnnotatorState, previousState: AnnotatorSta
     const rateTokenCopy = rateToken
     await new Promise(r => setTimeout(r, 150));
     if (rateToken === rateTokenCopy) {
-        const response = await axios.post(`/${dataDir}/tables/${image.name}`, tables)
+        const response = await axios.post(`${APIAddress}/${dataDir}/tables/${image.name}`, tables)
         if (response.status === 200) {
             await state.transitionHasSavedIndicator()
         }

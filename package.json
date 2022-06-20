@@ -24,7 +24,7 @@
     "zustand": "^3.5.10"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "REACT_APP_API_ADDRESS=http://127.0.0.1:5000 react-scripts start",
     "start-api": "cd api && poetry run flask run --no-debugger",
     "start-ocr-server": "cd ocr-server && poetry run flask run --no-debugger --port 5001",
     "start-segmenting-server": "cd segmenting-server && poetry run flask run --no-debugger --port 5002",
@@ -49,6 +49,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "proxy": "http://127.0.0.1:5000"
+  }
 }

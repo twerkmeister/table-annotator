@@ -11,6 +11,7 @@ import {
     transposeCells
 } from "./geometry";
 import {doesTableNeedOcr} from "./util";
+import {APIAddress} from "./api";
 
 
 const makeTable = (p1: Point, p2: Point, rotationDegrees: number): Table => {
@@ -131,7 +132,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
     fetchImages: async() => {
         const dataDir = getDataDir()
         const docId = getDocId()
-        const response = await fetch(`/${dataDir}/images`)
+        const response = await fetch(`${APIAddress}/${dataDir}/images`)
         const images: Image[] = (await response.json())["images"]
         set({images})
         if(docId && images.length > 0){
@@ -152,14 +153,14 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         if(image === undefined) return
 
         const dataDir = getDataDir()
-        const table_response = await fetch(`/${dataDir}/tables/${image.name}`)
+        const table_response = await fetch(`${APIAddress}/${dataDir}/tables/${image.name}`)
         const tables = (await table_response.json())["tables"]
         get().resetSelection()
         set({ currentImageIndex: idx, rotationDegrees: 0, documentPosition: undefined,
             tables, unfinishedTable: undefined, selectedTable: undefined})
 
         const new_location = getDocId() ?
-            window.location.href.replace(/\/[^\/]*$/, `/${image.docId}`)
+            window.location.href.replace(/\/[^/]*$/, `/${image.docId}`)
             : window.location.href.replace(/\/$/, "") + `/${image.docId}`
         window.history.pushState({pageTitle: `${dataDir} ${image.docId}`}, "", new_location)
 
@@ -376,7 +377,8 @@ export const useStore = create<AnnotatorState>((set, get) => ({
                 })
             })
 
-        const newColumnTypes = [...table.columnTypes.slice(0, selectedColumn), ... table.columnTypes.slice(selectedColumn+1)]
+        const newColumnTypes = [...table.columnTypes.slice(0, selectedColumn),
+            ...table.columnTypes.slice(selectedColumn+1)]
         const newColumns = [...table.columns.slice(0, selectedColumn), ...table.columns.slice(selectedColumn+1)]
         const newTable = {...table, columns: newColumns, cells: newCells, columnTypes: newColumnTypes}
         const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable+1)]
@@ -433,7 +435,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const dataDir = getDataDir()
         set({isRunningSegmentation: true})
         const response =
-            await fetch(`/${dataDir}/${image.name}/predict_table_structure/${selectedTable}`)
+            await fetch(`${APIAddress}/${dataDir}/${image.name}/predict_table_structure/${selectedTable}`)
         if (response.status === 200) {
             const rows: number[] = (await response.json())["rows"]
 
@@ -460,7 +462,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const dataDir = getDataDir()
         set({isRunningOCR: true})
         const response =
-            await fetch(`/${dataDir}/${image.name}/predict_table_contents/${selectedTable}`)
+            await fetch(`${APIAddress}/${dataDir}/${image.name}/predict_table_contents/${selectedTable}`)
         if (response.status === 200) {
             const updatedCells = (await response.json())["cells"]
             const newTables = [...tables.slice(0, selectedTable), {

@@ -7,6 +7,7 @@ import {height, width} from "../geometry";
 import styled from "styled-components";
 import {doesTableNeedOcr, hashTable} from "../util";
 import {calculateCellRectangle} from "../geometry";
+import {APIAddress} from "../api";
 
 const DataRow = styled.div`
     display: flex;
@@ -70,7 +71,7 @@ const SplitTable = ({imageName}: SplitTableProps) => {
                                         </div>
                                         <div key={j}>
                                             <div>
-                                                <img src={`/${dataDir}/${imageName}/cell_image/${selectedTable}/${i}/${j}/${tableHash}`}
+                                                <img src={`${APIAddress}/${dataDir}/${imageName}/cell_image/${selectedTable}/${i}/${j}/${tableHash}`}
                                                      width={width(cellRectangle)}
                                                      height={height(cellRectangle)}
                                                      alt={`cell at ${i} ${j}`} />
