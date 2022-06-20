@@ -18,4 +18,4 @@ services:
       - "127.0.0.1:3000:3000"
     environment:
       - REACT_APP_API_ADDRESS
-    command: ["serve", "-s", "build", "-l", "0.0.0.0:3000"]
+    command: ["serve", "-s", "build"]
