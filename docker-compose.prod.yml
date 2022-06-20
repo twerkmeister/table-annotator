@@ -18,4 +18,4 @@ services:
       - "127.0.0.1:3000:3000"
     environment:
       - REACT_APP_API_ADDRESS
-    command: ["sh", "-c", "yarn build && serve -s build"]
+    command: ["serve", "-s", "build"]
