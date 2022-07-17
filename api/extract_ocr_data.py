@@ -71,8 +71,11 @@ def extract_ocr_data(data_path: Text, target_path: Text,
                     elif without_non_corrections:
                         continue
 
-                    for idx, (text, line_image) in enumerate(zip(text_lines,
-                                                                 line_images)):
+                    text_lines_predicted = ocr_text.split("\n")
+                    for idx, (text, text_predicted, line_image) in \
+                            enumerate(
+                                zip(text_lines, text_lines_predicted, line_images)
+                            ):
                         target_identifier = f"{image_name}_{t_i}_{row_i}_" \
                                             f"{col_i}_{idx:02d}"
 
@@ -88,6 +91,15 @@ def extract_ocr_data(data_path: Text, target_path: Text,
                                 gtf.write("␢")  # empty sign
                             else:
                                 gtf.write(text)
+
+                        prediction_file = \
+                            os.path.join(target_path,
+                                         f"{target_identifier}.pred.orig.txt")
+                        with open(prediction_file, mode="w", encoding="utf-8") as pf:
+                            if text_predicted == "":
+                                pf.write("␢")  # empty sign
+                            else:
+                                pf.write(text_predicted)
 
     print("Total examples: ", examples)
     print("examples not for training: ", examples_not_for_training)
