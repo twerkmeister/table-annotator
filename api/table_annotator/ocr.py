@@ -12,14 +12,15 @@ from table_annotator.types import Table, CellGrid, Cell
 def table_ocr(image: np.ndarray, table: Table,
               overwrite: bool = False) -> CellGrid[Cell]:
 
-    cell_image_grid = table_annotator.cellgrid.get_cell_image_grid(image, table)
-
-    cells_copy = [[cell.copy() for cell in row] for row in table.cells]
-
     cell_list, _ = table_annotator.cellgrid.cell_grid_to_list(table.cells)
 
     needs_ocr: List[int] = list(range(len(cell_list))) if overwrite else \
         [i for i, c in enumerate(cell_list) if c.ocr_text is None]
+
+    if len(needs_ocr) == 0:
+        return table.cells
+
+    cell_image_grid = table_annotator.cellgrid.get_cell_image_grid(image, table)
 
     cell_images_list, mapping = \
         table_annotator.cellgrid.cell_grid_to_list(cell_image_grid)
@@ -35,6 +36,8 @@ def table_ocr(image: np.ndarray, table: Table,
     predictions: List[Text] = r.json()["predictions"]
 
     reversed_mapping = {v: k for k, v in mapping.items()}
+
+    cells_copy = [[cell.copy() for cell in row] for row in table.cells]
 
     for prediction, idx in zip(predictions, needs_ocr):
         i, j = reversed_mapping[idx]
