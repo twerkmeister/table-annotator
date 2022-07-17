@@ -1,4 +1,4 @@
-import {getDataDir} from "../path";
+import {getDataDir, getProject} from "../path";
 import {useStore} from "../store";
 import React from "react";
 import MultiSelect from "./MultiSelect";
@@ -29,11 +29,13 @@ type SplitTableProps = {
 }
 
 const SplitTable = ({imageName}: SplitTableProps) => {
+    const project = getProject()
     const dataDir = getDataDir()
     const tables = useStore(state => state.tables)
     const selectedTable = useStore(state => state.selectedTable)
     const updateCellText = useStore(state => state.updateCellText)
     const setColumnTypes = useStore(state => state.setColumnTypes)
+    if (project === undefined || dataDir === undefined) return null
     if(selectedTable === undefined) return null
     const table = tables[selectedTable]
     if(table === undefined ) return null
@@ -71,7 +73,7 @@ const SplitTable = ({imageName}: SplitTableProps) => {
                                         </div>
                                         <div key={j}>
                                             <div>
-                                                <img src={`${APIAddress}/${dataDir}/${imageName}/cell_image/${selectedTable}/${i}/${j}/${tableHash}`}
+                                                <img src={`${APIAddress}/${project}/${dataDir}/${imageName}/cell_image/${selectedTable}/${i}/${j}/${tableHash}`}
                                                      width={width(cellRectangle)}
                                                      height={height(cellRectangle)}
                                                      alt={`cell at ${i} ${j}`} />

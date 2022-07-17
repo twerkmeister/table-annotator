@@ -2,13 +2,13 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
-import {getDataDir} from './path';
+import {getProject, getDataDir} from './path';
 
 ReactDOM.render(
   <React.StrictMode>
   {
-      getDataDir() === undefined ?
-          <div>Missing data path</div> : <App />
+      getProject() === undefined ? <div style={{color: "white"}}>Missing project path</div> :
+          getDataDir() === undefined ? <div style={{color: "white"}}>Missing data path</div> : <App />
   }
   </React.StrictMode>,
   document.getElementById('root')

@@ -29,12 +29,12 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
 
     cell_image_cache: Dict[Tuple[Text, int], CellGrid[PIL.Image]] = {}
 
-    def get_workdir(subdir: Text) -> Text:
-        return os.path.join(app.config[DATA_PATH], subdir)
+    def get_workdir(project: Text, subdir: Text) -> Text:
+        return os.path.join(app.config[DATA_PATH], project, subdir)
 
-    @api.route('/<subdir>/images')
-    def list_images(subdir: Text):
-        workdir = get_workdir(subdir)
+    @api.route('/<project>/<subdir>/images')
+    def list_images(project: Text, subdir: Text):
+        workdir = get_workdir(project, subdir)
         if not os.path.isdir(workdir):
             return {"images": []}
         image_names = table_annotator.io.list_images(workdir)
@@ -45,20 +45,20 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
             width, height = table_annotator.img.get_dimensions(image)
             center = {"x": width // 2, "y": height // 2}
             images_with_metadata.append(
-                {"src": f"{subdir}/image/{image_name}", "width": width,
+                {"src": f"{project}/{subdir}/image/{image_name}", "width": width,
                  "height": height, "center": center,
                  "name": image_name, "docId": os.path.splitext(image_name)[0]})
         return {"images": images_with_metadata}
 
-    @api.route('/<subdir>/image/<image_name>')
-    def get_image(subdir: Text, image_name: Text):
-        workdir = get_workdir(subdir)
+    @api.route('/<project>/<subdir>/image/<image_name>')
+    def get_image(project: Text, subdir: Text, image_name: Text):
+        workdir = get_workdir(project, subdir)
         return send_from_directory(workdir, image_name)
 
-    @api.route('/<subdir>/tables/<image_name>', methods=["POST"])
-    def store_tables(subdir: Text, image_name: Text):
+    @api.route('/<project>/<subdir>/tables/<image_name>', methods=["POST"])
+    def store_tables(project: Text, subdir: Text, image_name: Text):
         """Stores the tables."""
-        workdir = get_workdir(subdir)
+        workdir = get_workdir(project, subdir)
         image_path = os.path.join(workdir, image_name)
         if not os.path.isfile(image_path):
             return make_response({"msg": "The image for which you tried to save "
@@ -69,9 +69,9 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
 
         return {"msg": "okay!"}
 
-    @api.route('/<subdir>/tables/<image_name>', methods=["GET"])
-    def get_tables(subdir: Text, image_name: Text):
-        workdir = get_workdir(subdir)
+    @api.route('/<project>/<subdir>/tables/<image_name>', methods=["GET"])
+    def get_tables(project: Text, subdir: Text, image_name: Text):
+        workdir = get_workdir(project, subdir)
         image_path = os.path.join(workdir, image_name)
         if not os.path.isfile(image_path):
             return make_response({"msg": "The image for which you tried to retrieve "
@@ -84,10 +84,10 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
 
         return tables_json
 
-    @api.route('/<subdir>/<image_name>/predict_table_structure/<int:table_id>',
+    @api.route('/<project>/<subdir>/<image_name>/predict_table_structure/<int:table_id>',
                methods=["GET"])
-    def predict_table_structure(subdir: Text, image_name: Text, table_id: int):
-        workdir = get_workdir(subdir)
+    def predict_table_structure(project: Text, subdir: Text, image_name: Text, table_id: int):
+        workdir = get_workdir(project, subdir)
         image_path = os.path.join(workdir, image_name)
         if not os.path.isfile(image_path):
             return make_response({"msg": "The image does not exist."}, 404)
@@ -108,10 +108,11 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
 
         return {"rows": rows}
 
-    @api.route('/<subdir>/<image_name>/predict_table_contents/<int:table_id>',
+    @api.route('/<project>/<subdir>/<image_name>/predict_table_contents/<int:table_id>',
                methods=["GET"])
-    def predict_table_contents(subdir: Text, image_name: Text, table_id: int):
-        workdir = get_workdir(subdir)
+    def predict_table_contents(project: Text, subdir: Text,
+                               image_name: Text, table_id: int):
+        workdir = get_workdir(project, subdir)
         image_path = os.path.join(workdir, image_name)
 
         if not os.path.isfile(image_path):
@@ -131,12 +132,12 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
             lambda c: {k: v for k, v in c.dict().items() if v is not None},
             updated_cells)}
 
-    @api.route('/<subdir>/<image_name>/cell_image/<int:table_id>/<int:row>/'
+    @api.route('/<project>/<subdir>/<image_name>/cell_image/<int:table_id>/<int:row>/'
                '<int:col>/<int:table_hash>',
                methods=["GET"])
-    def get_cell_image(subdir: Text, image_name: Text,
+    def get_cell_image(project: Text, subdir: Text, image_name: Text,
                        table_id: int, row: int, col: int, table_hash: int):
-        workdir = get_workdir(subdir)
+        workdir = get_workdir(project, subdir)
         image_path = os.path.join(workdir, image_name)
         if (image_path, table_hash) not in cell_image_cache:
             if not os.path.isfile(image_path):

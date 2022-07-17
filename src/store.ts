@@ -1,5 +1,5 @@
 import create from "zustand";
-import {getDataDir, getDocId} from "./path";
+import {getDataDir, getDocId, getProject} from "./path";
 import {CellIndex, Image, Point, Table, UnfinishedTable} from "./types";
 import {
     addPoints,
@@ -130,9 +130,10 @@ export const useStore = create<AnnotatorState>((set, get) => ({
     isRunningOCR: false,
     isRunningSegmentation: false,
     fetchImages: async() => {
+        const project = getProject()
         const dataDir = getDataDir()
         const docId = getDocId()
-        const response = await fetch(`${APIAddress}/${dataDir}/images`)
+        const response = await fetch(`${APIAddress}/${project}/${dataDir}/images`)
         const images: Image[] = (await response.json())["images"]
         set({images})
         if(docId && images.length > 0){
@@ -152,8 +153,10 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const image = images[idx]
         if(image === undefined) return
 
+        const project = getProject()
         const dataDir = getDataDir()
-        const table_response = await fetch(`${APIAddress}/${dataDir}/tables/${image.name}`)
+        if (project === undefined || dataDir === undefined) return
+        const table_response = await fetch(`${APIAddress}/${project}/${dataDir}/tables/${image.name}`)
         const tables = (await table_response.json())["tables"]
         get().resetSelection()
         set({ currentImageIndex: idx, rotationDegrees: 0, documentPosition: undefined,
@@ -432,10 +435,12 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             table === undefined) return
 
         if (table.rows.length > 0) return
+        const project = getProject()
         const dataDir = getDataDir()
+        if (project === undefined || dataDir === undefined) return
         set({isRunningSegmentation: true})
         const response =
-            await fetch(`${APIAddress}/${dataDir}/${image.name}/predict_table_structure/${selectedTable}`)
+            await fetch(`${APIAddress}/${project}/${dataDir}/${image.name}/predict_table_structure/${selectedTable}`)
         if (response.status === 200) {
             const rows: number[] = (await response.json())["rows"]
 
@@ -459,10 +464,12 @@ export const useStore = create<AnnotatorState>((set, get) => ({
 
         if (!doesTableNeedOcr(table)) return
 
+        const project = getProject()
         const dataDir = getDataDir()
+        if (project === undefined || dataDir === undefined) return
         set({isRunningOCR: true})
         const response =
-            await fetch(`${APIAddress}/${dataDir}/${image.name}/predict_table_contents/${selectedTable}`)
+            await fetch(`${APIAddress}/${project}/${dataDir}/${image.name}/predict_table_contents/${selectedTable}`)
         if (response.status === 200) {
             const updatedCells = (await response.json())["cells"]
             const newTables = [...tables.slice(0, selectedTable), {
