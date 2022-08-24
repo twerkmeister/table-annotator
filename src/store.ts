@@ -170,7 +170,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const new_location = getDocId() ?
             window.location.href.replace(/\/[^/]*$/, `/${image.docId}`)
             : window.location.href.replace(/\/$/, "") + `/${image.docId}`
-        window.history.pushState({pageTitle: `${dataDir} ${image.docId}`}, "", new_location)
+        window.history.replaceState({pageTitle: `${dataDir} ${image.docId}`}, "", new_location)
         get().setIsFetchingTables(false)
     },
     outlineTable: (p: Point, rotationDegrees: number) => {

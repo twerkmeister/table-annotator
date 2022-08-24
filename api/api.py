@@ -1,6 +1,7 @@
 from functools import partial
 from typing import Text, Optional, Dict, Tuple
 import os
+import math
 from flask import Flask, Blueprint, send_from_directory, \
     make_response, request, send_file
 from flask.cli import ScriptInfo
@@ -20,6 +21,13 @@ from table_annotator.types import CellGrid, Table
 DATA_PATH = "data_path"
 
 
+def try_float_conversion(s: Text) -> float:
+    try:
+        return float(s)
+    except ValueError:
+        return math.inf
+
+
 def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data"):
     app = Flask(__name__)
     api = Blueprint("api", __name__, url_prefix="/api")
@@ -31,6 +39,36 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
 
     def get_workdir(project: Text, subdir: Text) -> Text:
         return os.path.join(app.config[DATA_PATH], project, subdir)
+
+    @api.route('/<project>')
+    def get_project(project: Text):
+        project_path = os.path.join(app.config[DATA_PATH], project)
+        if not os.path.isdir(project_path):
+            return make_response({"msg": "The project does not exist."}, 404)
+
+        work_dirs = [os.path.join(os.path.join(project_path, d))
+                     for d in os.listdir(project_path)]
+        work_dirs = [d for d in work_dirs if os.path.isdir(d)]
+
+        work_dir_infos = []
+
+        for work_dir in work_dirs:
+            images = [os.path.join(work_dir, image)
+                      for image in table_annotator.io.list_images(work_dir)]
+            tables = [table_annotator.io.read_tables_for_image(image)
+                      for image in images]
+            work_dir_infos.append({
+                "name": os.path.basename(work_dir),
+                "numDocuments": len(images),
+                "numDocumentsWithTables": sum([len(ts) > 0 for ts in tables])
+            })
+        work_dir_infos = sorted(work_dir_infos,
+                                key=lambda wdi: try_float_conversion(wdi["name"]))
+        return {"project": {
+            "name": project,
+            "workPackages": work_dir_infos
+        }}
+
 
     @api.route('/<project>/<subdir>/images')
     def list_images(project: Text, subdir: Text):

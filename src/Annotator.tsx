@@ -66,7 +66,7 @@ const pushTablesToApi = async(state: AnnotatorState, previousState: AnnotatorSta
 
 useStore.subscribe(pushTablesToApi)
 
-function App() {
+function Annotator() {
     const fetchImages = useStore(state => state.fetchImages)
     const setImageIndex = useStore(state => state.setImageIndex)
     const increaseRotationDegrees = useStore(state => state.increaseRotationDegrees)
@@ -230,4 +230,4 @@ function App() {
     }
 }
 
-export default App;
+export default Annotator;
