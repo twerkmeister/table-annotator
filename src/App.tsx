@@ -43,6 +43,7 @@ const keyMap = {
 let rateToken = ""
 
 const pushTablesToApi = async(state: AnnotatorState, previousState: AnnotatorState) => {
+    if(state.isFetchingTables) return
     if(state.tables === previousState.tables) return
     const project = getProject()
     const dataDir = getDataDir()

@@ -66,6 +66,7 @@ export type AnnotatorState = {
     isRunningOCR: boolean,
     isRunningSegmentation: boolean,
     isInSync: boolean,
+    isFetchingTables: boolean,
     fetchImages: () => void
     setImageIndex: (idx: number) => void
     outlineTable: (p: Point, rotationDegrees: number) => void,
@@ -102,6 +103,7 @@ export type AnnotatorState = {
     lockTable: (lock: boolean) => void
     resetSelection: () => void
     setIsInSync: (isInSync: boolean) => void
+    setIsFetchingTables: (isFetchingTables: boolean) => void
 
 }
 
@@ -124,6 +126,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
     rotationDegrees: 0,
     tableDeletionMarkCount: 0,
     isInSync: true,
+    isFetchingTables: false,
     tables: [],
     ocrView: false,
     helpView: false,
@@ -158,17 +161,17 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const project = getProject()
         const dataDir = getDataDir()
         if (project === undefined || dataDir === undefined) return
+        get().setIsFetchingTables(true)
         const table_response = await fetch(`${APIAddress}/${project}/${dataDir}/tables/${image.name}`)
         const tables = (await table_response.json())["tables"]
         get().resetSelection()
         set({ currentImageIndex: idx, rotationDegrees: 0, documentPosition: undefined,
             tables, unfinishedTable: undefined, selectedTable: undefined})
-
         const new_location = getDocId() ?
             window.location.href.replace(/\/[^/]*$/, `/${image.docId}`)
             : window.location.href.replace(/\/$/, "") + `/${image.docId}`
         window.history.pushState({pageTitle: `${dataDir} ${image.docId}`}, "", new_location)
-
+        get().setIsFetchingTables(false)
     },
     outlineTable: (p: Point, rotationDegrees: number) => {
         const currentTables = get().tables
@@ -824,5 +827,8 @@ export const useStore = create<AnnotatorState>((set, get) => ({
     },
     setIsInSync: (isInSync: boolean) => {
         set({isInSync})
+    },
+    setIsFetchingTables: (isFetchingTables: boolean) => {
+        set({isFetchingTables})
     }
 }))
