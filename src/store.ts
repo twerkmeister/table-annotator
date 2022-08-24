@@ -426,6 +426,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         set({tables: newTables, tableDeletionMarkCount: 0, selectedRow: undefined})
     },
     segmentTable: async () => {
+        if (!get().isInSync) return
         const tables = get().tables
         const selectedTable = get().selectedTable
         const images = get().images
@@ -456,6 +457,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         set({isRunningSegmentation: false})
     },
     predictTableContent: async () => {
+        if (!get().isInSync) return
         const tables = get().tables
         const selectedTable = get().selectedTable
         const images = get().images
@@ -697,6 +699,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         set({tables: newTables})
     },
     setOCRView: async (ocrView: boolean) => {
+        if (ocrView && !get().isInSync) return
         if (ocrView) {
             await get().predictTableContent()
         }
