@@ -13,7 +13,7 @@ import StartedTable from "./components/StartedTable";
 import TableElement from './components/TableElement';
 import HelperGrid from "./components/HelperGrid";
 import LoadingScreen from "./components/LoadingScreen";
-import HasSavedIndicator from "./components/HasSavedIndicator";
+import SyncIndicator from "./components/SyncIndicator";
 import {APIAddress} from "./api";
 
 const AppContainer = styled.div`
@@ -51,13 +51,14 @@ const pushTablesToApi = async(state: AnnotatorState, previousState: AnnotatorSta
     if(currentImageIndex === undefined || images === undefined) return
     const image = images[currentImageIndex]
     if(image === undefined) return
+    state.setIsInSync(false)
     rateToken = uuidv4()
     const rateTokenCopy = rateToken
     await new Promise(r => setTimeout(r, 150));
     if (rateToken === rateTokenCopy) {
         const response = await axios.post(`${APIAddress}/${project}/${dataDir}/tables/${image.name}`, tables)
         if (response.status === 200) {
-            await state.transitionHasSavedIndicator()
+            state.setIsInSync(true)
         }
     }
 }
@@ -100,7 +101,7 @@ function App() {
     const handleDrag = useStore(state => state.handleDrag)
     const isRunningOCR = useStore(state => state.isRunningOCR)
     const isRunningSegmentation = useStore(state => state.isRunningSegmentation)
-    const showHasSaved = useStore(state => state.showHasSaved)
+    const isInSync = useStore(state => state.isInSync)
 
     useEffect(() => {
         if(images === undefined) {
@@ -213,7 +214,7 @@ function App() {
                     {helpView && <HelpScreen/>}
                     {isRunningOCR && <LoadingScreen text={"OCR läuft..."}/>}
                     {isRunningSegmentation && <LoadingScreen text={"Segmentierung läuft..."}/>}
-                    {showHasSaved && <HasSavedIndicator>💾</HasSavedIndicator>}
+                    {<SyncIndicator style={{background: isInSync ? "forestgreen" : "yellow"}}>💾</SyncIndicator>}
                 </GlobalHotKeys>
             </AppContainer>
         );
