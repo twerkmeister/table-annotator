@@ -146,8 +146,9 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         get().setImageIndex(0)
     },
     setImageIndex: async(idx: number) => {
-        const dataMode = get().ocrView
-        if (dataMode) return
+        if (get().ocrView) return
+        if (get().isRunningOCR) return
+        if (get().isRunningSegmentation) return
         const images = get().images
         if(images === undefined) return
         const image = images[idx]
