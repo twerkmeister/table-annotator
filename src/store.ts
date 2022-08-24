@@ -465,10 +465,10 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             table === undefined) return
 
         if (!doesTableNeedOcr(table)) return
-
         const project = getProject()
         const dataDir = getDataDir()
         if (project === undefined || dataDir === undefined) return
+        get().resetSelection()
         set({isRunningOCR: true})
         const response =
             await fetch(`${APIAddress}/${project}/${dataDir}/${image.name}/predict_table_contents/${selectedTable}`)
