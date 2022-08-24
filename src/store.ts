@@ -441,6 +441,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const project = getProject()
         const dataDir = getDataDir()
         if (project === undefined || dataDir === undefined) return
+        get().resetSelection()
         set({isRunningSegmentation: true})
         const response =
             await fetch(`${APIAddress}/${project}/${dataDir}/${image.name}/predict_table_structure/${selectedTable}`)
