@@ -24,8 +24,13 @@ export const useStore = create<ProjectPageState>((set, get) => ({
     fetchProject: async() => {
         const projectName = getProject()
         const response = await fetch(`${APIAddress}/${projectName}`)
-        const currentProject: Project = (await response.json())["project"]
-        set({currentProject})
+        if (response.status === 200) {
+            const currentProject: Project = (await response.json())["project"]
+            set({currentProject})
+        } else if (response.status === 404) {
+            window.history.replaceState({}, "", "/")
+            window.location.reload()
+        }
     }
 }))
 
@@ -52,7 +57,7 @@ function ProjectPage() {
                     {currentProject.workPackages.map((wp, i) => {
                         return (<tr key={i}>
                             <td style={{textAlign: "right"}}><a className="workPackageLink"
-                                   href={wp.name}>→{wp.name}←</a></td>
+                                   href={currentProject.name + "/" + wp.name}>→{wp.name}←</a></td>
                             <td>{wp.numDocumentsWithTables} / {wp.numDocuments}</td>
                         </tr>)
                     })}
