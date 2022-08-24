@@ -40,6 +40,15 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
     def get_workdir(project: Text, subdir: Text) -> Text:
         return os.path.join(app.config[DATA_PATH], project, subdir)
 
+    @api.route('/')
+    def get_all_projects():
+        project_names = [os.path.join(app.config[DATA_PATH], project_name)
+                         for project_name in os.listdir(app.config[DATA_PATH])]
+        project_names = [pn for pn in project_names if os.path.isdir(pn)]
+        project_names = [pn for pn in project_names if not pn.startswith('.')]
+        project_names = [os.path.basename(pn) for pn in project_names]
+        return {"projectNames": sorted(project_names)}
+
     @api.route('/<project>')
     def get_project(project: Text):
         project_path = os.path.join(app.config[DATA_PATH], project)
