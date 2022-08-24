@@ -339,13 +339,15 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const tables = get().tables
         const selectedTable = get().selectedTable
         const tableDeletionMarkCount = get().tableDeletionMarkCount
-        if (selectedTable !== undefined) {
-            if (tableDeletionMarkCount >= 2) {
-                const newTables = [...tables.slice(0, selectedTable), ...tables.slice(selectedTable + 1)]
-                set({selectedTable: undefined, tableDeletionMarkCount: 0, tables: newTables})
-            } else {
-                set({tableDeletionMarkCount: tableDeletionMarkCount + 1})
-            }
+        if (selectedTable === undefined) return
+        const table = tables[selectedTable]
+        if (table === undefined) return
+        if (table.structureLocked) return
+        if (tableDeletionMarkCount >= 2) {
+            const newTables = [...tables.slice(0, selectedTable), ...tables.slice(selectedTable + 1)]
+            set({selectedTable: undefined, tableDeletionMarkCount: 0, tables: newTables})
+        } else {
+            set({tableDeletionMarkCount: tableDeletionMarkCount + 1})
         }
     },
     deleteColumn: () => {
@@ -807,7 +809,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const newTable = {...table, structureLocked: lock}
         const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
         get().resetSelection()
-        set({tables: newTables})
+        set({tables: newTables, tableDeletionMarkCount: 0})
     },
     resetSelection: () => {
         set({tableDeletionMarkCount: 0, selectedRow: undefined,
