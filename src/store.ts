@@ -740,7 +740,6 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         set({tables: newTables})
     },
     setDragging: (isDragging: boolean) => {
-        console.log("isDragging", isDragging)
         set({isDragging, dragStartTime: isDragging ? new Date().getTime() : -1})
     },
     handleDrag: () => {
