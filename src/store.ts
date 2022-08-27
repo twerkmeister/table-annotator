@@ -138,16 +138,22 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const dataDir = getDataDir()
         const docId = getDocId()
         const response = await fetch(`${APIAddress}/${project}/${dataDir}/images`)
-        const images: Image[] = (await response.json())["images"]
-        set({images})
-        if(docId && images.length > 0){
-            const idx = images.findIndex((i: Image) => i.docId === docId)
-            if(idx !== -1){
-                get().setImageIndex(idx)
-                return
+        if (response.status === 200)
+        {
+            const images: Image[] = (await response.json())["images"]
+            set({images})
+            if (docId && images.length > 0) {
+                const idx = images.findIndex((i: Image) => i.docId === docId)
+                if (idx !== -1) {
+                    get().setImageIndex(idx)
+                    return
+                }
             }
+            get().setImageIndex(0)
+        } else if (response.status === 404) {
+            window.history.replaceState({}, "", `/${project}`)
+            window.location.reload()
         }
-        get().setImageIndex(0)
     },
     setImageIndex: async(idx: number) => {
         if (get().ocrView) return

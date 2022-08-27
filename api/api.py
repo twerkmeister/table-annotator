@@ -84,7 +84,8 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
     def list_images(project: Text, subdir: Text):
         workdir = get_workdir(project, subdir)
         if not os.path.isdir(workdir):
-            return {"images": []}
+            return make_response(
+                {"msg": "The workdir you tried to access does not exist."}, 404)
         image_names = table_annotator.io.list_images(workdir)
         images_with_metadata = []
         for image_name in image_names:
