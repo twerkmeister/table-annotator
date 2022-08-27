@@ -2,7 +2,7 @@ import {getDataDir, getProject} from "../path";
 import {useStore} from "../store";
 import React from "react";
 import MultiSelect from "./MultiSelect";
-import {DataTypesOptions} from "../dataModel";
+import {DataTypes, DataTypesOptions} from "../dataModel";
 import {height, width} from "../geometry";
 import styled from "styled-components";
 import {doesTableNeedOcr, hashTable} from "../util";
@@ -66,7 +66,8 @@ const SplitTable = ({imageName}: SplitTableProps) => {
                                         <div>
                                             {i !== 0 ? null :
                                                 <MultiSelect
-                                                    title={columnTypes[j].length.toString() || "0"}
+                                                    title={columnTypes[j].map((t) => DataTypes[t as keyof typeof DataTypes]).join(", ")}
+                                                    width={width(cellRectangle)}
                                                     items={DataTypesOptions}
                                                     selectedItems={columnTypes[j]}
                                                     onChange={onChangeType(j)}

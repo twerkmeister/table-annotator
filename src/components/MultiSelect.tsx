@@ -9,7 +9,7 @@ const Wrapper = styled.div`
 const Button = styled.button`
   background: white;
   border: 1px solid #675d5d;
-  padding: 5px 10px;
+  padding: 5px 5px;
   outline: none;
   border-radius: 4px;
   font-weight: 700;
@@ -17,12 +17,12 @@ const Button = styled.button`
     background: #f3eeee;
     cursor: pointer;
   }
-  width: 100%;
+  overflow: hidden;
 `
 
 const DropDown = styled.ul`
   list-style: none;
-  min-width: 100px;
+  min-width: 200px;
   font-size: 16px;
   position: absolute;
   background: white;
@@ -69,12 +69,13 @@ type Item = {
 
 type MultiSelectProps = {
     title : string,
+    width : number,
     items : Item[],
     selectedItems : string[],
     onChange : (items: string[]) => void
 }
 
-const MultiSelect = ({title, items, selectedItems, onChange}: MultiSelectProps) => {
+const MultiSelect = ({title, width, items, selectedItems, onChange}: MultiSelectProps) => {
     const [opened, setOpened] = React.useState(false)
 
     const changeList = (selectedItems: string[], item: string) => {
@@ -104,13 +105,15 @@ const MultiSelect = ({title, items, selectedItems, onChange}: MultiSelectProps) 
 
     return(
         <Wrapper onMouseLeave={(e) => setOpened(false)}>
-            <Button  onClick={() => setOpened(!opened)}>
+            <Button  onClick={() => setOpened(!opened)}
+                style={{width: `${width}px`}}>
                 {title}
                 <DropIcon>&#9662;</DropIcon>
             </Button>
             {
                 opened && (
-                    <DropDown role="menu">
+                    <DropDown role="menu"
+                    style={{width: `${width}px`}}>
                         {renderList(items, selectedItems)}
                     </DropDown>
                 )

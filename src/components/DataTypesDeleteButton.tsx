@@ -4,7 +4,7 @@ import {useStore} from "../store";
 const DataTypesDeleteStyledButton = styled.button`
   background: white;
   border: 1px solid #675d5d;
-  padding: 5px 10px;
+  padding: 6px 10px;
   outline: none;
   border-radius: 4px;
   font-weight: 700;
