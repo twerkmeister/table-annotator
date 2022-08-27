@@ -22,13 +22,6 @@ from table_annotator.types import CellGrid, Table
 DATA_PATH = "data_path"
 
 
-def try_float_conversion(s: Text) -> float:
-    try:
-        return float(s)
-    except ValueError:
-        return math.inf
-
-
 def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data"):
     app = Flask(__name__)
     api = Blueprint("api", __name__, url_prefix="/api")
@@ -72,8 +65,7 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
                 "numDocuments": len(images),
                 "numDocumentsWithTables": sum([len(ts) > 0 for ts in tables])
             })
-        work_dir_infos = sorted(work_dir_infos,
-                                key=lambda wdi: try_float_conversion(wdi["name"]))
+        work_dir_infos = sorted(work_dir_infos, key=lambda wdi: wdi["name"])
         return {"project": {
             "name": project,
             "workPackages": work_dir_infos
