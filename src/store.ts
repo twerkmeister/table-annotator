@@ -104,7 +104,7 @@ export type AnnotatorState = {
     resetSelection: () => void
     setIsInSync: (isInSync: boolean) => void
     setIsFetchingTables: (isFetchingTables: boolean) => void
-
+    deleteDataTypes: () => void
 }
 
 export const useStore = create<AnnotatorState>((set, get) => ({
@@ -830,5 +830,17 @@ export const useStore = create<AnnotatorState>((set, get) => ({
     },
     setIsFetchingTables: (isFetchingTables: boolean) => {
         set({isFetchingTables})
+    },
+    deleteDataTypes: () => {
+        const selectedTable = get().selectedTable
+        const tables = get().tables
+        if(selectedTable === undefined) return
+
+        const table = tables[selectedTable]
+        if (table === undefined) return
+
+        const newTable = {...table, columnTypes: table.columnTypes.map((c) => [])}
+        const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
+        set({tables: newTables})
     }
 }))

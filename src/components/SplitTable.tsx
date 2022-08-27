@@ -8,6 +8,7 @@ import styled from "styled-components";
 import {doesTableNeedOcr, hashTable} from "../util";
 import {calculateCellRectangle} from "../geometry";
 import {APIAddress} from "../api";
+import DataTypesDeleteButton from "./DataTypesDeleteButton";
 
 const DataRow = styled.div`
     display: flex;
@@ -61,7 +62,7 @@ const SplitTable = ({imageName}: SplitTableProps) => {
                             row.map((cell, j) => {
                                 const cellRectangle = calculateCellRectangle({row: i, column: j}, table)
                                 return (
-                                    <div>
+                                    <div style={{position: "relative"}}>
                                         <div>
                                             {i !== 0 ? null :
                                                 <MultiSelect
@@ -70,6 +71,8 @@ const SplitTable = ({imageName}: SplitTableProps) => {
                                                     selectedItems={columnTypes[j]}
                                                     onChange={onChangeType(j)}
                                                 />}
+                                            {i === 0 && j === row.length - 1 ?
+                                                <DataTypesDeleteButton leftOffset={width(cellRectangle)}/> : null}
                                         </div>
                                         <div key={j}>
                                             <div>
