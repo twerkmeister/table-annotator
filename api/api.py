@@ -16,6 +16,7 @@ import table_annotator.img
 import table_annotator.io
 import table_annotator.ocr
 import table_annotator.cellgrid
+import table_annotator.column_types
 from table_annotator.types import CellGrid, Table
 
 DATA_PATH = "data_path"
@@ -173,11 +174,22 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
         image = table_annotator.io.read_image(image_path)
         table = tables[table_id]
 
+        # Try to guess column types if tabel has not been OCR-ed before
+        cell_list = table_annotator.cellgrid.cell_grid_to_list(table.cells)[0]
+        if any([cell.ocr_text is not None for cell in cell_list]):
+            column_types = table.columnTypes
+        else:
+            column_types = \
+                table_annotator.column_types.guess_column_types(image_path,
+                                                                tables, table_id)
+
+
         updated_cells = table_annotator.ocr.table_ocr(image, table)
 
         return {"cells": table_annotator.cellgrid.apply_to_cells(
             lambda c: {k: v for k, v in c.dict().items() if v is not None},
-            updated_cells)}
+            updated_cells),
+                "columnTypes": column_types}
 
     @api.route('/<project>/<subdir>/<image_name>/cell_image/<int:table_id>/<int:row>/'
                '<int:col>/<int:table_hash>',

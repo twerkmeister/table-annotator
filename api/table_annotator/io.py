@@ -1,4 +1,4 @@
-from typing import Text, Any, List, Dict
+from typing import Text, Any, List, Dict, Optional
 import json
 import os
 
@@ -61,6 +61,17 @@ def list_images(path: Text) -> List[Text]:
     files = os.listdir(path)
     allowed_extensions = {".jpeg", ".jpg"}
     return sorted([f for f in files if os.path.splitext(f)[1] in allowed_extensions])
+
+
+def get_previous_image(image_path: Text) -> Optional[Text]:
+    """Finds the previous image in the folder if it exists."""
+    folder = os.path.dirname(image_path)
+    images = list_images(folder)
+    index_of_image = images.index(os.path.basename(image_path))
+    if index_of_image == -1 or index_of_image == 0:
+        return None
+    else:
+        return os.path.join(folder, images[index_of_image - 1])
 
 
 def tableToJson(table: Table) -> Dict[Text, Any]:

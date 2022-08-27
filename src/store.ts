@@ -481,10 +481,13 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const response =
             await fetch(`${APIAddress}/${project}/${dataDir}/${image.name}/predict_table_contents/${selectedTable}`)
         if (response.status === 200) {
-            const updatedCells = (await response.json())["cells"]
+            const responseJSON = await response.json()
+            const updatedCells = responseJSON["cells"]
+            const updatedColumnTypes = responseJSON["columnTypes"]
             const newTables = [...tables.slice(0, selectedTable), {
                 ...table,
                 cells: updatedCells,
+                columnTypes: updatedColumnTypes,
                 structureLocked: true
             },
                 ...tables.slice(selectedTable + 1)]
