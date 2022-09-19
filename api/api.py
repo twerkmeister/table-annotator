@@ -91,6 +91,18 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
                  "name": image_name, "docId": os.path.splitext(image_name)[0]})
         return {"images": images_with_metadata}
 
+    @api.route('/<project>/<subdir>/image/invert/<image_name>', methods=["POST"])
+    def invert_image(project: Text, subdir: Text, image_name: Text):
+        workdir = get_workdir(project, subdir)
+        image_path = os.path.join(workdir, image_name)
+        if not os.path.isfile(image_path):
+            return make_response({"msg": "The image you tried to invert"
+                                         "does not exist."}, 404)
+        image = table_annotator.io.read_image(image_path)
+        image = np.invert(image)
+        table_annotator.io.write_image(image_path, image)
+        return make_response({"msg": "Ok"}, 200)
+
     @api.route('/<project>/<subdir>/image/<image_name>')
     def get_image(project: Text, subdir: Text, image_name: Text):
         workdir = get_workdir(project, subdir)

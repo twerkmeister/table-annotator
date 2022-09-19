@@ -1,6 +1,6 @@
 import create from "zustand";
 import {getDataDir, getDocId, getProject} from "./path";
-import {CellIndex, Image, Point, Table, UnfinishedTable} from "./types";
+import {CellIndex, Image, Point, Table, TempImageParameters, UnfinishedTable} from "./types";
 import {
     addPoints,
     makeRectangle,
@@ -12,7 +12,15 @@ import {
 } from "./geometry";
 import {doesTableNeedOcr} from "./util";
 import {APIAddress} from "./api";
+import axios from "axios";
 
+
+const makeTemporaryImageParameters = (inverted: boolean = false, rotationSteps: number = 0): TempImageParameters => {
+    return {
+        inverted,
+        rotationSteps
+    }
+}
 
 const makeTable = (p1: Point, p2: Point, rotationDegrees: number): Table => {
     const outline = makeRectangle(p1, p2)
@@ -105,6 +113,7 @@ export type AnnotatorState = {
     setIsInSync: (isInSync: boolean) => void
     setIsFetchingTables: (isFetchingTables: boolean) => void
     deleteDataTypes: () => void
+    invertImage: () => void
 }
 
 export const useStore = create<AnnotatorState>((set, get) => ({
@@ -851,5 +860,28 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const newTable = {...table, columnTypes: table.columnTypes.map((c) => [])}
         const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
         set({tables: newTables})
+    },
+    invertImage: async () => {
+        const images = get().images
+        const currentImageIndex = get().currentImageIndex
+        if (images === undefined || currentImageIndex === undefined) return
+        const image = images[currentImageIndex]
+        if (image === undefined) return
+        const project = getProject()
+        const dataDir = getDataDir()
+
+        const response = await axios.post(`${APIAddress}/${project}/${dataDir}/image/invert/${image.name}`,
+            {})
+        if (response.status === 200) {
+            let temporaryParameters = image.temporaryParameters
+            if (temporaryParameters === undefined) {
+                temporaryParameters = makeTemporaryImageParameters(true)
+            } else {
+                temporaryParameters = {...temporaryParameters, inverted: !temporaryParameters.inverted}
+            }
+            const newImage = {...image, temporaryParameters}
+            const newImages = [...images.slice(0, currentImageIndex), newImage, ...images.slice(currentImageIndex+1)]
+            set({images: newImages})
+        }
     }
 }))

@@ -9,6 +9,11 @@ export type Rectangle = {
     bottomRight: Point
 }
 
+export type TempImageParameters = {
+    inverted: boolean
+    rotationSteps: number
+}
+
 export type Image = {
     src: string,
     width: number,
@@ -16,6 +21,7 @@ export type Image = {
     center: Point,
     name: string
     docId: string
+    temporaryParameters?: TempImageParameters
 }
 
 export type CellContent = {

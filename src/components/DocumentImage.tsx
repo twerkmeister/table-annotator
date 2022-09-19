@@ -1,4 +1,4 @@
-import {Image} from "../types";
+import {Image, TempImageParameters} from "../types";
 import React, {useEffect} from "react";
 import {getPageOffset} from "../geometry";
 import {useStore} from "../store";
@@ -13,6 +13,10 @@ const DocumentImageImg = styled.img `
   -ms-user-select: none;
 `
 
+const temporaryImageParametersToQueryString = (tip?: TempImageParameters): string => {
+    if (tip === undefined) return ""
+    return `?inverted=${tip.inverted}&rotationSteps=${tip.rotationSteps}`
+}
 
 type DocumentImageProps = {
     image: Image
@@ -26,6 +30,7 @@ const DocumentImage = ({image}: DocumentImageProps) => {
     const documentPosition = useStore(state => state.documentPosition)
     const selectedTable = useStore(state => state.selectedTable)
     const selectTable = useStore(state => state.selectTable)
+    const queryString = temporaryImageParametersToQueryString(image.temporaryParameters)
 
     useEffect(() => {
         const imageRef = ref.current
@@ -46,9 +51,10 @@ const DocumentImage = ({image}: DocumentImageProps) => {
     }
 
     return (
-        <DocumentImageImg ref={ref} src={`${APIAddress}/${image.src}`} width={image.width} height={image.height}
-             style={{transform: `rotate(${rotationDegrees}deg)`}} alt="The document"
-             onClick={e => handleClick(e)}/>
+        <DocumentImageImg ref={ref} src={`${APIAddress}/${image.src}${queryString}`}
+                          width={image.width} height={image.height}
+                          style={{transform: `rotate(${rotationDegrees}deg)`}} alt="The document"
+                          onClick={e => handleClick(e)}/>
     )
 
 }
