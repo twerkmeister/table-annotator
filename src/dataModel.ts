@@ -23,7 +23,9 @@ export enum DataTypes {
     FAMILIENSTAND = "Familienstand",
     EINGEWIESEN_DURCH = "eingewiesen durch",
     TRANSPORT_VON = "Transport von",
-    TRANSPORT_NACH = "Transport nach"
+    TRANSPORT_NACH = "Transport nach",
+    MIT_NUMMERNABKUERZUNG = "Mit Nummernabkürzung",
+    MIT_ANFUEHRUNGSZEICHEN = "Mit Anführungszeichen",
 }
 
 function enumKeys<E>(e: E): (keyof E)[] {
