@@ -35,6 +35,7 @@ const keyMap = {
     DOWN: "s",
     RIGHT: "d",
     INVERT_IMAGE: "i",
+    ROTATE_IMAGE_90: "u",
     ANNOTATE_ROWS_AUTOMATICALLY: "z",
     OCR_START_AND_VIEW: "o",
     HELP_VIEW: "h",
@@ -105,6 +106,7 @@ function Annotator() {
     const isRunningSegmentation = useStore(state => state.isRunningSegmentation)
     const isInSync = useStore(state => state.isInSync)
     const invertImage = useStore(state => state.invertImage)
+    const rotateimage90 = useStore(state => state.rotateImage90)
 
     useEffect(() => {
         if(images === undefined) {
@@ -184,7 +186,8 @@ function Annotator() {
         BACKSPACE_OR_DELETE: deleteFunc,
         ANNOTATE_ROWS_AUTOMATICALLY: segmentTable,
         OCR_START_AND_VIEW: () => setOCRView(!ocrView),
-        INVERT_IMAGE: () => invertImage(),
+        INVERT_IMAGE: invertImage,
+        ROTATE_IMAGE_90: rotateimage90,
         UP: () => upFunc(),
         DOWN: () => downFunc(),
         LEFT: () => leftFunc(),

@@ -114,6 +114,7 @@ export type AnnotatorState = {
     setIsFetchingTables: (isFetchingTables: boolean) => void
     deleteDataTypes: () => void
     invertImage: () => void
+    rotateImage90: () => void
 }
 
 export const useStore = create<AnnotatorState>((set, get) => ({
@@ -878,6 +879,29 @@ export const useStore = create<AnnotatorState>((set, get) => ({
                 temporaryParameters = makeTemporaryImageParameters(true)
             } else {
                 temporaryParameters = {...temporaryParameters, inverted: !temporaryParameters.inverted}
+            }
+            const newImage = {...image, temporaryParameters}
+            const newImages = [...images.slice(0, currentImageIndex), newImage, ...images.slice(currentImageIndex+1)]
+            set({images: newImages})
+        }
+    },
+    rotateImage90: async () => {
+        const images = get().images
+        const currentImageIndex = get().currentImageIndex
+        if (images === undefined || currentImageIndex === undefined) return
+        const image = images[currentImageIndex]
+        if (image === undefined) return
+        const project = getProject()
+        const dataDir = getDataDir()
+
+        const response = await axios.post(`${APIAddress}/${project}/${dataDir}/image/rotate/${image.name}`,
+            {})
+        if (response.status === 200) {
+            let temporaryParameters = image.temporaryParameters
+            if (temporaryParameters === undefined) {
+                temporaryParameters = makeTemporaryImageParameters(false, 1)
+            } else {
+                temporaryParameters = {...temporaryParameters, rotationSteps: (temporaryParameters.rotationSteps + 1) % 4}
             }
             const newImage = {...image, temporaryParameters}
             const newImages = [...images.slice(0, currentImageIndex), newImage, ...images.slice(currentImageIndex+1)]

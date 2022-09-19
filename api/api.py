@@ -103,6 +103,18 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
         table_annotator.io.write_image(image_path, image)
         return make_response({"msg": "Ok"}, 200)
 
+    @api.route('/<project>/<subdir>/image/rotate/<image_name>', methods=["POST"])
+    def rotate_image(project: Text, subdir: Text, image_name: Text):
+        workdir = get_workdir(project, subdir)
+        image_path = os.path.join(workdir, image_name)
+        if not os.path.isfile(image_path):
+            return make_response({"msg": "The image you tried to invert"
+                                         "does not exist."}, 404)
+        image = table_annotator.io.read_image(image_path)
+        image = np.rot90(image, 3)
+        table_annotator.io.write_image(image_path, image)
+        return make_response({"msg": "Ok"}, 200)
+
     @api.route('/<project>/<subdir>/image/<image_name>')
     def get_image(project: Text, subdir: Text, image_name: Text):
         workdir = get_workdir(project, subdir)
