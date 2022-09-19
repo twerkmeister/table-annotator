@@ -5,7 +5,7 @@ import os
 import cv2
 import numpy as np
 import PIL
-from table_annotator.types import Table
+from table_annotator.types import Table, DocumentState, DOCUMENT_STATE_TODO
 import table_annotator.cellgrid
 
 
@@ -36,6 +36,20 @@ def read_tables_for_image(image_path: Text) -> List[Table]:
 def write_tables_for_image(image_path: Text, tables: List[Table]) -> None:
     json_file_path = os.path.splitext(image_path)[0] + ".json"
     write_json(json_file_path, [tableToJson(t) for t in tables])
+
+
+def read_state_for_image(image_path: Text) -> DocumentState:
+    state_file_path = os.path.splitext(image_path)[0] + ".state.json"
+    if not os.path.isfile(state_file_path):
+        return DocumentState(state=DOCUMENT_STATE_TODO)
+    else:
+        state_serialized = read_json(state_file_path)
+        return DocumentState(**state_serialized)
+
+
+def write_state_for_image(image_path: Text, state: Text) -> None:
+    state_file_path = os.path.splitext(image_path)[0] + ".state.json"
+    write_json(state_file_path, {"state": state})
 
 
 def read_image(image_path: Text) -> np.ndarray:

@@ -57,3 +57,11 @@ class Table(BaseModel):
         return hash((self.outline, self.rotationDegrees,
                      tuple(self.rows), tuple(self.columns),
                      tuple(cells)))
+
+
+DOCUMENT_STATE_TODO = "TODO"
+
+
+class DocumentState(BaseModel):
+    state: Text
+

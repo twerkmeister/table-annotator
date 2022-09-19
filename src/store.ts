@@ -13,6 +13,12 @@ import {
 import {doesTableNeedOcr} from "./util";
 import {APIAddress} from "./api";
 import axios from "axios";
+import {
+    DocumentStateKeyStrings,
+    DocumentStates,
+    DocumentStateSelectType,
+    DocumentStatesValues
+} from "./components/documentStates";
 
 
 const makeTemporaryImageParameters = (inverted: boolean = false, rotationSteps: number = 0): TempImageParameters => {
@@ -68,6 +74,7 @@ export type AnnotatorState = {
     rotationDegrees: number,
     tableDeletionMarkCount: number,
     tables: Table[],
+    documentState?: DocumentStateKeyStrings
     ocrView: boolean,
     helpView: boolean,
     helpGridView: boolean,
@@ -115,6 +122,7 @@ export type AnnotatorState = {
     deleteDataTypes: () => void
     invertImage: () => void
     rotateImage90: () => void
+    setDocumentState: (documentState: DocumentStateKeyStrings) => void
 }
 
 export const useStore = create<AnnotatorState>((set, get) => ({
@@ -138,6 +146,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
     isInSync: true,
     isFetchingTables: false,
     tables: [],
+    documentState: undefined,
     ocrView: false,
     helpView: false,
     helpGridView: false,
@@ -180,6 +189,11 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         get().setIsFetchingTables(true)
         const table_response = await fetch(`${APIAddress}/${project}/${dataDir}/tables/${image.name}`)
         const tables = (await table_response.json())["tables"]
+        const doc_state_response = await fetch(`${APIAddress}/${project}/${dataDir}/state/${image.name}`)
+        if (doc_state_response.status === 200) {
+            const newState = (await doc_state_response.json())["state"]
+            set({documentState: newState})
+        }
         get().resetSelection()
         set({ currentImageIndex: idx, rotationDegrees: 0, documentPosition: undefined,
             tables, unfinishedTable: undefined, selectedTable: undefined})
@@ -906,6 +920,20 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             const newImage = {...image, temporaryParameters}
             const newImages = [...images.slice(0, currentImageIndex), newImage, ...images.slice(currentImageIndex+1)]
             set({images: newImages})
+        }
+    },
+    setDocumentState: async(documentState) => {
+        const images = get().images
+        const currentImageIndex = get().currentImageIndex
+        if (images === undefined || currentImageIndex === undefined) return
+        const image = images[currentImageIndex]
+        if (image === undefined) return
+        const project = getProject()
+        const dataDir = getDataDir()
+        const response = await axios.post(`${APIAddress}/${project}/${dataDir}/state/${image.name}`,
+            {"state": documentState})
+        if (response.status === 200) {
+            set({documentState})
         }
     }
 }))

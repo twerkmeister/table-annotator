@@ -3,6 +3,7 @@ import axios from 'axios';
 import {v4 as uuidv4} from "uuid";
 import { GlobalHotKeys } from "react-hotkeys";
 import styled from 'styled-components'
+
 import {getDataDir, getProject} from './path';
 import HelpScreen from "./components/HelpScreen";
 import DocumentImage from "./components/DocumentImage";
@@ -15,6 +16,8 @@ import HelperGrid from "./components/HelperGrid";
 import LoadingScreen from "./components/LoadingScreen";
 import SyncIndicator from "./components/SyncIndicator";
 import {APIAddress} from "./api";
+import AnnotatorMenu from "./components/AnnotatorMenu";
+
 
 const AppContainer = styled.div`
   margin: 100px auto 100px auto;
@@ -203,6 +206,7 @@ function Annotator() {
                 <GlobalHotKeys keyMap={keyMap} handlers={hotkeyHandlers} allowChanges={true}>
                     {!ocrView ?
                         <div>
+                            <AnnotatorMenu/>
                             {helpGridView && <HelperGrid/>}
                             <DocumentImage image={image} />
                             {

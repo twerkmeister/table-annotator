@@ -120,6 +120,30 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
         workdir = get_workdir(project, subdir)
         return send_from_directory(workdir, image_name)
 
+    @api.route('/<project>/<subdir>/state/<image_name>', methods=["GET"])
+    def get_document_state(project: Text, subdir: Text, image_name: Text):
+        workdir = get_workdir(project, subdir)
+        image_path = os.path.join(workdir, image_name)
+        if not os.path.isfile(image_path):
+            return make_response({"msg": "The image for which you tried to retrieve "
+                                         "state data does not exist."}, 404)
+
+        state = table_annotator.io.read_state_for_image(image_path)
+        return state.dict()
+
+    @api.route('/<project>/<subdir>/state/<image_name>', methods=["POST"])
+    def set_document_state(project: Text, subdir: Text, image_name: Text):
+        workdir = get_workdir(project, subdir)
+        image_path = os.path.join(workdir, image_name)
+        if not os.path.isfile(image_path):
+            return make_response({"msg": "The image for which you tried to save "
+                                         "state data does not exist."}, 404)
+
+        table_annotator.io.write_state_for_image(image_path,
+                                                 request.json["state"])
+
+        return {"msg": "OK"}
+
     @api.route('/<project>/<subdir>/tables/<image_name>', methods=["POST"])
     def store_tables(project: Text, subdir: Text, image_name: Text):
         """Stores the tables."""
@@ -132,7 +156,7 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
         table_annotator.io.write_tables_for_image(image_path,
                                                   [Table(**t) for t in request.json])
 
-        return {"msg": "okay!"}
+        return {"msg": "OK"}
 
     @api.route('/<project>/<subdir>/tables/<image_name>', methods=["GET"])
     def get_tables(project: Text, subdir: Text, image_name: Text):
