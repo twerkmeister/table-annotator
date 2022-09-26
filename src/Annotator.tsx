@@ -14,7 +14,6 @@ import StartedTable from "./components/StartedTable";
 import TableElement from './components/TableElement';
 import HelperGrid from "./components/HelperGrid";
 import LoadingScreen from "./components/LoadingScreen";
-import SyncIndicator from "./components/SyncIndicator";
 import {APIAddress} from "./api";
 import AnnotatorMenu from "./components/AnnotatorMenu";
 
@@ -107,7 +106,6 @@ function Annotator() {
     const handleDrag = useStore(state => state.handleDrag)
     const isRunningOCR = useStore(state => state.isRunningOCR)
     const isRunningSegmentation = useStore(state => state.isRunningSegmentation)
-    const isInSync = useStore(state => state.isInSync)
     const invertImage = useStore(state => state.invertImage)
     const rotateimage90 = useStore(state => state.rotateImage90)
 
@@ -204,9 +202,9 @@ function Annotator() {
         return (
             <AppContainer onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}>
                 <GlobalHotKeys keyMap={keyMap} handlers={hotkeyHandlers} allowChanges={true}>
+                    <AnnotatorMenu/>
                     {!ocrView ?
                         <div>
-                            <AnnotatorMenu/>
                             {helpGridView && <HelperGrid/>}
                             <DocumentImage image={image} />
                             {
@@ -225,7 +223,7 @@ function Annotator() {
                     {helpView && <HelpScreen/>}
                     {isRunningOCR && <LoadingScreen text={"OCR läuft..."}/>}
                     {isRunningSegmentation && <LoadingScreen text={"Segmentierung läuft..."}/>}
-                    {<SyncIndicator style={{background: isInSync ? "forestgreen" : "yellow"}}>💾</SyncIndicator>}
+
                 </GlobalHotKeys>
             </AppContainer>
         );

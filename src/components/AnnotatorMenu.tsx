@@ -1,27 +1,41 @@
 import React from "react";
-import Select, {SingleValue} from 'react-select'
-import {
-
-    DocumentStatesOptions,
-    DocumentStateSelectType, DocumentStatesValues,
-} from "./documentStates";
 import {useStore} from "../store";
 
+import SyncIndicator from "./SyncIndicator";
+import DocumentStateSelect from "./MenuComponents/DocumentStateSelect";
+import BackToProjectButton from "./MenuComponents/BackToProjectButton";
+import {Box} from "@mui/material";
+import PreviousDocumentButton from "./MenuComponents/PreviousDocumentButton";
+import NextDocumentButton from "./MenuComponents/NextDocumentButton";
+import TurnSlightLeftButton from "./MenuComponents/TurnSlightLeftButton";
+import TurnSlightRightButton from "./MenuComponents/TurnSlightRightButton";
+import InvertDocumentButton from "./MenuComponents/InvertDocumentButton";
+import TurnRightButton from "./MenuComponents/TurnRightButton";
+import SegmentTableButton from "./MenuComponents/SegmentTableButton";
+import SetOCRViewButton from "./MenuComponents/SetOCRViewButton";
+import DeleteObjectButton from "./MenuComponents/DeleteObjectButton";
+import ShowHelpRasterizationButton from "./MenuComponents/ShowHelpRasterizationButton";
+
+
 const AnnotatorMenu = () => {
-    const documentState = useStore(state => state.documentState)
-    const setDocumentState = useStore(state => state.setDocumentState)
+    const isInSync = useStore(state => state.isInSync)
 
-    const handleChange = async (newValue: SingleValue<DocumentStateSelectType>) => {
-        if (newValue === null) return
-        setDocumentState(newValue.value)
-    }
-
-    return (<div>
-        {documentState &&
-        <div style={{position: "fixed", top: 0, left: 0, zIndex: 99, minWidth: "200px"}}>
-            <Select isSearchable={false} blurInputOnSelect={true} options={DocumentStatesOptions} value={DocumentStatesValues[documentState]} onChange={handleChange}/>
-        </div>}
-    </div>)
+    return (<Box sx={{display: "flex", width: "100%", position: "fixed", "top": 0, "left": 0,
+    zIndex: 99, background: "lightgrey"}}>
+        <BackToProjectButton/>
+        <PreviousDocumentButton/>
+        <NextDocumentButton/>
+        <DocumentStateSelect/>
+        <TurnSlightLeftButton/>
+        <ShowHelpRasterizationButton/>
+        <TurnSlightRightButton/>
+        <InvertDocumentButton/>
+        <TurnRightButton/>
+        <SegmentTableButton/>
+        <SetOCRViewButton/>
+        <DeleteObjectButton/>
+        {<SyncIndicator style={{background: isInSync ? "forestgreen" : "yellow"}}>💾</SyncIndicator>}
+    </Box>)
 }
 
 export default AnnotatorMenu
