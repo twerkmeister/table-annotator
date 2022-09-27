@@ -18,7 +18,7 @@ import {
     DocumentStates,
     DocumentStateSelectType,
     DocumentStatesValues
-} from "./components/documentStates";
+} from "./documentStates";
 
 
 const makeTemporaryImageParameters = (inverted: boolean = false, rotationSteps: number = 0): TempImageParameters => {

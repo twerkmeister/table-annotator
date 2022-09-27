@@ -1,3 +1,4 @@
+from collections import Counter
 from functools import partial
 from typing import Text, Optional, Dict, Tuple
 import os
@@ -17,7 +18,8 @@ import table_annotator.io
 import table_annotator.ocr
 import table_annotator.cellgrid
 import table_annotator.column_types
-from table_annotator.types import CellGrid, Table
+from table_annotator.types import CellGrid, Table, DOCUMENT_STATE_DONE, \
+    DOCUMENT_STATE_TODO, DOCUMENT_STATE_FOR_RESUBMISSION, DOCUMENT_STATE_NO_LIST
 
 DATA_PATH = "data_path"
 
@@ -58,12 +60,24 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
         for work_dir in work_dirs:
             images = [os.path.join(work_dir, image)
                       for image in table_annotator.io.list_images(work_dir)]
-            tables = [table_annotator.io.read_tables_for_image(image)
+            states = [table_annotator.io.read_state_for_image(image).state
                       for image in images]
+            states_counter = Counter(states)
+            try:
+                first_todo_doc_index = states.index(DOCUMENT_STATE_TODO)
+                first_todo_doc = os.path.splitext(images[first_todo_doc_index])[0]
+            except ValueError:
+                first_todo_doc = None
+            
             work_dir_infos.append({
                 "name": os.path.basename(work_dir),
                 "numDocuments": len(images),
-                "numDocumentsWithTables": sum([len(ts) > 0 for ts in tables])
+                "numDocumentsDone": states_counter[DOCUMENT_STATE_DONE],
+                "numDocumentsTodo": states_counter[DOCUMENT_STATE_TODO],
+                "numDocumentsForResubmission":
+                    states_counter[DOCUMENT_STATE_FOR_RESUBMISSION],
+                "numDocumentsNoList": states_counter[DOCUMENT_STATE_NO_LIST],
+                "firstTodoDoc": first_todo_doc
             })
         work_dir_infos = sorted(work_dir_infos, key=lambda wdi: wdi["name"])
         return {"project": {

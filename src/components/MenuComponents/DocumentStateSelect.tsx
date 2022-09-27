@@ -1,5 +1,5 @@
 import Select, {SingleValue} from 'react-select'
-import {DocumentStateSelectType, DocumentStatesOptions, DocumentStatesValues} from "../documentStates";
+import {DocumentStateSelectType, DocumentStatesOptions, DocumentStatesValues} from "../../documentStates";
 import React from "react";
 import {useStore} from "../../store";
 

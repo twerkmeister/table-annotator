@@ -6,7 +6,11 @@ import {getProject} from "./path";
 export type WorkPackage = {
     name: string,
     numDocuments: number,
-    numDocumentsWithTables: number
+    numDocumentsDone: number
+    numDocumentsTodo: number
+    numDocumentsForResubmission: number
+    numDocumentsNoList: number
+    firstTodoDoc?: string
 }
 
 export type Project = {
@@ -47,7 +51,7 @@ function ProjectPage() {
         const totalNumDocuments = currentProject.workPackages.map(
             (wp, i) => wp.numDocuments).reduce((a, b) => a + b, 0)
         const totalNumDocumentsWithTables = currentProject.workPackages.map(
-            (wp, i) => wp.numDocumentsWithTables).reduce((a, b) => a + b, 0)
+            (wp, i) => wp.numDocuments-wp.numDocumentsTodo).reduce((a, b) => a + b, 0)
         return (
             <div style={{textAlign: "center", color: "lightgrey"}}>
                 <h2>{currentProject.name}</h2>
@@ -58,7 +62,7 @@ function ProjectPage() {
                         return (<tr key={i}>
                             <td style={{textAlign: "right"}}><a className="workPackageLink"
                                    href={currentProject.name + "/" + wp.name}>→{wp.name}←</a></td>
-                            <td>{wp.numDocumentsWithTables} / {wp.numDocuments}</td>
+                            <td>{wp.numDocuments-wp.numDocumentsTodo} / {wp.numDocuments}</td>
                         </tr>)
                     })}
                     </tbody>
