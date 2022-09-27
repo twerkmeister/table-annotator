@@ -15,6 +15,7 @@ import SegmentTableButton from "./MenuComponents/SegmentTableButton";
 import SetOCRViewButton from "./MenuComponents/SetOCRViewButton";
 import DeleteObjectButton from "./MenuComponents/DeleteObjectButton";
 import ShowHelpRasterizationButton from "./MenuComponents/ShowHelpRasterizationButton";
+import PositionDisplay from "./MenuComponents/PositionDisplay";
 
 
 const AnnotatorMenu = () => {
@@ -24,6 +25,7 @@ const AnnotatorMenu = () => {
     zIndex: 99, background: "lightgrey"}}>
         <BackToProjectButton/>
         <PreviousDocumentButton/>
+        <PositionDisplay/>
         <NextDocumentButton/>
         <DocumentStateSelect/>
         <TurnSlightLeftButton/>
