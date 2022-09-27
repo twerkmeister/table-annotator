@@ -68,7 +68,7 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
                 first_todo_doc = os.path.splitext(images[first_todo_doc_index])[0]
             except ValueError:
                 first_todo_doc = None
-            
+
             work_dir_infos.append({
                 "name": os.path.basename(work_dir),
                 "numDocuments": len(images),
