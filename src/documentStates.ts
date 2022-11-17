@@ -1,6 +1,6 @@
 
 export enum DocumentStates {
-    TODO="unbearbeitet",
+    TODO="Noch zu bearbeiten",
     SINGLE_PERSON_DOC="Einzeldokument",
     HANDWRITTEN_LIST="Liste Handschrift",
     NO_DATA="Keine Daten",

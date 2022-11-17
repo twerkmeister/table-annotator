@@ -13,12 +13,7 @@ import {
 import {doesTableNeedOcr} from "./util";
 import {APIAddress} from "./api";
 import axios from "axios";
-import {
-    DocumentStateKeyStrings,
-    DocumentStates,
-    DocumentStateSelectType,
-    DocumentStatesValues
-} from "./documentStates";
+import {DocumentStateKeyStrings} from "./documentStates";
 
 
 const makeTemporaryImageParameters = (inverted: boolean = false, rotationSteps: number = 0): TempImageParameters => {
@@ -522,6 +517,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             },
                 ...tables.slice(selectedTable + 1)]
             set({tables: newTables})
+            await get().setDocumentState("DONE")
         }
         set({isRunningOCR: false})
     },
