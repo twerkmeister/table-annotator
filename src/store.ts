@@ -917,7 +917,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             } else {
                 temporaryParameters = {...temporaryParameters, rotationSteps: (temporaryParameters.rotationSteps + 1) % 4}
             }
-            const newImage = {...image, temporaryParameters}
+            const newImage = {...image, height: image.width, width: image.height, temporaryParameters}
             const newImages = [...images.slice(0, currentImageIndex), newImage, ...images.slice(currentImageIndex+1)]
             set({images: newImages})
         }
