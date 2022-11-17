@@ -1,8 +1,9 @@
 
 export enum DocumentStates {
     TODO="unbearbeitet",
-    NO_LIST="keine Liste",
-    FOR_RESUBMISSION="zur Wiedervorlage",
+    SINGLE_PERSON_DOC="Einzeldokument",
+    HANDWRITTEN_LIST="Liste Handschrift",
+    NO_DATA="Keine Daten",
     DONE="fertig",
 }
 

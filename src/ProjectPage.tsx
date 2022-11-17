@@ -8,8 +8,6 @@ export type WorkPackage = {
     numDocuments: number,
     numDocumentsDone: number
     numDocumentsTodo: number
-    numDocumentsForResubmission: number
-    numDocumentsNoList: number
     firstTodoDoc?: string
 }
 

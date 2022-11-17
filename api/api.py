@@ -2,7 +2,6 @@ from collections import Counter
 from functools import partial
 from typing import Text, Optional, Dict, Tuple
 import os
-import math
 from flask import Flask, Blueprint, send_from_directory, \
     make_response, request, send_file
 from flask.cli import ScriptInfo
@@ -18,8 +17,7 @@ import table_annotator.io
 import table_annotator.ocr
 import table_annotator.cellgrid
 import table_annotator.column_types
-from table_annotator.types import CellGrid, Table, DOCUMENT_STATE_DONE, \
-    DOCUMENT_STATE_TODO, DOCUMENT_STATE_FOR_RESUBMISSION, DOCUMENT_STATE_NO_LIST
+from table_annotator.types import CellGrid, Table, DOCUMENT_STATE_TODO
 
 DATA_PATH = "data_path"
 
@@ -69,14 +67,14 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
             except ValueError:
                 first_todo_doc = None
 
+            num_processed_docs = \
+                len(states_counter) - states_counter[DOCUMENT_STATE_TODO]
+
             work_dir_infos.append({
                 "name": os.path.basename(work_dir),
                 "numDocuments": len(images),
-                "numDocumentsDone": states_counter[DOCUMENT_STATE_DONE],
+                "numDocumentsDone": num_processed_docs,
                 "numDocumentsTodo": states_counter[DOCUMENT_STATE_TODO],
-                "numDocumentsForResubmission":
-                    states_counter[DOCUMENT_STATE_FOR_RESUBMISSION],
-                "numDocumentsNoList": states_counter[DOCUMENT_STATE_NO_LIST],
                 "firstTodoDoc": first_todo_doc
             })
         work_dir_infos = sorted(work_dir_infos, key=lambda wdi: wdi["name"])
