@@ -32,7 +32,7 @@ def create_app(script_info: Optional[ScriptInfo] = None):
         images_as_bytes_io = [array_to_bytes_image(image)
                               for image in images]
         responses = [
-            vision_client.text_detection(
+            vision_client.document_text_detection(
                 image=image,
                 image_context={"language_hints": ["de-t-i0-handwrit"]}
             )
