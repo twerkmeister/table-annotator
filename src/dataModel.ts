@@ -24,6 +24,8 @@ export enum DataTypes {
     EINGEWIESEN_DURCH = "eingewiesen durch",
     TRANSPORT_VON = "Transport von",
     TRANSPORT_NACH = "Transport nach",
+    BESTATTUNGSDATUM = "Bestattungsdatum",
+    BESTATTUNGSORT = "Bestattungsort",
     MIT_NUMMERNABKUERZUNG = "Mit Nummernabkürzung",
     MIT_ANFUEHRUNGSZEICHEN = "Mit Anführungszeichen",
 }
