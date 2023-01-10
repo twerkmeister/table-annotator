@@ -1,6 +1,6 @@
 import argparse
 import os
-from typing import Text
+from typing import Text, Optional
 import cv2
 import table_annotator.io
 import table_annotator.cellgrid
@@ -9,7 +9,9 @@ import table_annotator.lines
 
 def extract_ocr_data(data_path: Text, target_path: Text,
                      without_corrections: bool = False,
-                     without_non_corrections: bool = False) -> None:
+                     without_non_corrections: bool = False,
+                     only_extract_type: Optional[Text] = None,
+                     window_size: int = 30) -> None:
     """Extracts ocr data points to a simpler file format."""
     image_paths = [os.path.join(data_path, image_path)
                    for image_path in table_annotator.io.list_images(data_path)]
@@ -40,6 +42,11 @@ def extract_ocr_data(data_path: Text, target_path: Text,
             cell_image_grid = table_annotator.cellgrid.get_cell_image_grid(image, t)
             for row_i in range(len(t.cells)):
                 for col_i in range(len(t.cells[row_i])):
+                    # skip those columns that don't have the desired data type
+                    if only_extract_type is not None \
+                            and only_extract_type not in ";".join(t.columnTypes[col_i]):
+                        continue
+
                     examples += 1
                     cell_text = t.cells[row_i][col_i].extract_text()
 
@@ -50,8 +57,10 @@ def extract_ocr_data(data_path: Text, target_path: Text,
                     cell_image = cell_image_grid[row_i][col_i]
                     text_lines = cell_text.split("\n")
                     if len(text_lines) == 1:
-                        line_images = \
-                            [table_annotator.lines.find_line_single(cell_image)]
+                        line_images = [table_annotator.lines.find_line_single(
+                            cell_image,
+                            window_size=window_size
+                        )]
                     else:
                         multi_line_images += 1
                         line_images = table_annotator.lines.find_lines(cell_image)
@@ -129,6 +138,14 @@ if __name__ == "__main__":
     parser.add_argument("-without_non_corrections", action="store_true", default=False,
                         help="Removes those examples that had no corrections")
 
+    parser.add_argument("-only_extract_type", default=None,
+                        help="Limit data extraction to certain table data types "
+                             "in the table. Checks whether the given type is contained."
+                             "Does not need to be an exact match")
+    parser.add_argument("-window_size", default=30, type=int,
+                        help="set the window size for the line finding heuristic.")
+
     args = parser.parse_args()
     extract_ocr_data(args.data_path, args.target_path, args.without_corrections,
-                     args.without_non_corrections)
+                     args.without_non_corrections, args.only_extract_type,
+                     args.window_size)
