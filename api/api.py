@@ -17,6 +17,7 @@ import table_annotator.io
 import table_annotator.ocr
 import table_annotator.cellgrid
 import table_annotator.column_types
+import table_annotator.pre_annotated
 from table_annotator.types import CellGrid, Table, DOCUMENT_STATE_TODO
 
 DATA_PATH = "data_path"
@@ -83,7 +84,6 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
             "workPackages": work_dir_infos
         }}
 
-
     @api.route('/<project>/<subdir>/images')
     def list_images(project: Text, subdir: Text):
         workdir = get_workdir(project, subdir)
@@ -96,11 +96,14 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
             image_path = os.path.join(workdir, image_name)
             image = table_annotator.io.read_image(image_path)
             width, height = table_annotator.img.get_dimensions(image)
+            has_pre_annotated_data = \
+                table_annotator.pre_annotated.image_has_pre_annotated_data(image_path)
             center = {"x": width // 2, "y": height // 2}
             images_with_metadata.append(
                 {"src": f"{project}/{subdir}/image/{image_name}", "width": width,
                  "height": height, "center": center,
-                 "name": image_name, "docId": os.path.splitext(image_name)[0]})
+                 "name": image_name, "docId": os.path.splitext(image_name)[0],
+                 "hasPreAnnotatedData": has_pre_annotated_data})
         return {"images": images_with_metadata}
 
     @api.route('/<project>/<subdir>/image/invert/<image_name>', methods=["POST"])
@@ -185,9 +188,11 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
 
         return tables_json
 
-    @api.route('/<project>/<subdir>/<image_name>/predict_table_structure/<int:table_id>',
-               methods=["GET"])
-    def predict_table_structure(project: Text, subdir: Text, image_name: Text, table_id: int):
+    @api.route(
+        '/<project>/<subdir>/<image_name>/predict_table_structure/<int:table_id>',
+        methods=["GET"])
+    def predict_table_structure(project: Text, subdir: Text, image_name: Text,
+                                table_id: int):
         workdir = get_workdir(project, subdir)
         image_path = os.path.join(workdir, image_name)
         if not os.path.isfile(image_path):
@@ -236,13 +241,37 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
                 table_annotator.column_types.guess_column_types(image_path,
                                                                 tables, table_id)
 
-
         updated_cells = table_annotator.ocr.table_ocr(image, table)
 
         return {"cells": table_annotator.cellgrid.apply_to_cells(
             lambda c: {k: v for k, v in c.dict().items() if v is not None},
             updated_cells),
-                "columnTypes": column_types}
+            "columnTypes": column_types}
+
+    @api.route(
+        '/<project>/<subdir>/<image_name>/apply_pre_annotated_table_content/<int:table_id>',
+        methods=["GET"])
+    def apply_pre_annotated_table_content(project: Text, subdir: Text,
+                                          image_name: Text, table_id: int):
+        workdir = get_workdir(project, subdir)
+        image_path = os.path.join(workdir, image_name)
+
+        if not os.path.isfile(image_path):
+            return make_response({"msg": "The image does not exist."}, 404)
+
+        tables = table_annotator.io.read_tables_for_image(image_path)
+
+        if table_id not in set(range(len(tables))):
+            return make_response({"msg": "The table does not exist."}, 404)
+
+        table = tables[table_id]
+
+        updated_cells = \
+            table_annotator.pre_annotated.apply_pre_annotated_csv(image_path, table)
+
+        return {"cells": table_annotator.cellgrid.apply_to_cells(
+            lambda c: {k: v for k, v in c.dict().items() if v is not None},
+            updated_cells)}
 
     @api.route('/<project>/<subdir>/<image_name>/cell_image/<int:table_id>/<int:row>/'
                '<int:col>/<int:table_hash>',
@@ -270,6 +299,7 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
 
             def to_pil_img(cell_img: np.ndarray):
                 return PIL.Image.fromarray(cell_img.astype('uint8'))
+
             cell_image_grid = table_annotator.cellgrid.apply_to_cells(to_pil_img,
                                                                       cell_image_grid)
 

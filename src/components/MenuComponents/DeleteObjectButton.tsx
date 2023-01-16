@@ -39,7 +39,9 @@ const DeleteObjectButton = () => {
     }
 
     return <Tooltip title="Ausgewähltes Objekt löschen (Rücktaste)">
-        <Button disabled={disabled} variant="contained" onClick={handleClick}><DeleteIcon/></Button>
+        <span>
+            <Button disabled={disabled} variant="contained" onClick={handleClick}><DeleteIcon/></Button>
+        </span>
     </Tooltip>
 }
 

@@ -17,7 +17,9 @@ const NextDocumentButton = () => {
     }
 
     return <Tooltip title="Nächstes Dokument (n)">
-        <Button disabled={disabled} variant="contained" onClick={handleClick}><SkipNext/></Button>
+        <span>
+            <Button disabled={disabled} variant="contained" onClick={handleClick}><SkipNext/></Button>
+        </span>
     </Tooltip>
 }
 

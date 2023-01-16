@@ -15,7 +15,9 @@ const TurnSlightLeftButton = () => {
     }
 
     return <Tooltip title="Dokument leicht gegen den Uhrzeigersinn drehen (q)">
-        <Button disabled={disabled} variant="contained" onClick={handleClick}><RotateLeftIcon/></Button>
+        <span>
+            <Button disabled={disabled} variant="contained" onClick={handleClick}><RotateLeftIcon/></Button>
+        </span>
     </Tooltip>
 }
 

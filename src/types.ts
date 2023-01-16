@@ -21,6 +21,7 @@ export type Image = {
     center: Point,
     name: string
     docId: string
+    hasPreAnnotatedData: boolean
     temporaryParameters?: TempImageParameters
 }
 

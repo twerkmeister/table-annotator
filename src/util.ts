@@ -28,6 +28,10 @@ export function doesTableNeedOcr(table: Table): boolean {
     return false
 }
 
+export function doesTableHaveTypes(table: Table): boolean {
+    return table.columnTypes.reduce((acc, val) => acc + val.length, 0) > 0
+}
+
 export function hashTable(table: Table): number {
     const cleanedCells = table.cells.map((row, i) => {
         return row.map((cell, j) => {

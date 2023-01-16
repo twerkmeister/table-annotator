@@ -16,6 +16,7 @@ import SetOCRViewButton from "./MenuComponents/SetOCRViewButton";
 import DeleteObjectButton from "./MenuComponents/DeleteObjectButton";
 import ShowHelpRasterizationButton from "./MenuComponents/ShowHelpRasterizationButton";
 import PositionDisplay from "./MenuComponents/PositionDisplay";
+import ApplyPreAnnotatedDataButton from "./MenuComponents/ApplyPreAnnotatedDataButton";
 
 
 const AnnotatorMenu = () => {
@@ -35,6 +36,7 @@ const AnnotatorMenu = () => {
         <TurnRightButton/>
         <SegmentTableButton/>
         <SetOCRViewButton/>
+        <ApplyPreAnnotatedDataButton/>
         <DeleteObjectButton/>
         {<SyncIndicator style={{background: isInSync ? "forestgreen" : "yellow"}}>💾</SyncIndicator>}
     </Box>)

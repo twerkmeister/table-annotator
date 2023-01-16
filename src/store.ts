@@ -1,6 +1,6 @@
 import create from "zustand";
 import {getDataDir, getDocId, getProject} from "./path";
-import {CellIndex, Image, Point, Table, TempImageParameters, UnfinishedTable} from "./types";
+import {Cell, CellIndex, Image, Point, Table, TempImageParameters, UnfinishedTable} from "./types";
 import {
     addPoints,
     makeRectangle,
@@ -10,10 +10,11 @@ import {
     height,
     transposeCells
 } from "./geometry";
-import {doesTableNeedOcr} from "./util";
+import {doesTableHaveTypes, doesTableNeedOcr} from "./util";
 import {APIAddress} from "./api";
 import axios from "axios";
 import {DocumentStateKeyStrings} from "./documentStates";
+import _ from "lodash";
 
 
 const makeTemporaryImageParameters = (inverted: boolean = false, rotationSteps: number = 0): TempImageParameters => {
@@ -118,6 +119,7 @@ export type AnnotatorState = {
     invertImage: () => void
     rotateImage90: () => void
     setDocumentState: (documentState: DocumentStateKeyStrings) => void
+    applyPreAnnotatedData: () => void
 }
 
 export const useStore = create<AnnotatorState>((set, get) => ({
@@ -760,7 +762,12 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         if(relevantRow === undefined) return
         const relevantCell = relevantRow[j]
         if(relevantCell === undefined) return
-        const newCell = {...relevantCell, human_text: text}
+        const newCell: Cell = {...relevantCell, human_text: text}
+        if (newCell.human_text === newCell.ocr_text) {
+            delete newCell.human_text
+        }
+        if (_.isEqual(newCell, relevantCell)) return
+        
         const newCellRow = [...relevantRow.slice(0, j), newCell, ...relevantRow.slice(j + 1)]
         const newCells = [...table.cells.slice(0, i), newCellRow, ...table.cells.slice(i + 1)]
         const newTable = {...table, cells: newCells}
@@ -932,6 +939,38 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             {"state": documentState})
         if (response.status === 200) {
             set({documentState})
+        }
+    },
+    applyPreAnnotatedData: async() => {
+        if (!get().isInSync) return
+        const tables = get().tables
+        const selectedTable = get().selectedTable
+        const images = get().images
+        const currentImageIndex = get().currentImageIndex
+        if (selectedTable === undefined ||
+            images === undefined) return
+        const image = images[currentImageIndex]
+        const table = tables[selectedTable]
+        if (image === undefined ||
+            table === undefined ||
+            !doesTableHaveTypes(table)) return
+
+        const project = getProject()
+        const dataDir = getDataDir()
+        if (project === undefined || dataDir === undefined) return
+        get().resetSelection()
+        const response =
+            await fetch(`${APIAddress}/${project}/${dataDir}/${image.name}/apply_pre_annotated_table_content/${selectedTable}`)
+        if (response.status === 200) {
+            const responseJSON = await response.json()
+            const updatedCells = responseJSON["cells"]
+            const newTables = [...tables.slice(0, selectedTable), {
+                ...table,
+                cells: updatedCells,
+                structureLocked: true
+            },
+                ...tables.slice(selectedTable + 1)]
+            set({tables: newTables})
         }
     }
 }))

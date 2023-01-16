@@ -19,7 +19,9 @@ const SetOCRViewButton = () => {
     const title = ocrView ? "OCR-Modus verlassen (o)" : "In den OCR-Modus wechseln (o)"
 
     return <Tooltip title={title}>
-        <Button disabled={disabled} variant="contained" onClick={handleClick}><AbcIcon/></Button>
+        <span>
+            <Button disabled={disabled} variant="contained" onClick={handleClick}><AbcIcon/></Button>
+        </span>
     </Tooltip>
 }
 

@@ -15,7 +15,9 @@ const InvertDocumentButton = () => {
     }
 
     return <Tooltip title="Dokument invertieren (i)">
-        <Button disabled={disabled} variant="contained" onClick={handleClick}><InvertColorsIcon/></Button>
+        <span>
+            <Button disabled={disabled} variant="contained" onClick={handleClick}><InvertColorsIcon/></Button>
+        </span>
     </Tooltip>
 }
 

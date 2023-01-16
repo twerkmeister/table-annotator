@@ -18,7 +18,9 @@ const ShowHelpRasterizationButton = () => {
     }
 
     return <Tooltip title="Hilfsraster anzeigen (r)">
-        <Button disabled={disabled} variant="contained" onClick={handleClick}><TagIcon/></Button>
+        <span>
+            <Button disabled={disabled} variant="contained" onClick={handleClick}><TagIcon/></Button>
+        </span>
     </Tooltip>
 }
 

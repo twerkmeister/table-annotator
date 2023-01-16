@@ -16,7 +16,9 @@ const TurnRightButton = () => {
     }
 
     return <Tooltip title="Dokument 90° im Uhrzeigersinn drehen (u)">
-        <Button disabled={disabled} variant="contained" onClick={handleClick}><TurnRightIcon/></Button>
+        <span>
+            <Button disabled={disabled} variant="contained" onClick={handleClick}><TurnRightIcon/></Button>
+        </span>
     </Tooltip>
 }
 

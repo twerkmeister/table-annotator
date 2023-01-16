@@ -16,7 +16,9 @@ const PreviousDocumentButton = () => {
     }
 
     return <Tooltip title="Vorheriges Dokument (b)">
-        <Button disabled={disabled} variant="contained" onClick={handleClick}><SkipPreviousIcon/></Button>
+        <span>
+            <Button disabled={disabled} variant="contained" onClick={handleClick}><SkipPreviousIcon/></Button>
+        </span>
     </Tooltip>
 }
 

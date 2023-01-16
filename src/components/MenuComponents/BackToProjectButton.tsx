@@ -11,7 +11,9 @@ const BackToProjectButton = () => {
     }
 
     return <Tooltip title="Zurück zum Projektordner">
-        <Button variant="contained" onClick={handleClick}><AssignmentReturnIcon/></Button>
+        <span>
+            <Button variant="contained" onClick={handleClick}><AssignmentReturnIcon/></Button>
+        </span>
     </Tooltip>
 }
 

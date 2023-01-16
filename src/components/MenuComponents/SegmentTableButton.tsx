@@ -17,7 +17,9 @@ const SegmentTableButton = () => {
     }
 
     return <Tooltip title="Tabellenzeilen automatisch finden (z)">
-        <Button disabled={disabled} variant="contained" onClick={handleClick}><SubjectIcon/></Button>
+        <span>
+            <Button disabled={disabled} variant="contained" onClick={handleClick}><SubjectIcon/></Button>
+        </span>
     </Tooltip>
 }
 
