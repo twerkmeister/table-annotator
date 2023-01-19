@@ -38,6 +38,6 @@ export function hashTable(table: Table): number {
             return {...cell, ocr_text: undefined, human_text: undefined}
         })
     })
-    const cleanedTable = {...table, cells: cleanedCells, structureLocked: false, columnTypes: []}
+    const cleanedTable = {...table, cells: cleanedCells, structureLocked: false, columnTypes: [], virtualValues: []}
     return cyrb53(JSON.stringify(cleanedTable))
 }

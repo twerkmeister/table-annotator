@@ -56,4 +56,10 @@ export type Table = {
     cells: Cell[][],
     structureLocked: boolean,
     columnTypes: string[][],
+    virtualValues?: VirtualValue[]
+}
+
+export type VirtualValue = {
+    label?: string
+    value?: string
 }

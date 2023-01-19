@@ -72,15 +72,16 @@ type MultiSelectProps = {
     width : number,
     items : Item[],
     selectedItems : string[],
-    onChange : (items: string[]) => void
+    onChange : (items: string[]) => void,
+    max_num_selection?: number
 }
 
-const MultiSelect = ({title, width, items, selectedItems, onChange}: MultiSelectProps) => {
+const MultiSelect = ({title, width, items, selectedItems, onChange, max_num_selection}: MultiSelectProps) => {
     const [opened, setOpened] = React.useState(false)
 
     const changeList = (selectedItems: string[], item: string) => {
         const index = selectedItems.indexOf(item)
-        if(index < 0) {
+        if(index < 0 && (max_num_selection === undefined || selectedItems.length < max_num_selection)) {
             onChange([...selectedItems, item])
         } else {
             onChange([...selectedItems.slice(0, index), ...selectedItems.slice(index+1)])

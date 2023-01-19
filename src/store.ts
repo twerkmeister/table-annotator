@@ -120,6 +120,10 @@ export type AnnotatorState = {
     rotateImage90: () => void
     setDocumentState: (documentState: DocumentStateKeyStrings) => void
     applyPreAnnotatedData: () => void
+    addVirtualValue: () => void
+    setVirtualValueType: (valueIndex: number, label?: string) => void
+    deleteVirtualValue: (valueIdnex: number) => void
+    setVirtualValue: (valueIndex: number, value: string) => void
 }
 
 export const useStore = create<AnnotatorState>((set, get) => ({
@@ -972,5 +976,97 @@ export const useStore = create<AnnotatorState>((set, get) => ({
                 ...tables.slice(selectedTable + 1)]
             set({tables: newTables})
         }
-    }
+    },
+    addVirtualValue: () => {
+        if (!get().isInSync) return
+        const tables = get().tables
+        const selectedTable = get().selectedTable
+        const images = get().images
+        const currentImageIndex = get().currentImageIndex
+        if (selectedTable === undefined ||
+            images === undefined) return
+        const image = images[currentImageIndex]
+        const table = tables[selectedTable]
+        if (image === undefined ||
+            table === undefined) return
+        const newVirtualValues = table.virtualValues ? [...table.virtualValues, {}] : [{}]
+        const newTable = {...table, virtualValues: newVirtualValues}
+        const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
+        set({tables: newTables})
+    },
+    setVirtualValueType: (valueIndex: number, label?: string) => {
+        if (!get().isInSync) return
+        const tables = get().tables
+        const selectedTable = get().selectedTable
+        const images = get().images
+        const currentImageIndex = get().currentImageIndex
+        if (selectedTable === undefined ||
+            images === undefined) return
+        const image = images[currentImageIndex]
+        const table = tables[selectedTable]
+        if (image === undefined ||
+            table === undefined ||
+            table.virtualValues === undefined) return
+        const virtualValue = table.virtualValues[valueIndex]
+        if (virtualValue === undefined) return
+
+        const newVirtualValues = [
+            ...table.virtualValues.slice(0, valueIndex),
+            {...virtualValue, label},
+            ...table.virtualValues.slice(valueIndex+1)
+        ]
+        const newTable = {...table, virtualValues: newVirtualValues}
+        const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
+        set({tables: newTables})
+    },
+    deleteVirtualValue: (valueIndex: number) => {
+        if (!get().isInSync) return
+        const tables = get().tables
+        const selectedTable = get().selectedTable
+        const images = get().images
+        const currentImageIndex = get().currentImageIndex
+        if (selectedTable === undefined ||
+            images === undefined) return
+        const image = images[currentImageIndex]
+        const table = tables[selectedTable]
+        if (image === undefined ||
+            table === undefined ||
+            table.virtualValues === undefined) return
+        const virtualValue = table.virtualValues[valueIndex]
+        if (virtualValue === undefined) return
+
+        const newVirtualValues = [
+            ...table.virtualValues.slice(0, valueIndex),
+            ...table.virtualValues.slice(valueIndex+1)
+        ]
+        const newTable = {...table, virtualValues: newVirtualValues}
+        const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
+        set({tables: newTables})
+    },
+    setVirtualValue: (valueIndex: number, value: string) => {
+        if (!get().isInSync) return
+        const tables = get().tables
+        const selectedTable = get().selectedTable
+        const images = get().images
+        const currentImageIndex = get().currentImageIndex
+        if (selectedTable === undefined ||
+            images === undefined) return
+        const image = images[currentImageIndex]
+        const table = tables[selectedTable]
+        if (image === undefined ||
+            table === undefined ||
+            table.virtualValues === undefined) return
+        const virtualValue = table.virtualValues[valueIndex]
+        if (virtualValue === undefined) return
+
+        const newVirtualValues = [
+            ...table.virtualValues.slice(0, valueIndex),
+            {...virtualValue, value},
+            ...table.virtualValues.slice(valueIndex+1)
+        ]
+        const newTable = {...table, virtualValues: newVirtualValues}
+        const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
+        set({tables: newTables})
+    },
+
 }))

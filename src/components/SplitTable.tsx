@@ -9,15 +9,17 @@ import {doesTableNeedOcr, hashTable} from "../util";
 import {calculateCellRectangle} from "../geometry";
 import {APIAddress} from "../api";
 import DataTypesDeleteButton from "./DataTypesDeleteButton";
+import SplitTableHeader from "./SplitTableHeader";
 
 const DataRow = styled.div`
     display: flex;
 `
 
-const SplitTableDiv = styled.div`
+const SplitTableContainer = styled.div`
     margin: 0 auto;
     width: min-content;
 `
+
 
 const DataInput = styled.textarea`
     resize: none;
@@ -54,7 +56,8 @@ const SplitTable = ({imageName}: SplitTableProps) => {
     }
 
     return (
-        <SplitTableDiv>
+        <SplitTableContainer>
+            <SplitTableHeader/>
             {table.cells.map((row, i) => {
                 return (
                     <DataRow key={`${i}_row`}>
@@ -102,7 +105,7 @@ const SplitTable = ({imageName}: SplitTableProps) => {
                 )
             })
             }
-        </SplitTableDiv>
+        </SplitTableContainer>
     )
 }
 
