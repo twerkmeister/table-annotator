@@ -36,10 +36,19 @@ def extract_people_data(data_path: Text, target_path: Text) -> None:
             if len(needs_ocr) > 0:
                 continue
 
+            valid_virtual_values = [v for v in t.virtualValues or []
+                                    if v.value and v.label]
+            if len(valid_virtual_values) > 0:
+                virtual_values, virtual_types = zip(*[(v.value, v.label)
+                                                      for v in valid_virtual_values])
+            else:
+                virtual_values, virtual_types = [], []
+
             target_csv_path = os.path.join(target_path, f"{image_name}_{t_i}.csv")
             with open(target_csv_path, "w") as out:
                 writer = csv.writer(out, dialect="unix+")
-                writer.writerow([";".join(types) for types in t.columnTypes])
+                writer.writerow([";".join(types) for types in t.columnTypes]
+                                + list(virtual_types))
                 text_rows = \
                     table_annotator.cellgrid.apply_to_cells(lambda c: c.extract_text(),
                                                             t.cells)
@@ -47,12 +56,15 @@ def extract_people_data(data_path: Text, target_path: Text) -> None:
                                                                     text_rows)
                 text_rows = table_annotator.cellgrid.apply_to_cells(replace_at_symbol,
                                                                     text_rows)
-                writer.writerows(text_rows)
+                for text_row in text_rows:
+                    writer.writerow(text_row + list(virtual_values))
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Extracts the people's data as csv")
+    parser = argparse.ArgumentParser(
+        description="Extracts the people's data as csv")
     parser.add_argument("data_path",
+
                         help='Path to the folder which you want to extract. '
                              'Needs to be a workdir of the server, '
                              'i.e. a folder containing images.')

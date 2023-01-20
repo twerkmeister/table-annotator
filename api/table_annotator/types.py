@@ -43,6 +43,11 @@ class Cell(BaseModel):
             else self.ocr_text
 
 
+class VirtualValue(BaseModel):
+    label: Optional[str]
+    value: Optional[str]
+
+
 class Table(BaseModel):
     outline: Rectangle
     rotationDegrees: float
@@ -51,6 +56,7 @@ class Table(BaseModel):
     cells: CellGrid[Cell]
     structureLocked: bool
     columnTypes: Optional[List[List[Text]]]
+    virtualValues: Optional[List[VirtualValue]]
 
     def __hash__(self) -> int:
         cells = tuple([cell for row in self.cells for cell in row])
