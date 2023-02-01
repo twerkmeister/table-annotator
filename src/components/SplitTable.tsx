@@ -25,6 +25,12 @@ const DataInput = styled.textarea`
     resize: none;
     background: lightgray;
     font-size: 18px;
+    padding: 1px;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
 `
 
 type SplitTableProps = {
@@ -69,7 +75,7 @@ const SplitTable = ({imageName}: SplitTableProps) => {
                                         {i !== 0 ? null : <div key={`${j}_datatype_selector`}>
                                                 <MultiSelect
                                                     title={columnTypes[j].map((t) => DataTypes[t as keyof typeof DataTypes]).join(", ")}
-                                                    width={width(cellRectangle)}
+                                                    width={Math.max(width(cellRectangle), 25)}
                                                     items={DataTypesOptions}
                                                     selectedItems={columnTypes[j]}
                                                     onChange={onChangeType(j)}
@@ -89,8 +95,8 @@ const SplitTable = ({imageName}: SplitTableProps) => {
                                             <div key={`${i}_${j}_cell_text_box`}>
                                                 <DataInput
                                                           defaultValue={cell.human_text || cell.ocr_text}
-                                                          style={{width: `${width(cellRectangle)-6}px`,
-                                                              height: `${Math.round(Math.max(height(cellRectangle)*1.3-6, 20))}px`}}
+                                                          style={{width: `${Math.max(width(cellRectangle)-4, 25)}px`,
+                                                              height: `${Math.round(Math.max(height(cellRectangle)*1.3-4, 20))}px`}}
                                                           onBlur={handleInputOnBlur(i, j)}
                                                           // little hack to update default cell text when ocr text changes
                                                           key={`${i}_${j}_cell_text_${cell.ocr_text}`}
