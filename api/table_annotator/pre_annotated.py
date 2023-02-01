@@ -44,9 +44,10 @@ def transform_birthdate(date_normalized: str) -> str:
     return f"{dt.day}.{dt.month}.{dt.year%100:02d}"
 
 
-def apply_pre_annotated_csv(image_path: str, table: Table) -> CellGrid[Cell]:
+def apply_pre_annotated_csv(image_path: str, table: Table, offset: int = 0) -> CellGrid[Cell]:
     lines = read_pre_annotated_csv(image_path)
     cells = table.cells
+    required_lines = list(range(offset, offset+len(cells)))
 
     last_name_column = find_column(table, KEY_LAST_NAME_ANNOTATOR)
     first_name_column = find_column(table, KEY_FIRST_NAME_ANNOTATOR)
@@ -54,7 +55,10 @@ def apply_pre_annotated_csv(image_path: str, table: Table) -> CellGrid[Cell]:
     birthdate_column = find_column(table, KEY_DATE_OF_BIRTH_ANNOTATOR)
 
     for line in lines:
-        row = cells[int(line[KEY_ORDER])]
+        key = int(line[KEY_ORDER])
+        if key not in required_lines:
+            continue
+        row = cells[key-offset]
         if last_name_column is not None and last_name_column == first_name_column:
             last_name_index = table.columnTypes[last_name_column].index(
                 KEY_LAST_NAME_ANNOTATOR)

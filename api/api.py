@@ -265,9 +265,13 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
             return make_response({"msg": "The table does not exist."}, 404)
 
         table = tables[table_id]
-
+        previous_tables = tables[:table_id]
+        offset = 0
+        for t in previous_tables:
+            offset += len(t.cells) if t.cells else 0
         updated_cells = \
-            table_annotator.pre_annotated.apply_pre_annotated_csv(image_path, table)
+            table_annotator.pre_annotated.apply_pre_annotated_csv(image_path,
+                                                                  table, offset)
 
         return {"cells": table_annotator.cellgrid.apply_to_cells(
             lambda c: {k: v for k, v in c.dict().items() if v is not None},
