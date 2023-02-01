@@ -1,22 +1,24 @@
 from typing import Text, Any, List, Dict, Optional
 import json
 import os
+from filelock import FileLock
 
 import cv2
 import numpy as np
-import PIL
 from table_annotator.types import Table, DocumentState, DOCUMENT_STATE_TODO
 import table_annotator.cellgrid
 
 
 def read_json(file_path: Text) -> Any:
-    with open(file_path, encoding="utf-8", mode="r") as f:
-        return json.load(f)
+    with FileLock(f"{file_path}.lock"):
+        with open(file_path, encoding="utf-8", mode="r") as f:
+            return json.load(f)
 
 
 def write_json(file_path: Text, obj: Any) -> None:
-    with open(file_path, "w", encoding="utf-8") as out:
-        json.dump(obj, out, ensure_ascii=False, indent=4)
+    with FileLock(f"{file_path}.lock"):
+        with open(file_path, "w", encoding="utf-8") as out:
+            json.dump(obj, out, ensure_ascii=False, indent=4)
 
 
 def read_tables(file_path: Text) -> List[Table]:
@@ -54,20 +56,14 @@ def write_state_for_image(image_path: Text, state: Text) -> None:
 
 def read_image(image_path: Text) -> np.ndarray:
     """Reads an image from disc."""
-    return cv2.imread(image_path)
+    with FileLock(f"{image_path}.lock"):
+        return cv2.imread(image_path)
 
 
 def write_image(file_path: Text, image: np.ndarray) -> None:
     """Writes image to disc."""
-    cv2.imwrite(file_path, image)
-
-
-def get_image_dpi(image_path: Text) -> int:
-    im = PIL.Image.open(image_path)
-    if "dpi" in im.info:
-        return im.info['dpi'][0]
-    else:
-        return 150
+    with FileLock(f"{file_path}.lock"):
+        cv2.imwrite(file_path, image)
 
 
 def list_images(path: Text) -> List[Text]:
