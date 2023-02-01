@@ -891,6 +891,8 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         if (image === undefined) return
         const project = getProject()
         const dataDir = getDataDir()
+        const tables = get().tables
+        if (tables.length > 0) return
 
         const response = await axios.post(`${APIAddress}/${project}/${dataDir}/image/invert/${image.name}`,
             {})

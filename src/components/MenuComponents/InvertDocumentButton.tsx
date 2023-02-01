@@ -8,7 +8,8 @@ const InvertDocumentButton = () => {
     const images = useStore(state => state.images)
     const invertImage = useStore(state => state.invertImage)
     const ocrView = useStore(state => state.ocrView)
-    const disabled = images === undefined || ocrView
+    const tables = useStore(state => state.tables)
+    const disabled = images === undefined || ocrView || tables.length > 0
     const handleClick = () => {
         if (disabled) return
         invertImage()
