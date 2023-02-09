@@ -1,6 +1,7 @@
 
 export enum DataTypes {
     LAUFENDE_NUMMER = "Laufende Nummer",
+    UNBESTIMMT = "Unbestimmt",
     NACHNAME = "Nachname",
     VORNAME = "Vorname",
     BERUF = "Beruf",
