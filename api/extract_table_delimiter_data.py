@@ -24,7 +24,9 @@ def line_based_height(lines: int) -> Callable[[int, int, List[int]], int]:
     return internal
 
 
-def extract_table_delimiter_data(data_path: Text, target_path: Text) -> None:
+def extract_table_delimiter_data(data_path: Text,
+                                 target_path: Text,
+                                 with_debug_line: bool = False) -> None:
     """Extracts training data for table segmentation."""
 
     image_paths = table_annotator.io.list_images(data_path)
@@ -88,17 +90,22 @@ def extract_table_delimiter_data(data_path: Text, target_path: Text) -> None:
                     continue
 
                 row_task_image = np.copy(row_task_image)
-                cv2.line(row_task_image,
-                         (0, row_task_targets[0]),
-                         (row_task_image.shape[1], row_task_targets[0]),
-                         (0, 255, 0),
-                         thickness=1)
+                if with_debug_line:
+                    cv2.line(row_task_image,
+                             (0, row_task_targets[0]),
+                             (row_task_image.shape[1], row_task_targets[0]),
+                             (0, 255, 0),
+                             thickness=1)
 
                 row_task_image_path = os.path.join(target_path,
                                                    f"{row_task_identifier}.jpg")
                 row_task_targets_path = os.path.join(target_path,
                                                      f"{row_task_identifier}.txt")
-                table_annotator.io.write_image(row_task_image_path, row_task_image)
+                try:
+                    table_annotator.io.write_image(row_task_image_path, row_task_image)
+                except cv2.error as e:
+                    print(f"Table {table_identifier} has an issue")
+                    continue
 
                 with open(row_task_targets_path, mode="w", encoding="utf-8") as rows_f:
                     rows_f.write(",".join([str(j) for j in row_task_targets]))
@@ -118,5 +125,9 @@ if __name__ == "__main__":
                         help='Path to the folder where you want to store the extracted '
                              'data')
 
+    parser.add_argument("-with_debug_line", action="store_true", default=False,
+                        help="Puts a green line for debugging the data in the "
+                             "resulting images")
+
     args = parser.parse_args()
-    extract_table_delimiter_data(args.data_path, args.target_path)
+    extract_table_delimiter_data(args.data_path, args.target_path, args.with_debug_line)
