@@ -40,8 +40,11 @@ def find_column(table: Table, column_type: str) -> Optional[int]:
         return None
 
 def transform_birthdate(date_normalized: str) -> str:
-    dt = datetime.datetime.strptime(date_normalized, '%Y%m%d')
-    return f"{dt.day}.{dt.month}.{dt.year%100:02d}"
+    try:
+        dt = datetime.datetime.strptime(date_normalized, '%Y%m%d')
+        return f"{dt.day}.{dt.month}.{dt.year%100:02d}"
+    except ValueError:
+        return "@"
 
 
 def apply_pre_annotated_csv(image_path: str, table: Table, offset: int = 0) -> CellGrid[Cell]:
