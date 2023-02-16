@@ -16,6 +16,7 @@ KEY_LAST_NAME_ANNOTATOR = "NACHNAME"
 KEY_FIRST_NAME_ANNOTATOR = "VORNAME"
 KEY_PRISONER_NUMBER_ANNOTATOR = "HAEFTLINGSNUMMER"
 KEY_DATE_OF_BIRTH_ANNOTATOR = "GEBURTSDATUM"
+KEY_BIRTH_PLACE_ANNOTATOR = "GEBURTSORT"
 
 
 def image_has_pre_annotated_data(image_path: str) -> bool:
@@ -56,13 +57,15 @@ def apply_pre_annotated_csv(image_path: str, table: Table, offset: int = 0) -> C
     first_name_column = find_column(table, KEY_FIRST_NAME_ANNOTATOR)
     prisoner_number_column = find_column(table, KEY_PRISONER_NUMBER_ANNOTATOR)
     birthdate_column = find_column(table, KEY_DATE_OF_BIRTH_ANNOTATOR)
+    birthplace_colum = find_column(table, KEY_BIRTH_PLACE_ANNOTATOR)
 
     for line in lines:
         key = int(line[KEY_ORDER])
         if key not in required_lines:
             continue
         row = cells[key-offset]
-        if last_name_column is not None and last_name_column == first_name_column:
+        if last_name_column is not None and last_name_column == first_name_column \
+                and KEY_LAST_NAME in line and KEY_FIRST_NAME in line:
             last_name_index = table.columnTypes[last_name_column].index(
                 KEY_LAST_NAME_ANNOTATOR)
             first_name_index = table.columnTypes[last_name_column].index(
@@ -73,15 +76,18 @@ def apply_pre_annotated_csv(image_path: str, table: Table, offset: int = 0) -> C
                 text = f"{line[KEY_FIRST_NAME].title()} {line[KEY_LAST_NAME].title()}"
             row[last_name_column].ocr_text = text
         else:
-            if last_name_column is not None:
+            if last_name_column is not None and KEY_LAST_NAME in line:
                 row[last_name_column].ocr_text = line[KEY_LAST_NAME].title()
-            if first_name_column is not None:
+            if first_name_column is not None and KEY_FIRST_NAME in line:
                 row[first_name_column].ocr_text = line[KEY_FIRST_NAME].title()
 
-        if prisoner_number_column is not None:
+        if prisoner_number_column is not None and KEY_PRISONER_NUMBER in line:
             row[prisoner_number_column].ocr_text = line[KEY_PRISONER_NUMBER]
-        if birthdate_column is not None:
+        if birthdate_column is not None and KEY_DATE_OF_BIRTH in line:
             row[birthdate_column].ocr_text = \
                 transform_birthdate(line[KEY_DATE_OF_BIRTH])
+
+        if birthplace_colum is not None and KEY_BIRTH_PLACE in line:
+            row[birthplace_colum].ocr_text = line[KEY_BIRTH_PLACE].title()
 
     return cells
