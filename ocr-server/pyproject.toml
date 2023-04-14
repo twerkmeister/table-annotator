@@ -5,8 +5,8 @@ description = ""
 authors = ["Thomas Werkmeister <thomas@werkmeister.me>"]
 
 [tool.poetry.dependencies]
-python = "^3.7"
-calamari-ocr = "^2.1.4"
+python = "^3.9"
+calamari-ocr = "^2.2.2"
 Flask = "^2.0.2"
 Flask-Cors = "^3.0.10"
 python-dotenv = "^0.19.2"
