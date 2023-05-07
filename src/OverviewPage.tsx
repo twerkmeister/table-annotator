@@ -1,6 +1,18 @@
 import create from "zustand";
-import {useEffect} from "react";
+import React, {useEffect} from "react";
 import {APIAddress} from "./api";
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
+import Link from '@mui/material/Link';
+import Container from '@mui/material/Container';
+import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 
 export type OverviewPageState = {
     projectNames?: string[]
@@ -27,19 +39,42 @@ function OverviewPage() {
     })
     if (projectNames !== undefined) {
         return (
-            <div style={{textAlign: "center", color: "lightgrey"}}>
-                <h2>Table Annotator</h2>
-                <div>
-                    {projectNames.map((name, i) => {
-                        return (<div key={i}>
-                            <a className="projectLink" href={name}>→{name}←</a>
-                        </div>)
-                    })}
-                </div>
-            </div>
+            <Container maxWidth="sm" style={{"textAlign": "center"}}>
+                <Paper>
+                    <Typography variant="h5" gutterBottom>
+                        Table Annotator
+                    </Typography>
+                </Paper>
+                <TableContainer component={Paper}>
+                    <Table sx={{ minWidth: 350, maxWidth: 650}} aria-label="packages">
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Projekt</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {projectNames.map((name, i) => (
+                                <TableRow
+                                    key={i}
+                                    sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                                >
+                                    <TableCell component="th" scope="row">
+                                        <Link href={name}
+                                              underline="hover">
+                                            {name}
+                                        </Link>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            </Container>
         )
     } else {
-        return <div>"Loading..."</div>
+        return <Box sx={{ display: 'flex' }}>
+            <CircularProgress />
+        </Box>
     }
 
 }

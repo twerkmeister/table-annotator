@@ -63,7 +63,7 @@ const SplitTable = ({imageName}: SplitTableProps) => {
 
     return (
         <SplitTableContainer>
-            <SplitTableHeader/>
+             <SplitTableHeader/>
             {table.cells.map((row, i) => {
                 return (
                     <DataRow key={`${i}_row`}>
@@ -94,7 +94,7 @@ const SplitTable = ({imageName}: SplitTableProps) => {
                                             </div>
                                             <div key={`${i}_${j}_cell_text_box`}>
                                                 <DataInput
-                                                          defaultValue={cell.human_text || cell.ocr_text}
+                                                          defaultValue={cell.human_text !== undefined ? cell.human_text : cell.ocr_text}
                                                           style={{width: `${Math.max(width(cellRectangle)-4, 25)}px`,
                                                               height: `${Math.round(Math.max(height(cellRectangle)*1.3-4, 20))}px`}}
                                                           onBlur={handleInputOnBlur(i, j)}

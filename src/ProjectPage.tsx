@@ -1,7 +1,22 @@
 import create from "zustand";
-import {useEffect} from "react";
+import React, {useEffect} from "react";
 import {APIAddress} from "./api";
 import {getProject} from "./path";
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
+import Link from '@mui/material/Link';
+import Container from '@mui/material/Container';
+import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+
+import BackToOverviewButton from "./components/MenuComponents/BackToOverviewButton";
+
 
 export type WorkPackage = {
     name: string,
@@ -51,26 +66,73 @@ function ProjectPage() {
         const totalNumDocumentsWithTables = currentProject.workPackages.map(
             (wp, i) => wp.numDocuments-wp.numDocumentsTodo).reduce((a, b) => a + b, 0)
         return (
-            <div style={{textAlign: "center", color: "lightgrey"}}>
-                <h2>{currentProject.name}</h2>
-                <p>{totalNumDocumentsWithTables} / {totalNumDocuments}</p>
-                <table style={{margin: "0 auto"}}>
-                    <tbody>
-                    {currentProject.workPackages.map((wp, i) => {
-                        return (<tr key={i}>
-                            <td style={{textAlign: "right"}}><a className="workPackageLink"
-                                   href={currentProject.name + "/" + wp.name}>→{wp.name}←</a></td>
-                            <td>{wp.numDocuments-wp.numDocumentsTodo} / {wp.numDocuments}</td>
-                        </tr>)
-                    })}
-                    </tbody>
-                </table>
+            <div style={{paddingTop: "50px"}}>
+                <ProjectMenu/>
+            <Container maxWidth="sm" style={{"textAlign": "center"}}>
+                <Paper>
+                    <Typography variant="h5" gutterBottom>
+                        {currentProject.name}
+                    </Typography>
+                    <Typography variant="subtitle1" gutterBottom>
+                        {totalNumDocumentsWithTables} / {totalNumDocuments}
+                    </Typography>
+                </Paper>
+                <TableContainer component={Paper}>
+                    <Table sx={{ minWidth: 350, maxWidth: 650}} aria-label="packages">
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Container</TableCell>
+                                <TableCell align="right">Fortschritt</TableCell>
+                                <TableCell align="right">Schnellzugriff</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {currentProject.workPackages.map((wp, i) => (
+                                <TableRow
+                                    key={i}
+                                    sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                                >
+                                    <TableCell component="th" scope="row">
+                                        <Link href={currentProject.name + "/" + wp.name}
+                                              underline="hover">
+                                        {wp.name}
+                                        </Link>
+                                    </TableCell>
+                                    <TableCell align="right">
+                                        {wp.numDocuments-wp.numDocumentsTodo} / {wp.numDocuments}
+                                    </TableCell>
+                                    <TableCell align="right">
+                                        {wp.firstTodoDoc?
+                                            <Link href={currentProject.name + "/" + wp.name + "/" + wp.firstTodoDoc}
+                                                  underline="hover">
+                                                {wp.firstTodoDoc}
+                                            </Link> : null}
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            </Container>
             </div>
-        )
+        );
     } else {
-        return <div>"Loading..."</div>
+        return <Box sx={{ display: 'flex' }}>
+            <CircularProgress />
+        </Box>
     }
 
+}
+
+const ProjectMenu = () => {
+    return (
+        <Box sx={{
+            display: "flex", width: "100%", position: "fixed", "top": 0, "left": 0,
+            zIndex: 99, background: "lightgrey"
+        }}>
+            <BackToOverviewButton/>
+        </Box>
+    )
 }
 
 export default ProjectPage

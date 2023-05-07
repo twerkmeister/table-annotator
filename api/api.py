@@ -65,6 +65,7 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
             try:
                 first_todo_doc_index = states.index(DOCUMENT_STATE_TODO)
                 first_todo_doc = os.path.splitext(images[first_todo_doc_index])[0]
+                first_todo_doc = os.path.split(first_todo_doc)[-1]
             except ValueError:
                 first_todo_doc = None
 
