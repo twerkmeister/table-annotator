@@ -1,18 +1,13 @@
 import Button from '@mui/material/Button';
 import AssignmentReturnIcon from '@mui/icons-material/AssignmentReturn';
-import {getProject} from "../../path";
 import {Tooltip} from "@mui/material";
+import {getProject} from "../../path";
 
 const BackToProjectButton = () => {
-    const handleClick = () => {
-        const project = getProject()
-        window.history.pushState({}, "", `/${project}`)
-        window.location.reload()
-    }
-
+    const project = getProject()
     return <Tooltip title="Zurück zum Projektordner">
         <span>
-            <Button variant="contained" onClick={handleClick}><AssignmentReturnIcon/></Button>
+            <Button variant="contained" href={`/${project}`}><AssignmentReturnIcon/></Button>
         </span>
     </Tooltip>
 }
