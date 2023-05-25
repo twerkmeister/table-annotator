@@ -48,6 +48,11 @@ class VirtualValue(BaseModel):
     value: Optional[str]
 
 
+class DataMatch(BaseModel):
+    score: float
+    data: dict
+
+
 class Table(BaseModel):
     outline: Rectangle
     rotationDegrees: float
@@ -57,6 +62,7 @@ class Table(BaseModel):
     structureLocked: bool
     columnTypes: Optional[List[List[Text]]]
     virtualValues: Optional[List[VirtualValue]]
+    matches: Optional[List[Optional[DataMatch]]]
 
     def __hash__(self) -> int:
         cells = tuple([cell for row in self.cells for cell in row])

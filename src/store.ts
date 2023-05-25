@@ -84,6 +84,7 @@ export type AnnotatorState = {
     helpGridView: boolean,
     isRunningOCR: boolean,
     isRunningSegmentation: boolean,
+    isRunningMatching: boolean,
     isInSync: boolean,
     isFetchingTables: boolean,
     fetchImages: () => void
@@ -132,7 +133,7 @@ export type AnnotatorState = {
     setVirtualValueType: (valueIndex: number, label?: string) => void
     deleteVirtualValue: (valueIdnex: number) => void
     setVirtualValue: (valueIndex: number, value: string) => void
-
+    matchData: () => void
 }
 
 export const useStore = create<AnnotatorState>((set, get) => ({
@@ -162,6 +163,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
     helpGridView: false,
     isRunningOCR: false,
     isRunningSegmentation: false,
+    isRunningMatching: false,
     fetchImages: async() => {
         const project = getProject()
         const dataDir = getDataDir()
@@ -1084,5 +1086,32 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
         set({tables: newTables})
     },
+    matchData: async () => {
+        if (!get().isInSync) return
+        const tables = get().tables
+        const selectedTable = get().selectedTable
+        const images = get().images
+        const currentImageIndex = get().currentImageIndex
+        if (selectedTable === undefined ||
+            images === undefined) return
+        const image = images[currentImageIndex]
+        const table = tables[selectedTable]
+        if (image === undefined ||
+            table === undefined) return
 
+        const project = getProject()
+        const dataDir = getDataDir()
+        if (project === undefined || dataDir === undefined) return
+
+        set({isRunningMatching: true})
+        const response =
+            await fetch(`${APIAddress}/${project}/${dataDir}/${image.name}/match_table_contents/${selectedTable}`)
+        if (response.status === 200) {
+            const matches = (await response.json())["matches"]
+            const newTable = {...table, matches}
+            const newTables = [...tables.slice(0, selectedTable), newTable, ...tables.slice(selectedTable + 1)]
+            set({tables: newTables})
+        }
+        set({isRunningMatching: false})
+    }
 }))

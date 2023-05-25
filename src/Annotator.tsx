@@ -106,6 +106,7 @@ function Annotator() {
     const handleDrag = useStore(state => state.handleDrag)
     const isRunningOCR = useStore(state => state.isRunningOCR)
     const isRunningSegmentation = useStore(state => state.isRunningSegmentation)
+    const isRunningMatching = useStore(state => state.isRunningMatching)
     const invertImage = useStore(state => state.invertImage)
     const rotateimage90 = useStore(state => state.rotateImage90)
 
@@ -223,7 +224,7 @@ function Annotator() {
                     {helpView && <HelpScreen/>}
                     {isRunningOCR && <LoadingScreen text={"OCR läuft..."}/>}
                     {isRunningSegmentation && <LoadingScreen text={"Segmentierung läuft..."}/>}
-
+                    {isRunningMatching && <LoadingScreen text={"Matching läuft..."}/>}
                 </GlobalHotKeys>
             </AppContainer>
         );

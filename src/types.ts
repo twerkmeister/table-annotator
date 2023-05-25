@@ -57,9 +57,15 @@ export type Table = {
     structureLocked: boolean,
     columnTypes: string[][],
     virtualValues?: VirtualValue[]
+    matches?: (DataMatch | null)[]
 }
 
 export type VirtualValue = {
     label?: string
     value?: string
+}
+
+export type DataMatch = {
+    score: number
+    data: object
 }

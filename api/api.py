@@ -18,6 +18,7 @@ import table_annotator.ocr
 import table_annotator.cellgrid
 import table_annotator.column_types
 import table_annotator.pre_annotated
+from table_annotator import matching
 from table_annotator.types import CellGrid, Table, DOCUMENT_STATE_TODO
 
 DATA_PATH = "data_path"
@@ -184,7 +185,7 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
 
         tables = table_annotator.io.read_tables_for_image(image_path)
         tables_json = {
-            "tables": [table_annotator.io.tableToJson(t) for t in tables]
+            "tables": [table_annotator.io.table_as_json(t) for t in tables]
         }
 
         return tables_json
@@ -248,6 +249,35 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
             lambda c: {k: v for k, v in c.dict().items() if v is not None},
             updated_cells),
             "columnTypes": column_types}
+
+    @api.route('/<project>/<subdir>/<image_name>/match_table_contents/<int:table_id>',
+               methods=["GET"])
+    def match_table_contents(project: Text, subdir: Text,
+                               image_name: Text, table_id: int):
+        workdir = get_workdir(project, subdir)
+        image_path = os.path.join(workdir, image_name)
+
+        if not os.path.isfile(image_path):
+            return make_response({"msg": "The image does not exist."}, 404)
+
+        tables = table_annotator.io.read_tables_for_image(image_path)
+
+        if table_id not in set(range(len(tables))):
+            return make_response({"msg": "The table does not exist."}, 404)
+
+        pers_data_path = os.path.join(app.config[DATA_PATH], project,
+                                          "persdata.csv")
+        if not os.path.isfile(pers_data_path):
+            return make_response({"msg": "No persdata for project."}, 404)
+
+        pers_data_index = matching.read_persdata_index(pers_data_path)
+        table = tables[table_id]
+        matches = matching.match_table(table, pers_data_index)
+        if matches:
+            return {"matches": [m.dict() if m is not None else None for m in matches]}
+        else:
+            return {"matches": None}
+
 
     @api.route(
         '/<project>/<subdir>/<image_name>/apply_pre_annotated_table_content/<int:table_id>',

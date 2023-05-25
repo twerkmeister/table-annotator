@@ -1,5 +1,8 @@
+import functools
+from collections import defaultdict
 from typing import Text, Any, List, Dict, Optional
 import json
+import csv
 import os
 from filelock import FileLock
 
@@ -37,7 +40,7 @@ def read_tables_for_image(image_path: Text) -> List[Table]:
 
 def write_tables_for_image(image_path: Text, tables: List[Table]) -> None:
     json_file_path = os.path.splitext(image_path)[0] + ".json"
-    write_json(json_file_path, [tableToJson(t) for t in tables])
+    write_json(json_file_path, [table_as_json(t) for t in tables])
 
 
 def read_state_for_image(image_path: Text) -> DocumentState:
@@ -84,7 +87,7 @@ def get_previous_image(image_path: Text) -> Optional[Text]:
         return os.path.join(folder, images[index_of_image - 1])
 
 
-def tableToJson(table: Table) -> Dict[Text, Any]:
+def table_as_json(table: Table) -> Dict[Text, Any]:
     table_json = {
         k: v for k, v in table.dict().items()
         if v is not None

@@ -10,6 +10,12 @@ import {calculateCellRectangle} from "../geometry";
 import {APIAddress} from "../api";
 import DataTypesDeleteButton from "./DataTypesDeleteButton";
 import SplitTableHeader from "./SplitTableHeader";
+import MatchButton from "./MatchButton";
+import Tooltip from '@mui/material/Tooltip';
+import IconButton from '@mui/material/IconButton';
+import {Close} from '@mui/icons-material';
+import {Done} from "@mui/icons-material";
+
 
 const DataRow = styled.div`
     display: flex;
@@ -68,6 +74,19 @@ const SplitTable = ({imageName}: SplitTableProps) => {
                 return (
                     <DataRow key={`${i}_row`}>
                         {
+                        (table.matches? table.matches[i] ?
+                            <Tooltip title={JSON.stringify(table.matches[i])}>
+                                <IconButton>
+                                    <Done/>
+                                </IconButton>
+                            </Tooltip> :
+                            <Tooltip title="Kein match">
+                                <IconButton>
+                                    <Close/>
+                                </IconButton>
+                            </Tooltip>: null)
+                            }
+                            {
                             row.map((cell, j) => {
                                 const cellRectangle = calculateCellRectangle({row: i, column: j}, table)
                                 return (
@@ -111,6 +130,7 @@ const SplitTable = ({imageName}: SplitTableProps) => {
                 )
             })
             }
+            <MatchButton leftOffset={0}/>
         </SplitTableContainer>
     )
 }
