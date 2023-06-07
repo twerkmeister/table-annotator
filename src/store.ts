@@ -132,6 +132,7 @@ export type AnnotatorState = {
     setVirtualValueType: (valueIndex: number, label?: string) => void
     deleteVirtualValue: (valueIdnex: number) => void
     setVirtualValue: (valueIndex: number, value: string) => void
+
 }
 
 export const useStore = create<AnnotatorState>((set, get) => ({

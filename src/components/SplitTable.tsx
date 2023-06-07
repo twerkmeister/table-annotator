@@ -99,7 +99,7 @@ const SplitTable = ({imageName}: SplitTableProps) => {
                                                               height: `${Math.round(Math.max(height(cellRectangle)*1.3-4, 20))}px`}}
                                                           onBlur={handleInputOnBlur(i, j)}
                                                           // little hack to update default cell text when ocr text changes
-                                                          key={`${i}_${j}_cell_text_${cell.ocr_text}`}
+                                                          key={`${i}_${j}_cell_text_${cell.ocr_text}_${cell.human_text}`}
                                                 />
                                             </div>
                                         </div>

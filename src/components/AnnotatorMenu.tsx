@@ -17,10 +17,12 @@ import DeleteObjectButton from "./MenuComponents/DeleteObjectButton";
 import ShowHelpRasterizationButton from "./MenuComponents/ShowHelpRasterizationButton";
 import PositionDisplay from "./MenuComponents/PositionDisplay";
 import ApplyPreAnnotatedDataButton from "./MenuComponents/ApplyPreAnnotatedDataButton";
+import DeleteOCRDataButton from "./MenuComponents/DeleteOCRDataButton";
 
 
 const AnnotatorMenu = () => {
     const isInSync = useStore(state => state.isInSync)
+    const ocrView = useStore(state => state.ocrView)
 
     return (<Box sx={{display: "flex", width: "100%", position: "fixed", "top": 0, "left": 0,
     zIndex: 99, background: "lightgrey"}}>
@@ -37,7 +39,7 @@ const AnnotatorMenu = () => {
         <SegmentTableButton/>
         <SetOCRViewButton/>
         <ApplyPreAnnotatedDataButton/>
-        <DeleteObjectButton/>
+        {ocrView ? <DeleteOCRDataButton/> : <DeleteObjectButton/>}
         {<SyncIndicator style={{background: isInSync ? "forestgreen" : "yellow"}}>💾</SyncIndicator>}
     </Box>)
 }
