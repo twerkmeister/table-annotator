@@ -16,6 +16,9 @@ import axios from "axios";
 import {DocumentStateKeyStrings} from "./documentStates";
 import _ from "lodash";
 
+// how far individual lines have to be apart
+const LINE_PADDING = 10
+
 
 const makeTemporaryImageParameters = (inverted: boolean = false, rotationSteps: number = 0): TempImageParameters => {
     return {
@@ -49,6 +52,11 @@ const validateCellWidth = (table: Table, columnNum: number, change: number): boo
         .map(width)
         .filter((w) => w - Math.abs(change) < 10)
     return cellsThatWouldBecomeTooSmall.length === 0
+}
+
+const areDistancesAppropriate = (positions: number[], newPosition: number): boolean => {
+    const distances = positions.map((val) => Math.abs(val - newPosition) > LINE_PADDING)
+    return distances.reduce((a, b) => a && b, true)
 }
 
 export type AnnotatorState = {
@@ -308,6 +316,8 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         const table = tables[selectedTableIdx]
         if (table === undefined) return
 
+        if (!areDistancesAppropriate(table.columns, newColumnPosition)) return
+
         const newColumns = [...table.columns, newColumnPosition].sort((a, b) => a - b)
 
         const separatedColumn = newColumns.indexOf(newColumnPosition)
@@ -340,6 +350,9 @@ export const useStore = create<AnnotatorState>((set, get) => ({
 
         const table = tables[selectedTable]
         if (table === undefined) return
+
+        if (!areDistancesAppropriate(table.rows, newRowPosition)) return
+
         const newRows = [...table.rows, newRowPosition].sort((a, b) => a - b)
         const separatedRow = newRows.indexOf(newRowPosition)
 
