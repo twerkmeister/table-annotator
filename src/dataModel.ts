@@ -11,6 +11,7 @@ export enum DataTypes {
     ENTLASSUNGSDATUM = "Entlassungsdatum",
     BEFREIUNGSDATUM = "Befreiungsdatum",
     HAEFTLINGSNUMMER = "Häfltingsnummer",
+    TRANSPORTNUMMER = "Transportnummer",
     HAFTSTAETTE = "Haftstätte",
     NATIONALITÄT = "Nationalität",
     RELIGION = "Religion",
