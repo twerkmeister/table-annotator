@@ -42,6 +42,11 @@ class Cell(BaseModel):
         return self.human_text if self.human_text is not None \
             else self.ocr_text
 
+    def extract_clean_text(self) -> Optional[Text]:
+        text = self.extract_text()
+        if text is not None:
+            return text.replace("@", "").replace("␢", "").strip()
+
 
 class VirtualValue(BaseModel):
     label: Optional[str]

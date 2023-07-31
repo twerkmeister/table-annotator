@@ -3,20 +3,11 @@ import os
 import datetime
 from typing import Dict, List, Optional
 
+from table_annotator.constants import KEY_LAST_NAME_ANNOTATOR, KEY_FIRST_NAME_ANNOTATOR, \
+    KEY_PRISONER_NUMBER_ANNOTATOR, KEY_DATE_OF_BIRTH_ANNOTATOR, \
+    KEY_BIRTH_PLACE_ANNOTATOR, KEY_ORDER, KEY_LAST_NAME, KEY_FIRST_NAME, \
+    KEY_PRISONER_NUMBER, KEY_DATE_OF_BIRTH, KEY_BIRTH_PLACE
 from table_annotator.types import Table, CellGrid, Cell
-
-KEY_ORDER = "lCountId"
-KEY_LAST_NAME = "strLName"
-KEY_FIRST_NAME = "strGName"
-KEY_DATE_OF_BIRTH = "strDoB"
-KEY_PRISONER_NUMBER = "lNumber"
-KEY_BIRTH_PLACE = "birthplace"
-
-KEY_LAST_NAME_ANNOTATOR = "NACHNAME"
-KEY_FIRST_NAME_ANNOTATOR = "VORNAME"
-KEY_PRISONER_NUMBER_ANNOTATOR = "HAEFTLINGSNUMMER"
-KEY_DATE_OF_BIRTH_ANNOTATOR = "GEBURTSDATUM"
-KEY_BIRTH_PLACE_ANNOTATOR = "GEBURTSORT"
 
 
 def image_has_pre_annotated_data(image_path: str) -> bool:
