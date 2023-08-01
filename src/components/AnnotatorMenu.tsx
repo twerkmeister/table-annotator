@@ -18,6 +18,7 @@ import ShowHelpRasterizationButton from "./MenuComponents/ShowHelpRasterizationB
 import PositionDisplay from "./MenuComponents/PositionDisplay";
 import ApplyPreAnnotatedDataButton from "./MenuComponents/ApplyPreAnnotatedDataButton";
 import DeleteOCRDataButton from "./MenuComponents/DeleteOCRDataButton";
+import MatchButton from "./MenuComponents/MatchButton";
 
 
 const AnnotatorMenu = () => {
@@ -39,6 +40,7 @@ const AnnotatorMenu = () => {
         <SegmentTableButton/>
         <SetOCRViewButton/>
         <ApplyPreAnnotatedDataButton/>
+        <MatchButton/>
         {ocrView ? <DeleteOCRDataButton/> : <DeleteObjectButton/>}
         {<SyncIndicator style={{background: isInSync ? "forestgreen" : "yellow"}}>💾</SyncIndicator>}
     </Box>)

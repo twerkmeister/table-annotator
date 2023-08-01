@@ -42,6 +42,8 @@ def read_persdata_index(path: str) -> dict[str, list[dict]]:
                 row[KEY_DATE_OF_BIRTH_YEAR] = year
                 row[KEY_DATE_OF_BIRTH_MONTH] = month
                 row[KEY_DATE_OF_BIRTH_DAY] = day
+                row[KEY_LAST_NAME] = row[KEY_LAST_NAME].title()
+                row[KEY_FIRST_NAME] = row[KEY_FIRST_NAME].title()
                 results[number].append(row)
     return results
 

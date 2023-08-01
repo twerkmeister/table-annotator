@@ -10,11 +10,11 @@ import {calculateCellRectangle} from "../geometry";
 import {APIAddress} from "../api";
 import DataTypesDeleteButton from "./DataTypesDeleteButton";
 import SplitTableHeader from "./SplitTableHeader";
-import MatchButton from "./MatchButton";
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
 import {Close} from '@mui/icons-material';
 import {Done} from "@mui/icons-material";
+import {DataMatch} from "../types";
 
 
 const DataRow = styled.div`
@@ -41,6 +41,12 @@ const DataInput = styled.textarea`
 
 type SplitTableProps = {
     imageName: string
+}
+
+const stringify_match = (match: DataMatch | null): string => {
+    if (!match)
+        return ""
+    return `Gematcht mit #${match.data.lNumber}, ${match.data.strGName} ${match.data.strLName}, ${match.data.strDoBDay}.${match.data.strDoBMonth}.${match.data.strDoBYear}`
 }
 
 const SplitTable = ({imageName}: SplitTableProps) => {
@@ -75,7 +81,7 @@ const SplitTable = ({imageName}: SplitTableProps) => {
                     <DataRow key={`${i}_row`}>
                         {
                         (table.matches? table.matches[i] ?
-                            <Tooltip title={JSON.stringify(table.matches[i])}>
+                            <Tooltip title={stringify_match(table.matches[i])}>
                                 <IconButton>
                                     <Done/>
                                 </IconButton>
@@ -115,7 +121,8 @@ const SplitTable = ({imageName}: SplitTableProps) => {
                                                 <DataInput
                                                           defaultValue={cell.human_text !== undefined ? cell.human_text : cell.ocr_text}
                                                           style={{width: `${Math.max(width(cellRectangle)-4, 25)}px`,
-                                                              height: `${Math.round(Math.max(height(cellRectangle)*1.3-4, 20))}px`}}
+                                                              height: `${Math.round(Math.max(height(cellRectangle)*1.3-4, 20))}px`,
+                                                              background: table.matches && table.matches[i] ? "#8AAD64" : "lightgrey" }}
                                                           onBlur={handleInputOnBlur(i, j)}
                                                           // little hack to update default cell text when ocr text changes
                                                           key={`${i}_${j}_cell_text_${cell.ocr_text}_${cell.human_text}`}
@@ -130,7 +137,6 @@ const SplitTable = ({imageName}: SplitTableProps) => {
                 )
             })
             }
-            <MatchButton leftOffset={0}/>
         </SplitTableContainer>
     )
 }

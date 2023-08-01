@@ -67,5 +67,13 @@ export type VirtualValue = {
 
 export type DataMatch = {
     score: number
-    data: object
+    data: {
+        strGName: string
+        strLName: string
+        lNumber: string
+        strDoBMonth: string
+        strDoBDay: string
+        strDoBYear: string
+        strDoB: string
+    }
 }
