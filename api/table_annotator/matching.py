@@ -1,4 +1,5 @@
 import csv
+import os
 import functools
 from collections import defaultdict
 from typing import Optional
@@ -25,7 +26,7 @@ SEPARATOR = ";"
 @functools.cache
 def read_persdata_index(path: str) -> dict[str, list[dict]]:
     results = defaultdict(list)
-    with open(path) as csvfile:
+    with open(path, encoding="utf-8-sig") as csvfile:
         reader = csv.DictReader(csvfile, delimiter="|")
         for row in reader:
             if row[KEY_LAST_NAME] and (number := row[KEY_PRISONER_NUMBER]) and \

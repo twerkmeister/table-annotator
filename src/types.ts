@@ -22,6 +22,7 @@ export type Image = {
     name: string
     docId: string
     hasPreAnnotatedData: boolean
+    hasMatchingData: boolean
     temporaryParameters?: TempImageParameters
 }
 

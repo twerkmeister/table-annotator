@@ -100,12 +100,17 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
             width, height = table_annotator.img.get_dimensions(image)
             has_pre_annotated_data = \
                 table_annotator.pre_annotated.image_has_pre_annotated_data(image_path)
+            has_matching_data = os.path.exists(
+                os.path.join(app.config[DATA_PATH], project, "persdata.csv")
+            )
             center = {"x": width // 2, "y": height // 2}
             images_with_metadata.append(
                 {"src": f"{project}/{subdir}/image/{image_name}", "width": width,
                  "height": height, "center": center,
                  "name": image_name, "docId": os.path.splitext(image_name)[0],
-                 "hasPreAnnotatedData": has_pre_annotated_data})
+                 "hasPreAnnotatedData": has_pre_annotated_data,
+                 "hasMatchingData": has_matching_data
+                 })
         return {"images": images_with_metadata}
 
     @api.route('/<project>/<subdir>/image/invert/<image_name>', methods=["POST"])
