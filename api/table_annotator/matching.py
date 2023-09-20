@@ -63,7 +63,7 @@ def find_column_single(table: Table, column_type: str) -> Optional[int]:
 
 def match_entry(last_name: str, first_name: str, date_of_birth: str, number: str,
                 persdata_index: dict[str, list[dict]],
-                threshold: float = 0.8) -> Optional[DataMatch]:
+                threshold: float = 0.9) -> Optional[DataMatch]:
     """Match an entry against persdata index and return highest match if any."""
     final_match = None
     for potential_match in persdata_index.get(number, []):
