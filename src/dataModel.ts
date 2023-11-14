@@ -13,6 +13,7 @@ export enum DataTypes {
     HAEFTLINGSNUMMER = "Häfltingsnummer",
     TRANSPORTNUMMER = "Transportnummer",
     HAFTSTAETTE = "Haftstätte",
+    BLOCKNUMMER = "Blocknummer",
     NATIONALITÄT = "Nationalität",
     RELIGION = "Religion",
     HAEFTLINGSKATEGORIE = "Häftlingskategorie",
