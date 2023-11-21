@@ -19,10 +19,10 @@ logger = logging.getLogger(__name__)
 def create_app(script_info: Optional[ScriptInfo] = None):
     app = Flask(__name__)
     CORS(app)
+    mp.set_start_method("spawn")
 
     ocr_model = load_model('models/latest.hdf5')
     lm_path = 'models/kenlm.binary'
-    mp.set_start_method("spawn")
 
     @app.route('/ocr', methods=["POST"])
     def ocr():
