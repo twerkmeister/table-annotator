@@ -1,14 +1,18 @@
 [tool.poetry]
 name = "ocr-server"
-version = "0.1.0"
+version = "0.1.2"
 description = ""
 authors = ["Thomas Werkmeister <thomas@werkmeister.me>"]
 
 [tool.poetry.dependencies]
-python = "~3.9"
+python = "~3.11"
 Flask = "^2.0.2"
 Flask-Cors = "^3.0.10"
 python-dotenv = "^0.19.2"
+kenlm = "^0.2.0"
+ocr = {path = "../../ocr"}
+opencv-python = "^4.8.1.78"
+scipy = "^1.11.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
