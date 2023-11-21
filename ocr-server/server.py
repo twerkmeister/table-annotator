@@ -1,6 +1,6 @@
 from typing import Optional
 import logging
-
+import multiprocessing as mp
 import PIL.Image
 import numpy as np
 from flask import Flask, request
@@ -22,6 +22,7 @@ def create_app(script_info: Optional[ScriptInfo] = None):
 
     ocr_model = load_model('models/latest.hdf5')
     lm_path = 'models/kenlm.binary'
+    mp.set_start_method("spawn")
 
     @app.route('/ocr', methods=["POST"])
     def ocr():
