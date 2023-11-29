@@ -96,3 +96,13 @@ def table_as_json(table: Table) -> Dict[Text, Any]:
         lambda c: {k: v for k, v in c.items() if v is not None}, table_json["cells"]
     )
     return table_json
+
+
+def get_all_non_hidden_dirs(path: str, return_base_names: bool = False) -> list[str]:
+    dirs = [os.path.join(path, project_name)
+                     for project_name in os.listdir(path)]
+    dirs = [d for d in dirs if os.path.isdir(d) and not d.startswith('.')]
+    if return_base_names:
+        return [os.path.basename(d) for d in dirs]
+    else:
+        return dirs

@@ -33,28 +33,31 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
 
     cell_image_cache: Dict[Tuple[Text, int], CellGrid[PIL.Image]] = {}
 
-    def get_workdir(project: Text, subdir: Text) -> Text:
-        return os.path.join(app.config[DATA_PATH], project, subdir)
+    def get_workdir(bucket: Text, project: Text, subdir: Text) -> Text:
+        return os.path.join(app.config[DATA_PATH], bucket, project, subdir)
 
-    @api.route('/')
-    def get_all_projects():
-        project_names = [os.path.join(app.config[DATA_PATH], project_name)
-                         for project_name in os.listdir(app.config[DATA_PATH])]
-        project_names = [pn for pn in project_names if os.path.isdir(pn)]
-        project_names = [pn for pn in project_names if not pn.startswith('.')]
-        project_names = [os.path.basename(pn) for pn in project_names]
+    @api.route("/")
+    def get_all_status_folders():
+        data_path = app.config[DATA_PATH]
+        project_buckets = table_annotator.io.get_all_non_hidden_dirs(data_path,
+                                                                return_base_names=True)
+        return {"bucketNames": sorted(project_buckets)}
+
+    @api.route('/<bucket>/')
+    def get_all_projects(bucket: str):
+        bucket_dir = os.path.join(app.config[DATA_PATH], bucket)
+        if not os.path.isdir(bucket_dir):
+            return make_response({"msg": "The state dir does not exist."}, 404)
+        project_names = table_annotator.io.get_all_non_hidden_dirs(bucket_dir,
+                                                                   return_base_names=True)
         return {"projectNames": sorted(project_names)}
 
-    @api.route('/<project>')
-    def get_project(project: Text):
-        project_path = os.path.join(app.config[DATA_PATH], project)
+    @api.route('/<bucket>/<project>')
+    def get_project(bucket: str, project: str):
+        project_path = os.path.join(app.config[DATA_PATH], bucket, project)
         if not os.path.isdir(project_path):
             return make_response({"msg": "The project does not exist."}, 404)
-
-        work_dirs = [os.path.join(os.path.join(project_path, d))
-                     for d in os.listdir(project_path)]
-        work_dirs = [d for d in work_dirs if os.path.isdir(d)]
-
+        work_dirs = table_annotator.io.get_all_non_hidden_dirs(project_path)
         work_dir_infos = []
 
         for work_dir in work_dirs:
@@ -86,9 +89,9 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
             "workPackages": work_dir_infos
         }}
 
-    @api.route('/<project>/<subdir>/images')
-    def list_images(project: Text, subdir: Text):
-        workdir = get_workdir(project, subdir)
+    @api.route('/<bucket>/<project>/<subdir>/images')
+    def list_images(bucket: Text, project: Text, subdir: Text):
+        workdir = get_workdir(bucket, project, subdir)
         if not os.path.isdir(workdir):
             return make_response(
                 {"msg": "The workdir you tried to access does not exist."}, 404)
@@ -105,7 +108,7 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
             )
             center = {"x": width // 2, "y": height // 2}
             images_with_metadata.append(
-                {"src": f"{project}/{subdir}/image/{image_name}", "width": width,
+                {"src": f"{bucket}/{project}/{subdir}/image/{image_name}", "width": width,
                  "height": height, "center": center,
                  "name": image_name, "docId": os.path.splitext(image_name)[0],
                  "hasPreAnnotatedData": has_pre_annotated_data,
@@ -113,9 +116,9 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
                  })
         return {"images": images_with_metadata}
 
-    @api.route('/<project>/<subdir>/image/invert/<image_name>', methods=["POST"])
-    def invert_image(project: Text, subdir: Text, image_name: Text):
-        workdir = get_workdir(project, subdir)
+    @api.route('/<bucket>/<project>/<subdir>/image/invert/<image_name>', methods=["POST"])
+    def invert_image(bucket: Text, project: Text, subdir: Text, image_name: Text):
+        workdir = get_workdir(bucket, project, subdir)
         image_path = os.path.join(workdir, image_name)
         if not os.path.isfile(image_path):
             return make_response({"msg": "The image you tried to invert"
@@ -125,9 +128,9 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
         table_annotator.io.write_image(image_path, image)
         return make_response({"msg": "Ok"}, 200)
 
-    @api.route('/<project>/<subdir>/image/rotate/<image_name>', methods=["POST"])
-    def rotate_image(project: Text, subdir: Text, image_name: Text):
-        workdir = get_workdir(project, subdir)
+    @api.route('/<bucket>/<project>/<subdir>/image/rotate/<image_name>', methods=["POST"])
+    def rotate_image(bucket: Text, project: Text, subdir: Text, image_name: Text):
+        workdir = get_workdir(bucket, project, subdir)
         image_path = os.path.join(workdir, image_name)
         if not os.path.isfile(image_path):
             return make_response({"msg": "The image you tried to invert"
@@ -137,9 +140,9 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
         table_annotator.io.write_image(image_path, image)
         return make_response({"msg": "Ok"}, 200)
 
-    @api.route('/<project>/<subdir>/image/<image_name>')
-    def get_image(project: Text, subdir: Text, image_name: Text):
-        workdir = get_workdir(project, subdir)
+    @api.route('/<bucket>/<project>/<subdir>/image/<image_name>')
+    def get_image(bucket: Text, project: Text, subdir: Text, image_name: Text):
+        workdir = get_workdir(bucket, project, subdir)
         return send_from_directory(workdir, image_name)
 
     @api.route('/<project>/<subdir>/state/<image_name>', methods=["GET"])
@@ -153,9 +156,9 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
         state = table_annotator.io.read_state_for_image(image_path)
         return state.dict()
 
-    @api.route('/<project>/<subdir>/state/<image_name>', methods=["POST"])
-    def set_document_state(project: Text, subdir: Text, image_name: Text):
-        workdir = get_workdir(project, subdir)
+    @api.route('/<bucket>/<project>/<subdir>/state/<image_name>', methods=["POST"])
+    def set_document_state(bucket: Text, project: Text, subdir: Text, image_name: Text):
+        workdir = get_workdir(bucket, project, subdir)
         image_path = os.path.join(workdir, image_name)
         if not os.path.isfile(image_path):
             return make_response({"msg": "The image for which you tried to save "
@@ -166,10 +169,10 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
 
         return {"msg": "OK"}
 
-    @api.route('/<project>/<subdir>/tables/<image_name>', methods=["POST"])
-    def store_tables(project: Text, subdir: Text, image_name: Text):
+    @api.route('/<bucket>/<project>/<subdir>/tables/<image_name>', methods=["POST"])
+    def store_tables(bucket: Text, project: Text, subdir: Text, image_name: Text):
         """Stores the tables."""
-        workdir = get_workdir(project, subdir)
+        workdir = get_workdir(bucket, project, subdir)
         image_path = os.path.join(workdir, image_name)
         if not os.path.isfile(image_path):
             return make_response({"msg": "The image for which you tried to save "
@@ -180,9 +183,9 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
 
         return {"msg": "OK"}
 
-    @api.route('/<project>/<subdir>/tables/<image_name>', methods=["GET"])
-    def get_tables(project: Text, subdir: Text, image_name: Text):
-        workdir = get_workdir(project, subdir)
+    @api.route('/<bucket>/<project>/<subdir>/tables/<image_name>', methods=["GET"])
+    def get_tables(bucket, project: Text, subdir: Text, image_name: Text):
+        workdir = get_workdir(bucket, project, subdir)
         image_path = os.path.join(workdir, image_name)
         if not os.path.isfile(image_path):
             return make_response({"msg": "The image for which you tried to retrieve "
@@ -196,11 +199,11 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
         return tables_json
 
     @api.route(
-        '/<project>/<subdir>/<image_name>/predict_table_structure/<int:table_id>',
+        '/<bucket>/<project>/<subdir>/<image_name>/predict_table_structure/<int:table_id>',
         methods=["GET"])
-    def predict_table_structure(project: Text, subdir: Text, image_name: Text,
+    def predict_table_structure(bucket: Text, project: Text, subdir: Text, image_name: Text,
                                 table_id: int):
-        workdir = get_workdir(project, subdir)
+        workdir = get_workdir(bucket, project, subdir)
         image_path = os.path.join(workdir, image_name)
         if not os.path.isfile(image_path):
             return make_response({"msg": "The image does not exist."}, 404)
@@ -221,11 +224,11 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
 
         return {"rows": rows}
 
-    @api.route('/<project>/<subdir>/<image_name>/predict_table_contents/<int:table_id>',
+    @api.route('/<bucket>/<project>/<subdir>/<image_name>/predict_table_contents/<int:table_id>',
                methods=["GET"])
-    def predict_table_contents(project: Text, subdir: Text,
+    def predict_table_contents(bucket: Text, project: Text, subdir: Text,
                                image_name: Text, table_id: int):
-        workdir = get_workdir(project, subdir)
+        workdir = get_workdir(bucket, project, subdir)
         image_path = os.path.join(workdir, image_name)
 
         if not os.path.isfile(image_path):
@@ -255,11 +258,11 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
             updated_cells),
             "columnTypes": column_types}
 
-    @api.route('/<project>/<subdir>/<image_name>/match_table_contents/<int:table_id>',
+    @api.route('/<bucket>/<project>/<subdir>/<image_name>/match_table_contents/<int:table_id>',
                methods=["GET"])
-    def match_table_contents(project: Text, subdir: Text,
+    def match_table_contents(bucket: Text, project: Text, subdir: Text,
                                image_name: Text, table_id: int):
-        workdir = get_workdir(project, subdir)
+        workdir = get_workdir(bucket, project, subdir)
         image_path = os.path.join(workdir, image_name)
 
         if not os.path.isfile(image_path):
@@ -285,11 +288,11 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
 
 
     @api.route(
-        '/<project>/<subdir>/<image_name>/apply_pre_annotated_table_content/<int:table_id>',
+        '/<bucket>/<project>/<subdir>/<image_name>/apply_pre_annotated_table_content/<int:table_id>',
         methods=["GET"])
-    def apply_pre_annotated_table_content(project: Text, subdir: Text,
+    def apply_pre_annotated_table_content(bucket: Text, project: Text, subdir: Text,
                                           image_name: Text, table_id: int):
-        workdir = get_workdir(project, subdir)
+        workdir = get_workdir(bucket, project, subdir)
         image_path = os.path.join(workdir, image_name)
 
         if not os.path.isfile(image_path):
@@ -313,12 +316,12 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
             lambda c: {k: v for k, v in c.dict().items() if v is not None},
             updated_cells)}
 
-    @api.route('/<project>/<subdir>/<image_name>/cell_image/<int:table_id>/<int:row>/'
+    @api.route('/<bucket>/<project>/<subdir>/<image_name>/cell_image/<int:table_id>/<int:row>/'
                '<int:col>/<int:table_hash>',
                methods=["GET"])
-    def get_cell_image(project: Text, subdir: Text, image_name: Text,
+    def get_cell_image(bucket: Text, project: Text, subdir: Text, image_name: Text,
                        table_id: int, row: int, col: int, table_hash: int):
-        workdir = get_workdir(project, subdir)
+        workdir = get_workdir(bucket, project, subdir)
         image_path = os.path.join(workdir, image_name)
         if (image_path, table_hash) not in cell_image_cache:
             if not os.path.isfile(image_path):

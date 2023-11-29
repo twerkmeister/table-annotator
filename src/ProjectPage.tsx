@@ -1,7 +1,7 @@
 import create from "zustand";
 import React, {useEffect} from "react";
 import {APIAddress} from "./api";
-import {getProject} from "./path";
+import {getProject, getProjectBucket} from "./path";
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -15,7 +15,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 
-import BackToOverviewButton from "./components/MenuComponents/BackToOverviewButton";
+import BrowsingMenu from "./BrowsingMenu";
 
 
 export type WorkPackage = {
@@ -39,8 +39,9 @@ export type ProjectPageState = {
 export const useStore = create<ProjectPageState>((set, get) => ({
     currentProject: undefined,
     fetchProject: async() => {
+        const projectBucket = getProjectBucket()
         const projectName = getProject()
-        const response = await fetch(`${APIAddress}/${projectName}`)
+        const response = await fetch(`${APIAddress}/${projectBucket}/${projectName}`)
         if (response.status === 200) {
             const currentProject: Project = (await response.json())["project"]
             set({currentProject})
@@ -54,7 +55,7 @@ export const useStore = create<ProjectPageState>((set, get) => ({
 function ProjectPage() {
     const currentProject = useStore(state => state.currentProject)
     const fetchProject = useStore(state => state.fetchProject)
-
+    const bucketName = getProjectBucket()
     useEffect(() => {
         if(currentProject === undefined) {
             fetchProject()
@@ -67,7 +68,7 @@ function ProjectPage() {
             (wp, i) => wp.numDocuments-wp.numDocumentsTodo).reduce((a, b) => a + b, 0)
         return (
             <div style={{paddingTop: "50px"}}>
-                <ProjectMenu/>
+                <BrowsingMenu back_to_level={1}/>
             <Container maxWidth="sm" style={{"textAlign": "center"}}>
                 <Paper>
                     <Typography variant="h5" gutterBottom>
@@ -93,7 +94,7 @@ function ProjectPage() {
                                     sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                                 >
                                     <TableCell component="th" scope="row">
-                                        <Link href={currentProject.name + "/" + wp.name}
+                                        <Link href={`${currentProject.name}/${wp.name}`}
                                               underline="hover">
                                         {wp.name}
                                         </Link>
@@ -103,7 +104,7 @@ function ProjectPage() {
                                     </TableCell>
                                     <TableCell align="right">
                                         {wp.firstTodoDoc?
-                                            <Link href={currentProject.name + "/" + wp.name + "/" + wp.firstTodoDoc}
+                                            <Link href={`${currentProject.name}/${wp.name}/${wp.firstTodoDoc}`}
                                                   underline="hover">
                                                 {wp.firstTodoDoc}
                                             </Link> : null}
@@ -122,17 +123,6 @@ function ProjectPage() {
         </Box>
     }
 
-}
-
-const ProjectMenu = () => {
-    return (
-        <Box sx={{
-            display: "flex", width: "100%", position: "fixed", "top": 0, "left": 0,
-            zIndex: 99, background: "lightgrey"
-        }}>
-            <BackToOverviewButton/>
-        </Box>
-    )
 }
 
 export default ProjectPage

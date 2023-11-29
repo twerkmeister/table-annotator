@@ -1,4 +1,4 @@
-import {getDataDir, getProject} from "../path";
+import {getDataDir, getProject, getProjectBucket} from "../path";
 import {useStore} from "../store";
 import React from "react";
 import MultiSelect from "./MultiSelect";
@@ -50,13 +50,14 @@ const stringify_match = (match: DataMatch | null): string => {
 }
 
 const SplitTable = ({imageName}: SplitTableProps) => {
+    const bucket = getProjectBucket()
     const project = getProject()
     const dataDir = getDataDir()
     const tables = useStore(state => state.tables)
     const selectedTable = useStore(state => state.selectedTable)
     const updateCellText = useStore(state => state.updateCellText)
     const setColumnTypes = useStore(state => state.setColumnTypes)
-    if (project === undefined || dataDir === undefined) return null
+    if (bucket === undefined || project === undefined || dataDir === undefined) return null
     if(selectedTable === undefined) return null
     const table = tables[selectedTable]
     if(table === undefined ) return null
@@ -111,7 +112,7 @@ const SplitTable = ({imageName}: SplitTableProps) => {
                                         </div>}
                                         <div key={`${i}_${j}_cell`}>
                                             <div key={`${i}_${j}_cell_image_box`}>
-                                                <img src={`${APIAddress}/${project}/${dataDir}/${imageName}/cell_image/${selectedTable}/${i}/${j}/${tableHash}`}
+                                                <img src={`${APIAddress}/${bucket}/${project}/${dataDir}/${imageName}/cell_image/${selectedTable}/${i}/${j}/${tableHash}`}
                                                      width={width(cellRectangle)}
                                                      height={height(cellRectangle)}
                                                      alt={`cell at ${i} ${j}`}

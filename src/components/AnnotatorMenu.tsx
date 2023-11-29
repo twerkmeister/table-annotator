@@ -3,7 +3,7 @@ import {useStore} from "../store";
 
 import SyncIndicator from "./SyncIndicator";
 import DocumentStateSelect from "./MenuComponents/DocumentStateSelect";
-import BackToProjectButton from "./MenuComponents/BackToProjectButton";
+import BackButton from "./MenuComponents/BackButton";
 import {Box} from "@mui/material";
 import PreviousDocumentButton from "./MenuComponents/PreviousDocumentButton";
 import NextDocumentButton from "./MenuComponents/NextDocumentButton";
@@ -27,7 +27,7 @@ const AnnotatorMenu = () => {
 
     return (<Box sx={{display: "flex", width: "100%", position: "fixed", "top": 0, "left": 0,
     zIndex: 99, background: "lightgrey"}}>
-        <BackToProjectButton/>
+        <BackButton to_level={2}/>
         <PreviousDocumentButton/>
         <PositionDisplay/>
         <NextDocumentButton/>

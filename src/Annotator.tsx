@@ -4,7 +4,7 @@ import {v4 as uuidv4} from "uuid";
 import { GlobalHotKeys } from "react-hotkeys";
 import styled from 'styled-components'
 
-import {getDataDir, getProject} from './path';
+import {getDataDir, getProject, getProjectBucket} from './path';
 import HelpScreen from "./components/HelpScreen";
 import DocumentImage from "./components/DocumentImage";
 import {useStore} from "./store";
@@ -49,9 +49,10 @@ let rateToken = ""
 const pushTablesToApi = async(state: AnnotatorState, previousState: AnnotatorState) => {
     if(state.isFetchingTables) return
     if(state.tables === previousState.tables) return
+    const bucket = getProjectBucket()
     const project = getProject()
     const dataDir = getDataDir()
-    if (project === undefined || dataDir === undefined) return
+    if (bucket === undefined || project === undefined || dataDir === undefined) return
     const {currentImageIndex, images, tables} = state
     if(currentImageIndex === undefined || images === undefined) return
     const image = images[currentImageIndex]
@@ -61,7 +62,7 @@ const pushTablesToApi = async(state: AnnotatorState, previousState: AnnotatorSta
     const rateTokenCopy = rateToken
     await new Promise(r => setTimeout(r, 150));
     if (rateToken === rateTokenCopy) {
-        const response = await axios.post(`${APIAddress}/${project}/${dataDir}/tables/${image.name}`, tables)
+        const response = await axios.post(`${APIAddress}/${bucket}/${project}/${dataDir}/tables/${image.name}`, tables)
         if (response.status === 200) {
             state.setIsInSync(true)
         }

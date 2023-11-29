@@ -1,5 +1,5 @@
 import create from "zustand";
-import {getDataDir, getDocId, getProject} from "./path";
+import {getDataDir, getDocId, getProject, getProjectBucket} from "./path";
 import {Cell, CellIndex, Image, Point, Table, TempImageParameters, UnfinishedTable} from "./types";
 import {
     addPoints,
@@ -165,10 +165,11 @@ export const useStore = create<AnnotatorState>((set, get) => ({
     isRunningSegmentation: false,
     isRunningMatching: false,
     fetchImages: async() => {
+        const bucket = getProjectBucket()
         const project = getProject()
         const dataDir = getDataDir()
         const docId = getDocId()
-        const response = await fetch(`${APIAddress}/${project}/${dataDir}/images`)
+        const response = await fetch(`${APIAddress}/${bucket}/${project}/${dataDir}/images`)
         if (response.status === 200)
         {
             const images: Image[] = (await response.json())["images"]
@@ -182,7 +183,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             }
             get().setImageIndex(0)
         } else if (response.status === 404) {
-            window.history.replaceState({}, "", `/${project}`)
+            window.history.replaceState({}, "", `/${bucket}/${project}`)
             window.location.reload()
         }
     },
@@ -194,14 +195,14 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         if(images === undefined) return
         const image = images[idx]
         if(image === undefined) return
-
+        const bucket = getProjectBucket()
         const project = getProject()
         const dataDir = getDataDir()
-        if (project === undefined || dataDir === undefined) return
+        if (bucket === undefined || project === undefined || dataDir === undefined) return
         get().setIsFetchingTables(true)
-        const table_response = await fetch(`${APIAddress}/${project}/${dataDir}/tables/${image.name}`)
+        const table_response = await fetch(`${APIAddress}/${bucket}/${project}/${dataDir}/tables/${image.name}`)
         const tables = (await table_response.json())["tables"]
-        const doc_state_response = await fetch(`${APIAddress}/${project}/${dataDir}/state/${image.name}`)
+        const doc_state_response = await fetch(`${APIAddress}/${bucket}/${project}/${dataDir}/state/${image.name}`)
         if (doc_state_response.status === 200) {
             const newState = (await doc_state_response.json())["state"]
             set({documentState: newState})
@@ -490,13 +491,14 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             table === undefined) return
 
         if (table.rows.length > 0) return
+        const bucket = getProjectBucket()
         const project = getProject()
         const dataDir = getDataDir()
-        if (project === undefined || dataDir === undefined) return
+        if (bucket === undefined || project === undefined || dataDir === undefined) return
         get().resetSelection()
         set({isRunningSegmentation: true})
         const response =
-            await fetch(`${APIAddress}/${project}/${dataDir}/${image.name}/predict_table_structure/${selectedTable}`)
+            await fetch(`${APIAddress}/${bucket}/${project}/${dataDir}/${image.name}/predict_table_structure/${selectedTable}`)
         if (response.status === 200) {
             const rows: number[] = (await response.json())["rows"]
 
@@ -520,13 +522,14 @@ export const useStore = create<AnnotatorState>((set, get) => ({
             table === undefined) return
 
         if (!doesTableNeedOcr(table)) return
+        const bucket = getProjectBucket()
         const project = getProject()
         const dataDir = getDataDir()
-        if (project === undefined || dataDir === undefined) return
+        if (bucket === undefined || project === undefined || dataDir === undefined) return
         get().resetSelection()
         set({isRunningOCR: true})
         const response =
-            await fetch(`${APIAddress}/${project}/${dataDir}/${image.name}/predict_table_contents/${selectedTable}`)
+            await fetch(`${APIAddress}/${bucket}/${project}/${dataDir}/${image.name}/predict_table_contents/${selectedTable}`)
         if (response.status === 200) {
             const responseJSON = await response.json()
             const updatedCells = responseJSON["cells"]
@@ -905,12 +908,14 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         if (images === undefined || currentImageIndex === undefined) return
         const image = images[currentImageIndex]
         if (image === undefined) return
+        const bucket = getProjectBucket()
         const project = getProject()
         const dataDir = getDataDir()
+        if (bucket === undefined || project === undefined || dataDir === undefined) return
         const tables = get().tables
         if (tables.length > 0) return
 
-        const response = await axios.post(`${APIAddress}/${project}/${dataDir}/image/invert/${image.name}`,
+        const response = await axios.post(`${APIAddress}/${bucket}/${project}/${dataDir}/image/invert/${image.name}`,
             {})
         if (response.status === 200) {
             let temporaryParameters = image.temporaryParameters
@@ -930,12 +935,14 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         if (images === undefined || currentImageIndex === undefined) return
         const image = images[currentImageIndex]
         if (image === undefined) return
+        const bucket = getProjectBucket()
         const project = getProject()
         const dataDir = getDataDir()
+        if (bucket === undefined || project === undefined || dataDir === undefined) return
         const tables = get().tables
         if (tables.length > 0) return
 
-        const response = await axios.post(`${APIAddress}/${project}/${dataDir}/image/rotate/${image.name}`,
+        const response = await axios.post(`${APIAddress}/${bucket}/${project}/${dataDir}/image/rotate/${image.name}`,
             {})
         if (response.status === 200) {
             let temporaryParameters = image.temporaryParameters
@@ -955,9 +962,11 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         if (images === undefined || currentImageIndex === undefined) return
         const image = images[currentImageIndex]
         if (image === undefined) return
+        const bucket = getProjectBucket()
         const project = getProject()
         const dataDir = getDataDir()
-        const response = await axios.post(`${APIAddress}/${project}/${dataDir}/state/${image.name}`,
+        if (bucket === undefined || project === undefined || dataDir === undefined) return
+        const response = await axios.post(`${APIAddress}/${bucket}/${project}/${dataDir}/state/${image.name}`,
             {"state": documentState})
         if (response.status === 200) {
             set({documentState})
@@ -976,13 +985,13 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         if (image === undefined ||
             table === undefined ||
             !doesTableHaveTypes(table)) return
-
+        const bucket = getProjectBucket()
         const project = getProject()
         const dataDir = getDataDir()
-        if (project === undefined || dataDir === undefined) return
+        if (bucket === undefined || project === undefined || dataDir === undefined) return
         get().resetSelection()
         const response =
-            await fetch(`${APIAddress}/${project}/${dataDir}/${image.name}/apply_pre_annotated_table_content/${selectedTable}`)
+            await fetch(`${APIAddress}/${bucket}/${project}/${dataDir}/${image.name}/apply_pre_annotated_table_content/${selectedTable}`)
         if (response.status === 200) {
             const responseJSON = await response.json()
             const updatedCells = responseJSON["cells"]
@@ -1099,13 +1108,14 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         if (image === undefined ||
             table === undefined) return
 
+        const bucket = getProjectBucket()
         const project = getProject()
         const dataDir = getDataDir()
-        if (project === undefined || dataDir === undefined) return
+        if (bucket === undefined || project === undefined || dataDir === undefined) return
 
         set({isRunningMatching: true})
         const response =
-            await fetch(`${APIAddress}/${project}/${dataDir}/${image.name}/match_table_contents/${selectedTable}`)
+            await fetch(`${APIAddress}/${bucket}/${project}/${dataDir}/${image.name}/match_table_contents/${selectedTable}`)
         if (response.status === 200) {
             const matches = (await response.json())["matches"]
             const newTable = {...table, matches}

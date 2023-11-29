@@ -13,53 +13,58 @@ import Container from '@mui/material/Container';
 import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
+import {getProjectBucket} from "./path";
+import BrowsingMenu from "./BrowsingMenu";
 
-export type OverviewPageState = {
-    bucketNames?: string[]
-    fetchAllProjectBuckets: () => void
+export type BucketPageState = {
+    projectNames?: string[]
+    fetchAllProjectNames: () => void
 }
 
-export const useStore = create<OverviewPageState>((set, get) => ({
-    bucketNames: undefined,
-    fetchAllProjectBuckets: async() => {
-        const response = await fetch(`${APIAddress}/`)
-        const bucketNames: string[] = (await response.json())["bucketNames"]
-        set({bucketNames})
+export const useStore = create<BucketPageState>((set, get) => ({
+    projectNames: undefined,
+    fetchAllProjectNames: async() => {
+        const projectBucket = getProjectBucket()
+        const response = await fetch(`${APIAddress}/${projectBucket}`)
+        const projectNames: string[] = (await response.json())["projectNames"]
+        set({projectNames})
     }
 }))
 
-function OverviewPage() {
-    const bucketNames= useStore(state => state.bucketNames)
-    const fetchAllProjectBuckets = useStore(state => state.fetchAllProjectBuckets)
+function BucketPage() {
+    const bucketName = getProjectBucket()
+    const projectNames= useStore(state => state.projectNames)
+    const fetchAllProjectNames = useStore(state => state.fetchAllProjectNames)
 
     useEffect(() => {
-        if(bucketNames === undefined) {
-            fetchAllProjectBuckets()
+        if(projectNames === undefined) {
+            fetchAllProjectNames()
         }
     })
-    if (bucketNames !== undefined) {
+    if (projectNames !== undefined) {
         return (
             <Container maxWidth="sm" style={{"textAlign": "center"}}>
+                <BrowsingMenu back_to_level={0}/>
                 <Paper>
                     <Typography variant="h5" gutterBottom>
-                        Table Annotator
+                        {bucketName}
                     </Typography>
                 </Paper>
                 <TableContainer component={Paper}>
                     <Table sx={{ minWidth: 350, maxWidth: 650}} aria-label="packages">
                         <TableHead>
                             <TableRow>
-                                <TableCell>Projektordner</TableCell>
+                                <TableCell>Projekt</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {bucketNames.map((name, i) => (
+                            {projectNames.map((name, i) => (
                                 <TableRow
                                     key={i}
                                     sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                                 >
                                     <TableCell component="th" scope="row">
-                                        <Link href={name}
+                                        <Link href={`${bucketName}/${name}`}
                                               underline="hover">
                                             {name}
                                         </Link>
@@ -79,4 +84,4 @@ function OverviewPage() {
 
 }
 
-export default OverviewPage
+export default BucketPage
