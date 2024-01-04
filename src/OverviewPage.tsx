@@ -49,7 +49,7 @@ function OverviewPage() {
                     <Table sx={{ minWidth: 350, maxWidth: 650}} aria-label="packages">
                         <TableHead>
                             <TableRow>
-                                <TableCell>Projektordner</TableCell>
+                                <TableCell>Projektgruppe</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
