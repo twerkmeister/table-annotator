@@ -107,7 +107,7 @@ export type AnnotatorState = {
     deleteColumn: () => void
     deleteRow: () => void
     segmentTable: () => void
-    predictTableContent: () => void
+    predictTableContent: (force?: boolean) => void
     adjustRow: (change: number) => void
     selectCellColumnLine: (row: number, column: number) => void
     selectCellRowLine: (row: number, column: number) => void
@@ -508,7 +508,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         }
         set({isRunningSegmentation: false})
     },
-    predictTableContent: async () => {
+    predictTableContent: async (force: boolean = false) => {
         if (!get().isInSync) return
         const tables = get().tables
         const selectedTable = get().selectedTable
@@ -521,7 +521,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         if (image === undefined ||
             table === undefined) return
 
-        if (!doesTableNeedOcr(table)) return
+        if (!doesTableNeedOcr(table) && !force) return
         const bucket = getProjectBucket()
         const project = getProject()
         const dataDir = getDataDir()
@@ -529,7 +529,7 @@ export const useStore = create<AnnotatorState>((set, get) => ({
         get().resetSelection()
         set({isRunningOCR: true})
         const response =
-            await fetch(`${APIAddress}/${bucket}/${project}/${dataDir}/${image.name}/predict_table_contents/${selectedTable}`)
+            await fetch(`${APIAddress}/${bucket}/${project}/${dataDir}/${image.name}/predict_table_contents/${selectedTable}?overwrite=${force ? 1 : 0}`)
         if (response.status === 200) {
             const responseJSON = await response.json()
             const updatedCells = responseJSON["cells"]

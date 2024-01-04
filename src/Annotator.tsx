@@ -40,6 +40,7 @@ const keyMap = {
     ROTATE_IMAGE_90: "u",
     ANNOTATE_ROWS_AUTOMATICALLY: "z",
     OCR_START_AND_VIEW: "o",
+    FORCE_OCR: "command+ctrl+shift+o",
     HELP_VIEW: "h",
     HELPER_GRID: "r",
 };
@@ -96,6 +97,7 @@ function Annotator() {
     const adjustColumn = useStore(state => state.adjustColumn)
     const adjustBorder = useStore(state => state.adjustBorder)
     const setOCRView = useStore(state => state.setOCRView)
+    const predictTableContent = useStore(state => state.predictTableContent)
     const setHelpView = useStore(state => state.setHelpView)
     const setHelpGridView = useStore(state => state.setHelpGridView)
     const ocrView = useStore(state => state.ocrView)
@@ -189,6 +191,7 @@ function Annotator() {
         BACKSPACE_OR_DELETE: deleteFunc,
         ANNOTATE_ROWS_AUTOMATICALLY: segmentTable,
         OCR_START_AND_VIEW: () => setOCRView(!ocrView),
+        FORCE_OCR: () => predictTableContent(true),
         INVERT_IMAGE: invertImage,
         ROTATE_IMAGE_90: rotateimage90,
         UP: () => upFunc(),

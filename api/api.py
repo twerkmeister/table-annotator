@@ -230,6 +230,7 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
                                image_name: Text, table_id: int):
         workdir = get_workdir(bucket, project, subdir)
         image_path = os.path.join(workdir, image_name)
+        overwrite = bool(request.args.get('overwrite', 0))
 
         if not os.path.isfile(image_path):
             return make_response({"msg": "The image does not exist."}, 404)
@@ -251,7 +252,7 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
                 table_annotator.column_types.guess_column_types(image_path,
                                                                 tables, table_id)
 
-        updated_cells = table_annotator.ocr.table_ocr(image, table)
+        updated_cells = table_annotator.ocr.table_ocr(image, table, overwrite)
 
         return {"cells": table_annotator.cellgrid.apply_to_cells(
             lambda c: {k: v for k, v in c.dict().items() if v is not None},
