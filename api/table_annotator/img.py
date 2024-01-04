@@ -13,10 +13,11 @@ def get_dimensions(image: np.ndarray) -> Tuple[int, int]:
     return image.shape[1], image.shape[0]
 
 
-def crop(image: np.ndarray, rect: Rectangle) -> np.ndarray:
+def crop(image: np.ndarray, rect: Rectangle, padding: int = 0) -> np.ndarray:
     """Extracts a rectangular part from the image."""
-    return image[max(rect.topLeft.y, 0):max(rect.bottomRight.y, 0),
-                 max(rect.topLeft.x, 0):max(rect.bottomRight.x, 0)]
+    p = padding
+    return image[max(rect.topLeft.y-p, 0):min(rect.bottomRight.y+p, image.shape[0]),
+                 max(rect.topLeft.x-p, 0):min(rect.bottomRight.x+p, image.shape[1])]
 
 
 def rotate(image: np.ndarray, degrees: float) -> np.ndarray:

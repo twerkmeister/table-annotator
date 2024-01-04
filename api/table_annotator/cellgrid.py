@@ -94,13 +94,13 @@ def get_cell_rectangles(table: Table) -> CellGrid[Rectangle]:
     return cell_rectangles
 
 
-def get_cell_image_grid(image: np.ndarray, table: Table) -> CellGrid[np.ndarray]:
+def get_cell_image_grid(image: np.ndarray, table: Table, padding: int = 0) -> CellGrid[np.ndarray]:
     """Extracts cells as separate images."""
     table_image = table_annotator.img.extract_table_image(image, table)
     cell_image_grid = []
     for row in get_cell_rectangles(table):
         row_cells = []
         for cell in row:
-            row_cells.append(table_annotator.img.crop(table_image, cell))
+            row_cells.append(table_annotator.img.crop(table_image, cell, padding))
         cell_image_grid.append(row_cells)
     return cell_image_grid

@@ -11,13 +11,14 @@ def extract_ocr_data(data_path: Text, target_path: Text,
                      without_corrections: bool = False,
                      without_non_corrections: bool = False,
                      only_extract_type: Optional[Text] = None,
-                     window_size: int = 30) -> None:
+                     window_size: int = 30,
+                     padding: int = 0,
+                     extract_lines: bool = True) -> None:
     """Extracts ocr data points to a simpler file format."""
     image_paths = [os.path.join(data_path, image_path)
                    for image_path in table_annotator.io.list_images(data_path)]
     tables_for_images = [table_annotator.io.read_tables_for_image(image_path)
                          for image_path in image_paths]
-
     line_mismatches = 0
     multi_line_images = 0
     examples = 0
@@ -39,7 +40,7 @@ def extract_ocr_data(data_path: Text, target_path: Text,
             if len(needs_ocr) > 0:
                 continue
 
-            cell_image_grid = table_annotator.cellgrid.get_cell_image_grid(image, t)
+            cell_image_grid = table_annotator.cellgrid.get_cell_image_grid(image, t, padding)
             for row_i in range(len(t.cells)):
                 for col_i in range(len(t.cells[row_i])):
                     # skip those columns that don't have the desired data type
@@ -55,15 +56,19 @@ def extract_ocr_data(data_path: Text, target_path: Text,
                         continue
 
                     cell_image = cell_image_grid[row_i][col_i]
-                    text_lines = cell_text.split("\n")
-                    if len(text_lines) == 1:
-                        line_images = [table_annotator.lines.find_line_single(
-                            cell_image,
-                            window_size=window_size
-                        )]
+                    if extract_lines:
+                        text_lines = cell_text.split("\n")
+                        if len(text_lines) == 1:
+                            line_images = [table_annotator.lines.find_line_single(
+                                cell_image,
+                                window_size=window_size
+                            )]
+                        else:
+                            multi_line_images += 1
+                            line_images = table_annotator.lines.find_lines(cell_image)
                     else:
-                        multi_line_images += 1
-                        line_images = table_annotator.lines.find_lines(cell_image)
+                        text_lines = [cell_text]
+                        line_images = [cell_image]
 
                     if len(line_images) != len(text_lines):
                         line_mismatches += 1
@@ -80,7 +85,7 @@ def extract_ocr_data(data_path: Text, target_path: Text,
                     elif without_non_corrections:
                         continue
 
-                    text_lines_predicted = ocr_text.split("\n")
+                    text_lines_predicted = ocr_text.split("\n") if extract_lines else ocr_text
                     for idx, (text, text_predicted, line_image) in \
                             enumerate(
                                 zip(text_lines, text_lines_predicted, line_images)
@@ -144,8 +149,12 @@ if __name__ == "__main__":
                              "Does not need to be an exact match")
     parser.add_argument("-window_size", default=30, type=int,
                         help="set the window size for the line finding heuristic.")
+    parser.add_argument("-padding", default=0, type=int,
+                        help="Add additional pixels for padding during cropping of cells.")
+    parser.add_argument("--extract-lines", default=True, type=bool, action=argparse.BooleanOptionalAction,
+                        help="Whether to extract individual lines from cells")
 
     args = parser.parse_args()
     extract_ocr_data(args.data_path, args.target_path, args.without_corrections,
                      args.without_non_corrections, args.only_extract_type,
-                     args.window_size)
+                     args.window_size, args.padding, args.extract_lines)
