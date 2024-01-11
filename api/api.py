@@ -43,7 +43,7 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
                                                                 return_base_names=True)
         return {"bucketNames": sorted(project_buckets)}
 
-    @api.route('/<bucket>/')
+    @api.route('/<bucket>')
     def get_all_projects(bucket: str):
         bucket_dir = os.path.join(app.config[DATA_PATH], bucket)
         if not os.path.isdir(bucket_dir):
