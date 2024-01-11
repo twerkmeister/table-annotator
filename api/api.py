@@ -145,9 +145,9 @@ def create_app(script_info: Optional[ScriptInfo] = None, data_path: Text = "data
         workdir = get_workdir(bucket, project, subdir)
         return send_from_directory(workdir, image_name)
 
-    @api.route('/<project>/<subdir>/state/<image_name>', methods=["GET"])
-    def get_document_state(project: Text, subdir: Text, image_name: Text):
-        workdir = get_workdir(project, subdir)
+    @api.route('/<bucket>/<project>/<subdir>/state/<image_name>', methods=["GET"])
+    def get_document_state(bucket: Text, project: Text, subdir: Text, image_name: Text):
+        workdir = get_workdir(bucket, project, subdir)
         image_path = os.path.join(workdir, image_name)
         if not os.path.isfile(image_path):
             return make_response({"msg": "The image for which you tried to retrieve "
